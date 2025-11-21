@@ -1,10 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './ProductCard.css';
 
 const ProductCard = ({ product, onQuickView }) => {
-    const [imageLoaded, setImageLoaded] = useState(true);
+    const [imageLoaded, setImageLoaded] = useState(false);
     const [imageError, setImageError] = useState(false);
+    const [imageUrl, setImageUrl] = useState('');
+    const [finalImageUrl, setFinalImageUrl] = useState('');
+    const [retryCount, setRetryCount] = useState(0);
+
+    // Prepara la URL de la imagen con proxy
+    useEffect(() => {
+        if (product.imagen && product.codigo) {
+            // Siempre usar el proxy para evitar problemas de CORS
+            const proxyUrl = `http://localhost:4004/api/images/code/${product.codigo}?size=full`;
+            
+            console.log('🖼️ Usando proxy para imagen:', proxyUrl);
+            setImageUrl(proxyUrl);
+            setFinalImageUrl(proxyUrl);
+            setImageLoaded(false);
+            setImageError(false);
+            setRetryCount(0);
+        } else {
+            setImageError(true);
+        }
+    }, [product.imagen, product.codigo]);
+
+    const handleImageLoad = () => {
+        setImageLoaded(true);
+        setImageError(false);
+        console.log('✅ Imagen cargada via proxy:', imageUrl);
+    };
+
+    const handleImageError = () => {
+        console.error('❌ Error cargando imagen via proxy:', imageUrl);
+        
+        // Intentar reconexión (máximo 2 intentos)
+        if (retryCount < 2) {
+            const newRetryCount = retryCount + 1;
+            setRetryCount(newRetryCount);
+            console.log(`🔄 Reintento ${newRetryCount} para: ${product.codigo}`);
+            
+            // Forzar recarga con timestamp para evitar cache
+            setTimeout(() => {
+                setFinalImageUrl(`${imageUrl}&t=${Date.now()}`);
+                setImageLoaded(false);
+                setImageError(false);
+            }, 1000 * newRetryCount);
+        } else {
+            setImageLoaded(false);
+            setImageError(true);
+            console.log('💥 Agotados los reintentos para:', product.codigo);
+        }
+    };
 
     // Verificar si hay promoción activa
     const hasActivePromotion = product.promociones && product.promociones.length > 0;
@@ -12,11 +60,11 @@ const ProductCard = ({ product, onQuickView }) => {
     
     // Calcular precio en MXN si está en USD
     const precioMXN = product.moneda === 'USD' ? 
-        (product.precio * product.tipoCambio).toFixed(2) : 
+        (product.precio * (product.tipoCambio || 20)).toFixed(2) : 
         product.precio;
 
     const precioPromoMXN = currentPromotion && product.moneda === 'USD' ?
-        (currentPromotion.promocion * product.tipoCambio).toFixed(2) :
+        (currentPromotion.promocion * (product.tipoCambio || 20)).toFixed(2) :
         currentPromotion?.promocion;
 
     // Calcular descuento porcentual
@@ -24,16 +72,17 @@ const ProductCard = ({ product, onQuickView }) => {
         Math.round(((product.precio - currentPromotion.promocion) / product.precio) * 100) : 
         0;
 
-    // Manejar error de imagen
-    const handleImageError = () => {
-        setImageLoaded(false);
-        setImageError(true);
-    };
-
     // Obtener existencia total
     const getTotalStock = () => {
         if (!product.existencia) return 0;
-        return Object.values(product.existencia).reduce((total, stock) => total + stock, 0);
+        
+        // Si existencia es un objeto con ubicaciones
+        if (typeof product.existencia === 'object') {
+            return Object.values(product.existencia).reduce((total, stock) => total + stock, 0);
+        }
+        
+        // Si existencia es un número directo
+        return product.existencia;
     };
 
     const totalStock = getTotalStock();
@@ -61,15 +110,37 @@ const ProductCard = ({ product, onQuickView }) => {
                     <div className="image-placeholder">
                         <span>📷</span>
                         <p>Imagen no disponible</p>
+                        <small>{product.nombre}</small>
+                        {retryCount > 0 && (
+                            <div className="retry-info">
+                                <small>Intentos: {retryCount}/2</small>
+                            </div>
+                        )}
                     </div>
                 ) : (
-                    <img 
-                        src={product.imagen} 
-                        alt={product.nombre}
-                        onLoad={() => setImageLoaded(true)}
-                        onError={handleImageError}
-                        className={imageLoaded ? 'loaded' : 'loading'}
-                    />
+                    <>
+                        <img 
+                            src={finalImageUrl}
+                            alt={product.nombre}
+                            onLoad={handleImageLoad}
+                            onError={handleImageError}
+                            className={imageLoaded ? 'loaded' : 'loading'}
+                            style={{
+                                opacity: imageLoaded ? 1 : 0,
+                                transition: 'opacity 0.3s ease-in-out'
+                            }}
+                            crossOrigin="anonymous" // Importante para CORS
+                        />
+                        {!imageLoaded && !imageError && (
+                            <div className="image-loading">
+                                <div className="loading-spinner"></div>
+                                <p>Cargando imagen...</p>
+                                {retryCount > 0 && (
+                                    <small>Reintento {retryCount}/2</small>
+                                )}
+                            </div>
+                        )}
+                    </>
                 )}
                 
                 {/* Overlay de acciones */}
@@ -85,7 +156,7 @@ const ProductCard = ({ product, onQuickView }) => {
                         Vista Rápida
                     </button>
                     <Link 
-                        to={`/product/${product.idProducto}`}
+                        to={`/product/${product.idProducto || product.id}`}
                         className="btn-overlay btn-view-details"
                     >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -102,7 +173,7 @@ const ProductCard = ({ product, onQuickView }) => {
                 {/* Marca y categoría */}
                 <div className="product-meta">
                     <span className="product-brand">{product.marca}</span>
-                    <span className="product-category">{product.subcategoria}</span>
+                    <span className="product-category">{product.subcategoria || product.categoria}</span>
                 </div>
 
                 {/* Nombre del producto */}
@@ -112,7 +183,7 @@ const ProductCard = ({ product, onQuickView }) => {
 
                 {/* Descripción corta */}
                 <p className="product-description">
-                    {product.descripcion_corta}
+                    {product.descripcion_corta || product.descripcion?.substring(0, 100) + '...'}
                 </p>
 
                 {/* Precios */}
@@ -129,8 +200,8 @@ const ProductCard = ({ product, onQuickView }) => {
                         </>
                     ) : (
                         <div className="price-normal">
-                            <span className="current-price">${product.moneda === 'USD' ? precioMXN : product.precio}</span>
-                            <span className="currency">{product.moneda === 'USD' ? 'MXN' : ''}</span>
+                            <span className="current-price">${precioMXN}</span>
+                            <span className="currency">MXN</span>
                         </div>
                     )}
                 </div>
@@ -163,7 +234,7 @@ const ProductCard = ({ product, onQuickView }) => {
                         Vista Rápida
                     </button>
                     <Link 
-                        to={`/product/${product.idProducto}`}
+                        to={`/product/${product.idProducto || product.id}`}
                         className="btn-mobile btn-details-mobile"
                     >
                         Ver Detalles

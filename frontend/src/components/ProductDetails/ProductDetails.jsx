@@ -1,109 +1,96 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import ProductCard from '../Product Card/ProductCard';
+import { useProductoPorId, useProductos } from '../../api/productosHooks';
 import './ProductDetails.css';
 
 const ProductDetails = () => {
     const { productId } = useParams();
-    const [product, setProduct] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
     const [selectedImage, setSelectedImage] = useState(0);
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState('description');
+    const [relatedProducts, setRelatedProducts] = useState([]);
 
-    // Datos de ejemplo - reemplazar con API real
-    const sampleProduct = {
-        "idProducto": 67660,
-        "clave": "ACCPOL1210",
-        "numParte": "875M4AA",
-        "nombre": "Cable POLYCOM 875M4AA",
-        "modelo": "875M4AA",
-        "idMarca": 444,
-        "marca": "POLYCOM",
-        "idSubCategoria": 23,
-        "subcategoria": "Accesorios de Telefonía",
-        "idCategoria": 13,
-        "categoria": "Telefonía y Video Vigilancia",
-        "descripcion_corta": "Cable HP Poly extensor de microfono de expansion para poly studio X50/X52/X70/USB",
-        "descripcion_larga": "Cable extensor de micrófono de expansión HP Poly diseñado específicamente para los modelos Poly Studio X50, X52 y X70. Este cable permite extender la funcionalidad del micrófono en sistemas de videoconferencia, proporcionando mayor flexibilidad en la configuración de salas de reuniones. Compatible con conexiones USB para una integración sencilla. Fabricado con materiales de alta calidad que garantizan durabilidad y un rendimiento óptimo en entornos profesionales.",
-        "ean": "",
-        "upc": "197497663853",
-        "sustituto": "ACCPOL1210",
-        "activo": 1,
-        "protegido": 0,
-        "existencia": {
-            "QRO": 1,
-            "CDMX": 3,
-            "MTY": 2
-        },
-        "precio": 78.53,
-        "moneda": "USD",
-        "tipoCambio": 18.54,
-        "especificaciones": {
-            "Longitud": "3 metros",
-            "Conector": "USB Type-A",
-            "Color": "Negro",
-            "Compatibilidad": "Poly Studio X50, X52, X70",
-            "Tipo": "Cable extensor de micrófono",
-            "Garantía": "1 año",
-            "Material": "Nylon trenzado",
-            "Certificaciones": "RoHS, CE, FCC"
-        },
-        "promociones": [
-            {
-                "tipo": "importe",
-                "promocion": 64.89,
-                "vigencia": {
-                    "inicio": "2025-11-01T07:00:00.000Z",
-                    "fin": "2025-11-30T07:00:00.000Z"
-                }
-            }
-        ],
-        "imagen": "https://static.ctonline.mx/imagenes/ACCPOL1210/ACCPOL1210_full.jpg",
-        "imagenes_adicionales": [
-            "https://static.ctonline.mx/imagenes/ACCPOL1210/ACCPOL1210_1.jpg",
-            "https://static.ctonline.mx/imagenes/ACCPOL1210/ACCPOL1210_2.jpg",
-            "https://static.ctonline.mx/imagenes/ACCPOL1210/ACCPOL1210_3.jpg"
-        ]
+    // Usar datos reales de la API con los nuevos hooks
+    const { data: productResponse, loading, error } = useProductoPorId(productId);
+    const { data: allProductsResponse } = useProductos();
+
+    const product = productResponse?.data;
+    const allProducts = allProductsResponse?.data || [];
+
+    // **FUNCIÓN: Procesar producto para normalizar estructura**
+    const procesarProducto = (producto) => {
+        if (!producto) return null;
+        
+        return {
+            ...producto,
+            id: producto.idProducto || producto.id,
+            codigo: producto.codigo || producto.clave,
+            nombre: producto.nombre,
+            descripcion: producto.descripcion_corta || producto.descripcion,
+            precio: producto.precio,
+            moneda: producto.moneda,
+            tipoCambio: producto.tipoCambio || 20,
+            marca: producto.marca,
+            categoria: producto.categoria,
+            subcategoria: producto.subcategoria,
+            existencia: producto.existencia,
+            promociones: producto.promociones,
+            imagen: producto.imagen,
+            // Propiedades adicionales para detalles
+            descripcion_larga: producto.descripcion_larga || producto.descripcion,
+            especificaciones: producto.especificaciones,
+            imagenes_adicionales: producto.imagenes_adicionales || []
+        };
     };
 
-    useEffect(() => {
-        // Simular carga de API
-        const loadProduct = async () => {
-            setLoading(true);
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Aquí iría la llamada real a la API:
-            // const response = await fetch(`/api/products/${productId}`);
-            // const data = await response.json();
-            // setProduct(data);
-            
-            setProduct(sampleProduct);
-            setLoading(false);
-        };
+    const productoProcesado = procesarProducto(product);
 
-        loadProduct();
-    }, [productId]);
+    // Encontrar productos relacionados
+    useEffect(() => {
+        if (productoProcesado && Array.isArray(allProducts)) {
+            const related = allProducts
+                .filter(p => {
+                    const pId = p.idProducto || p.id;
+                    const currentId = productoProcesado.idProducto || productoProcesado.id;
+                    return pId !== currentId && 
+                           (p.categoria === productoProcesado.categoria || 
+                            p.marca === productoProcesado.marca);
+                })
+                .slice(0, 4)
+                .map(p => procesarProducto(p));
+            setRelatedProducts(related);
+        }
+    }, [productoProcesado, allProducts]);
 
     // Cálculos de precios
-    const hasActivePromotion = product?.promociones && product.promociones.length > 0;
-    const currentPromotion = hasActivePromotion ? product.promociones[0] : null;
+    const hasActivePromotion = productoProcesado?.promociones && productoProcesado.promociones.length > 0;
+    const currentPromotion = hasActivePromotion ? productoProcesado.promociones[0] : null;
     
-    const precioMXN = product?.moneda === 'USD' ? 
-        (product.precio * product.tipoCambio).toFixed(2) : 
-        product?.precio;
+    const precioMXN = productoProcesado?.moneda === 'USD' ? 
+        (productoProcesado.precio * productoProcesado.tipoCambio).toFixed(2) : 
+        productoProcesado?.precio;
 
-    const precioPromoMXN = currentPromotion && product?.moneda === 'USD' ?
-        (currentPromotion.promocion * product.tipoCambio).toFixed(2) :
+    const precioPromoMXN = currentPromotion && productoProcesado?.moneda === 'USD' ?
+        (currentPromotion.promocion * productoProcesado.tipoCambio).toFixed(2) :
         currentPromotion?.promocion;
 
     const discountPercentage = currentPromotion ? 
-        Math.round(((product.precio - currentPromotion.promocion) / product.precio) * 100) : 
+        Math.round(((productoProcesado.precio - currentPromotion.promocion) / productoProcesado.precio) * 100) : 
         0;
 
     // Stock total
     const getTotalStock = () => {
-        if (!product?.existencia) return 0;
-        return Object.values(product.existencia).reduce((total, stock) => total + stock, 0);
+        if (!productoProcesado?.existencia) return 0;
+        
+        // Si existencia es un objeto con ubicaciones
+        if (typeof productoProcesado.existencia === 'object') {
+            return Object.values(productoProcesado.existencia).reduce((total, stock) => total + stock, 0);
+        }
+        
+        // Si existencia es un número directo
+        return productoProcesado.existencia;
     };
 
     const totalStock = getTotalStock();
@@ -115,16 +102,73 @@ const ProductDetails = () => {
     };
 
     const handleAddToCart = () => {
-        // Lógica para agregar al carrito
-        console.log('Agregado al carrito:', { product, quantity });
-        alert(`¡${quantity} x ${product.nombre} agregado al carrito!`);
+        if (!productoProcesado) return;
+        
+        const cartItem = {
+            ...productoProcesado,
+            quantity,
+            precioFinal: hasActivePromotion ? precioPromoMXN : precioMXN
+        };
+        
+        console.log('Agregado al carrito:', cartItem);
+        
+        // Guardar en localStorage
+        const existingCart = JSON.parse(localStorage.getItem('ctonline_cart') || '[]');
+        const existingItemIndex = existingCart.findIndex(item => 
+            item.id === productoProcesado.id || item.idProducto === productoProcesado.idProducto
+        );
+        
+        if (existingItemIndex >= 0) {
+            existingCart[existingItemIndex].quantity += quantity;
+        } else {
+            existingCart.push(cartItem);
+        }
+        
+        localStorage.setItem('ctonline_cart', JSON.stringify(existingCart));
+        
+        // Mostrar notificación
+        alert(`¡${quantity} x ${productoProcesado.nombre} agregado al carrito!`);
     };
 
     const handleBuyNow = () => {
-        // Lógica para compra inmediata
-        console.log('Comprar ahora:', { product, quantity });
-        alert(`Redirigiendo al checkout con ${quantity} x ${product.nombre}`);
+        handleAddToCart();
+        navigate('/cart');
     };
+
+    const handleQuickView = (relatedProduct) => {
+        navigate(`/product/${relatedProduct.idProducto || relatedProduct.id}`);
+    };
+
+    // Función para formatear fechas
+    const formatDate = (dateString) => {
+        if (!dateString) return 'Fecha no disponible';
+        try {
+            return new Date(dateString).toLocaleDateString('es-MX', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        } catch {
+            return 'Fecha no disponible';
+        }
+    };
+
+    // Verificar si la promoción está activa
+    const isPromotionActive = () => {
+        if (!currentPromotion || !currentPromotion.vigencia) return false;
+        
+        try {
+            const now = new Date();
+            const start = new Date(currentPromotion.vigencia.inicio);
+            const end = new Date(currentPromotion.vigencia.fin);
+            
+            return now >= start && now <= end;
+        } catch {
+            return false;
+        }
+    };
+
+    const activePromotion = isPromotionActive() ? currentPromotion : null;
 
     if (loading) {
         return (
@@ -135,17 +179,27 @@ const ProductDetails = () => {
         );
     }
 
-    if (!product) {
+    if (error || !productoProcesado) {
         return (
             <div className="product-not-found">
+                <div className="error-icon">❌</div>
                 <h2>Producto no encontrado</h2>
-                <p>El producto que buscas no está disponible.</p>
-                <Link to="/products" className="btn-primary">
-                    Volver a Productos
-                </Link>
+                <p>{error || 'El producto que buscas no está disponible.'}</p>
+                <div className="not-found-actions">
+                    <Link to="/products" className="btn-primary">
+                        Volver a Productos
+                    </Link>
+                    <button onClick={() => window.location.reload()} className="btn-secondary">
+                        Reintentar
+                    </button>
+                </div>
             </div>
         );
     }
+
+    const images = productoProcesado.imagenes_adicionales ? 
+        [productoProcesado.imagen, ...productoProcesado.imagenes_adicionales] : 
+        [productoProcesado.imagen];
 
     return (
         <div className="product-details">
@@ -156,11 +210,11 @@ const ProductDetails = () => {
                     <span> / </span>
                     <Link to="/products">Productos</Link>
                     <span> / </span>
-                    <Link to={`/products`}>
-                        {product.categoria}
+                    <Link to={`/products?category=${encodeURIComponent(productoProcesado.categoria || 'todos')}`}>
+                        {productoProcesado.categoria || 'Categoría'}
                     </Link>
                     <span> / </span>
-                    <span className="current">{product.nombre}</span>
+                    <span className="current">{productoProcesado.nombre}</span>
                 </nav>
 
                 <div className="product-details-content">
@@ -168,25 +222,39 @@ const ProductDetails = () => {
                     <div className="product-gallery">
                         <div className="main-image">
                             <img 
-                                src={product.imagenes_adicionales?.[selectedImage] || product.imagen} 
-                                alt={product.nombre}
+                                src={images[selectedImage]} 
+                                alt={productoProcesado.nombre}
+                                onError={(e) => {
+                                    e.target.src = '/images/placeholder-product.jpg';
+                                }}
                             />
-                            {hasActivePromotion && (
+                            {activePromotion && (
                                 <div className="promotion-badge-large">
                                     -{discountPercentage}% OFF
                                 </div>
                             )}
+                            {totalStock === 0 && (
+                                <div className="out-of-stock-badge">
+                                    AGOTADO
+                                </div>
+                            )}
                         </div>
                         
-                        {product.imagenes_adicionales && product.imagenes_adicionales.length > 0 && (
+                        {images.length > 1 && (
                             <div className="image-thumbnails">
-                                {[product.imagen, ...product.imagenes_adicionales].map((img, index) => (
+                                {images.map((img, index) => (
                                     <button
                                         key={index}
                                         className={`thumbnail ${selectedImage === index ? 'active' : ''}`}
                                         onClick={() => setSelectedImage(index)}
                                     >
-                                        <img src={img} alt={`${product.nombre} ${index + 1}`} />
+                                        <img 
+                                            src={img} 
+                                            alt={`${productoProcesado.nombre} ${index + 1}`}
+                                            onError={(e) => {
+                                                e.target.src = '/images/placeholder-thumbnail.jpg';
+                                            }}
+                                        />
                                     </button>
                                 ))}
                             </div>
@@ -196,17 +264,18 @@ const ProductDetails = () => {
                     {/* Información principal del producto */}
                     <div className="product-info-main">
                         <div className="product-header">
-                            <span className="product-brand">{product.marca}</span>
-                            <h1 className="product-title">{product.nombre}</h1>
+                            <span className="product-brand">{productoProcesado.marca}</span>
+                            <h1 className="product-title">{productoProcesado.nombre}</h1>
                             <div className="product-codes">
-                                <span><strong>Clave:</strong> {product.clave}</span>
-                                <span><strong>Número de parte:</strong> {product.numParte}</span>
-                                {product.upc && <span><strong>UPC:</strong> {product.upc}</span>}
+                                <span><strong>Clave:</strong> {productoProcesado.codigo}</span>
+                                {productoProcesado.numParte && (
+                                    <span><strong>Número de parte:</strong> {productoProcesado.numParte}</span>
+                                )}
                             </div>
                         </div>
 
                         <div className="product-pricing">
-                            {hasActivePromotion ? (
+                            {activePromotion ? (
                                 <div className="pricing-with-promo">
                                     <div className="current-price">
                                         <span className="currency">MXN </span>
@@ -216,23 +285,28 @@ const ProductDetails = () => {
                                         <span className="price">${precioMXN}</span>
                                         <span className="discount">-{discountPercentage}%</span>
                                     </div>
+                                    {activePromotion.vigencia && (
+                                        <div className="promotion-timer">
+                                            <span>🔥 Oferta termina {formatDate(activePromotion.vigencia.fin)}</span>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="pricing-normal">
-                                    <span className="currency">{product.moneda === 'USD' ? 'MXN ' : ''}</span>
-                                    <span className="price">${product.moneda === 'USD' ? precioMXN : product.precio}</span>
+                                    <span className="currency">{productoProcesado.moneda === 'USD' ? 'MXN ' : ''}</span>
+                                    <span className="price">${productoProcesado.moneda === 'USD' ? precioMXN : productoProcesado.precio}</span>
                                 </div>
                             )}
                             
-                            {product.moneda === 'USD' && (
+                            {productoProcesado.moneda === 'USD' && (
                                 <div className="exchange-info">
-                                    <span>Tipo de cambio: ${product.tipoCambio} MXN/USD</span>
+                                    <span>Tipo de cambio: ${productoProcesado.tipoCambio} MXN/USD</span>
                                 </div>
                             )}
                         </div>
 
                         <div className="product-description-short">
-                            <p>{product.descripcion_corta}</p>
+                            <p>{productoProcesado.descripcion}</p>
                         </div>
 
                         {/* Stock y ubicaciones */}
@@ -245,15 +319,17 @@ const ProductDetails = () => {
                                 )}
                             </div>
                             
-                            {totalStock > 0 && (
+                            {totalStock > 0 && productoProcesado.existencia && typeof productoProcesado.existencia === 'object' && (
                                 <div className="stock-locations">
                                     <strong>Disponible en:</strong>
                                     <div className="locations-list">
-                                        {Object.entries(product.existencia).map(([location, stock]) => (
-                                            <div key={location} className="location-item">
-                                                <span className="location-name">{location}:</span>
-                                                <span className="location-stock">{stock} unidades</span>
-                                            </div>
+                                        {Object.entries(productoProcesado.existencia).map(([location, stock]) => (
+                                            stock > 0 && (
+                                                <div key={location} className="location-item">
+                                                    <span className="location-name">{location}:</span>
+                                                    <span className="location-stock">{stock} unidades</span>
+                                                </div>
+                                            )
                                         ))}
                                     </div>
                                 </div>
@@ -267,7 +343,8 @@ const ProductDetails = () => {
                                 <div className="quantity-controls">
                                     <button 
                                         onClick={() => handleQuantityChange(quantity - 1)}
-                                        disabled={quantity <= 1}
+                                        disabled={quantity <= 1 || totalStock === 0}
+                                        className="quantity-btn"
                                     >
                                         -
                                     </button>
@@ -277,10 +354,13 @@ const ProductDetails = () => {
                                         min="1"
                                         max={totalStock}
                                         onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
+                                        disabled={totalStock === 0}
+                                        className="quantity-input"
                                     />
                                     <button 
                                         onClick={() => handleQuantityChange(quantity + 1)}
-                                        disabled={quantity >= totalStock}
+                                        disabled={quantity >= totalStock || totalStock === 0}
+                                        className="quantity-btn"
                                     >
                                         +
                                     </button>
@@ -293,36 +373,56 @@ const ProductDetails = () => {
                                     onClick={handleAddToCart}
                                     disabled={totalStock === 0}
                                 >
-                                    🛒 Agregar al Carrito
+                                    <span className="btn-icon">🛒</span>
+                                    Agregar al Carrito
                                 </button>
                                 <button 
                                     className="btn-buy-now"
                                     onClick={handleBuyNow}
                                     disabled={totalStock === 0}
                                 >
-                                    ⚡ Comprar Ahora
+                                    <span className="btn-icon">⚡</span>
+                                    Comprar Ahora
                                 </button>
                             </div>
                         </div>
 
                         {/* Información adicional */}
                         <div className="product-meta-info">
-                            {product.sustituto && product.sustituto !== product.clave && (
+                            {productoProcesado.sustituto && productoProcesado.sustituto !== productoProcesado.codigo && (
                                 <div className="substitute-info">
-                                    <strong>Sustituto:</strong> {product.sustituto}
+                                    <strong>Sustituto:</strong> {productoProcesado.sustituto}
                                 </div>
                             )}
                             
-                            {hasActivePromotion && currentPromotion.vigencia && (
+                            {activePromotion && activePromotion.vigencia && (
                                 <div className="promotion-info">
                                     <strong>Oferta válida hasta:</strong>{' '}
-                                    {new Date(currentPromotion.vigencia.fin).toLocaleDateString('es-MX', {
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    })}
+                                    {formatDate(activePromotion.vigencia.fin)}
                                 </div>
                             )}
+                        </div>
+
+                        {/* Envío y devoluciones */}
+                        <div className="shipping-preview">
+                            <div className="shipping-item">
+                                <span className="shipping-icon">🚚</span>
+                                <div>
+                                    <strong>Envío gratis</strong> en pedidos mayores a $500 MXN
+                                </div>
+                            </div>
+                            <div className="shipping-item">
+                                <span className="shipping-icon">↩️</span>
+                                <div>
+                                    <strong>30 días</strong> para devoluciones
+                                </div>
+                            </div>
+                            <div className="shipping-item">
+                                <span className="shipping-icon">🛡️</span>
+                                <div>
+                                    <strong>Garantía</strong> incluida
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -354,17 +454,26 @@ const ProductDetails = () => {
                         {activeTab === 'description' && (
                             <div className="tab-panel">
                                 <h3>Descripción del Producto</h3>
-                                <p>{product.descripcion_larga || product.descripcion_corta}</p>
+                                <p>{productoProcesado.descripcion_larga || productoProcesado.descripcion}</p>
                                 
                                 <div className="features-list">
                                     <h4>Características principales:</h4>
                                     <ul>
-                                        <li>Compatible con sistemas Poly Studio X50, X52 y X70</li>
-                                        <li>Conexión USB para fácil instalación</li>
-                                        <li>Extensión de micrófono para mayor flexibilidad</li>
-                                        <li>Calidad de audio profesional</li>
-                                        <li>Durabilidad y confiabilidad garantizadas</li>
-                                        <li>Materiales de alta calidad para uso profesional</li>
+                                        {productoProcesado.descripcion_larga ? (
+                                            productoProcesado.descripcion_larga.split('. ').map((feature, index) => (
+                                                feature.trim() && (
+                                                    <li key={index}>{feature.trim()}.</li>
+                                                )
+                                            ))
+                                        ) : (
+                                            <>
+                                                <li>Alta calidad y durabilidad garantizada</li>
+                                                <li>Compatibilidad con sistemas estándar de la industria</li>
+                                                <li>Fácil instalación y configuración</li>
+                                                <li>Soporte técnico especializado</li>
+                                                <li>Materiales de primera calidad</li>
+                                            </>
+                                        )}
                                     </ul>
                                 </div>
                             </div>
@@ -374,8 +483,8 @@ const ProductDetails = () => {
                             <div className="tab-panel">
                                 <h3>Especificaciones Técnicas</h3>
                                 <div className="specifications-grid">
-                                    {product.especificaciones ? (
-                                        Object.entries(product.especificaciones).map(([key, value]) => (
+                                    {productoProcesado.especificaciones ? (
+                                        Object.entries(productoProcesado.especificaciones).map(([key, value]) => (
                                             <div key={key} className="spec-item">
                                                 <span className="spec-label">{key}:</span>
                                                 <span className="spec-value">{value}</span>
@@ -383,7 +492,21 @@ const ProductDetails = () => {
                                         ))
                                     ) : (
                                         <div className="no-specifications">
-                                            <p>No hay especificaciones disponibles para este producto.</p>
+                                            <p>No hay especificaciones técnicas disponibles para este producto.</p>
+                                            <div className="default-specs">
+                                                <div className="spec-item">
+                                                    <span className="spec-label">Marca:</span>
+                                                    <span className="spec-value">{productoProcesado.marca}</span>
+                                                </div>
+                                                <div className="spec-item">
+                                                    <span className="spec-label">Categoría:</span>
+                                                    <span className="spec-value">{productoProcesado.categoria}</span>
+                                                </div>
+                                                <div className="spec-item">
+                                                    <span className="spec-label">Subcategoría:</span>
+                                                    <span className="spec-value">{productoProcesado.subcategoria}</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -400,23 +523,41 @@ const ProductDetails = () => {
                                             <li><strong>Envío estándar:</strong> 3-5 días hábiles - $99 MXN</li>
                                             <li><strong>Envío express:</strong> 1-2 días hábiles - $199 MXN</li>
                                             <li><strong>Recoge en tienda:</strong> Gratis (Disponible en CDMX, QRO, MTY)</li>
+                                            <li><strong>Envío gratis:</strong> En compras mayores a $500 MXN</li>
                                         </ul>
                                     </div>
                                     
                                     <div className="info-section">
                                         <h4>🛡️ Garantía</h4>
                                         <p>Este producto incluye garantía del fabricante de 1 año contra defectos de fabricación.</p>
-                                    </div>
-                                    
-                                    <div className="info-section">
-                                        <h4>📦 Política de Devoluciones</h4>
-                                        <p>30 días para devoluciones. Producto debe estar en perfecto estado y en su empaque original.</p>
+                                        <ul>
+                                            <li>Cobertura: Defectos de fabricación y materiales</li>
+                                            <li>Duración: 12 meses a partir de la fecha de compra</li>
+                                            <li>Proceso: Presentar ticket de compra y producto</li>
+                                            <li>Exclusiones: Daño por mal uso o modificaciones</li>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
                         )}
                     </div>
                 </div>
+
+                {/* Productos relacionados */}
+                {relatedProducts.length > 0 && (
+                    <div className="related-products">
+                        <h2>Productos Relacionados</h2>
+                        <div className="related-products-grid">
+                            {relatedProducts.map(relatedProduct => (
+                                <ProductCard 
+                                    key={relatedProduct.idProducto || relatedProduct.id} 
+                                    product={relatedProduct}
+                                    onQuickView={handleQuickView}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
