@@ -1,0 +1,397 @@
+/* Banner.css - Versión con colores forzados */
+
+/* Variables CSS para consistencia */
+:root {
+  --primary-blue: #4895CF;
+  --dark-blue: #2C5F8E;
+  --darker-blue: #16395C;
+  --light-blue: #7CCBDD;
+  --white: #ffffff;
+  --transition: all 0.3s ease;
+}
+
+/* Banner Ecommerce - Iconos Profesionales */
+.banner-lucesa {
+  position: relative;
+  height: 80vh;
+  min-height: 600px;
+  margin-top: 70px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease;
+}
+
+.banner-lucesa.animate-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.banner-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('/IMAGEN-1.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  will-change: transform;
+}
+
+/* Animación de zoom solo si no hay preferencia de movimiento reducido */
+@media (prefers-reduced-motion: no-preference) {
+  .banner-background {
+    animation: zoomEffect 20s ease-in-out infinite;
+  }
+}
+
+.banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    rgba(22, 57, 92, 0.85) 0%,
+    rgba(44, 95, 142, 0.75) 50%,
+    rgba(72, 149, 207, 0.6) 100%
+  );
+}
+
+.banner-container-lucesa {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.banner-content {
+  max-width: 600px;
+}
+
+.banner-text {
+  color: var(--white);
+}
+
+.banner-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.banner-title .highlight {
+  background: linear-gradient(135deg, var(--light-blue), var(--primary-blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+  display: inline-block;
+}
+
+.banner-title .highlight::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--light-blue), var(--primary-blue));
+  border-radius: 2px;
+}
+
+.banner-description {
+  font-size: clamp(1rem, 2.5vw, 1.3rem);
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  opacity: 0.95;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.banner-buttons {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 1rem 2.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  min-width: 140px;
+}
+
+.btn:focus {
+  outline: 2px solid var(--white);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+  color: var(--white);
+  box-shadow: 0 8px 25px rgba(72, 149, 207, 0.4);
+  border: 2px solid transparent;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(72, 149, 207, 0.6);
+  background: linear-gradient(135deg, var(--dark-blue), var(--darker-blue));
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--white);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--white);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+}
+
+/* FEATURES COMPLETAMENTE CORREGIDOS - SIN BLANCO */
+.banner-features {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  /* Fondo azul sólido sin transparencia */
+  background: #2C5F8E !important; /* Azul oscuro sólido */
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  border: 2px solid #4895CF !important; /* Borde azul primario */
+  transition: var(--transition);
+  min-width: 160px;
+  /* Reset completo de estilos que puedan causar blanco */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+}
+
+.feature:hover,
+.feature:focus-within {
+  background: #4895CF !important; /* Azul primario al hover */
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(72, 149, 207, 0.6) !important;
+  border-color: #7CCBDD !important; /* Azul claro al hover */
+}
+
+.feature-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.feature-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke: #7CCBDD !important; /* Azul claro forzado */
+  stroke-width: 2;
+  fill: none !important;
+  transition: var(--transition);
+}
+
+.feature:hover .feature-icon svg,
+.feature:focus-within .feature-icon svg {
+  stroke: #ffffff !important; /* Blanco al hover */
+  transform: scale(1.1);
+}
+
+.feature span:last-child {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: white !important; /* Texto blanco forzado */
+  white-space: nowrap;
+}
+
+/* Reset específico para eliminar cualquier blanco residual */
+.feature * {
+  background: transparent !important;
+}
+
+/* Animaciones */
+@keyframes zoomEffect {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Efectos de partículas sutiles */
+.banner-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(124, 203, 221, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(72, 149, 207, 0.1) 0%, transparent 50%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .banner-background::before {
+    animation: floatParticles 15s ease-in-out infinite;
+  }
+}
+
+@keyframes floatParticles {
+  0%, 100% {
+    transform: translateX(0) translateY(0);
+  }
+  50% {
+    transform: translateX(-20px) translateY(20px);
+  }
+}
+
+/* Responsive mejorado */
+@media (max-width: 1024px) {
+  .banner-lucesa {
+    height: 70vh;
+    min-height: 500px;
+  }
+  
+  .banner-features {
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .banner-lucesa {
+    height: 60vh;
+    min-height: 400px;
+    text-align: center;
+  }
+  
+  .banner-container-lucesa {
+    padding: 0 1rem;
+  }
+  
+  .banner-buttons {
+    justify-content: center;
+  }
+  
+  .btn {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+  }
+  
+  .banner-features {
+    justify-content: center;
+    gap: 1rem;
+  }
+  
+  .feature {
+    padding: 0.8rem 1.2rem;
+    min-width: 140px;
+  }
+}
+
+@media (max-width: 480px) {
+  .banner-lucesa {
+    height: 70vh;
+    min-height: 450px;
+  }
+  
+  .banner-description {
+    margin-bottom: 2rem;
+  }
+  
+  .banner-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .btn {
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  .banner-features {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .feature {
+    width: 100%;
+    max-width: 200px;
+    justify-content: flex-start;
+  }
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .banner-background {
+    animation: none !important;
+  }
+  
+  .banner-background::before {
+    animation: none !important;
+  }
+  
+  .feature:hover,
+  .feature:focus-within {
+    transform: none;
+  }
+  
+  .btn:hover,
+  .btn:focus {
+    transform: none;
+  }
+}
+
+/* Mejora de contraste para accesibilidad */
+@media (prefers-contrast: high) {
+  .banner-overlay {
+    background: rgba(22, 57, 92, 0.95);
+  }
+  
+  .feature {
+    background: #16395C !important;
+    border: 2px solid var(--white) !important;
+  }
+  
+  .feature-icon svg {
+    stroke: var(--white) !important;
+  }
+}

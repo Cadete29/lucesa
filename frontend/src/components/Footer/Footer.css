@@ -1,0 +1,594 @@
+/* Footer Styles - Con Efecto Niebla Muy Visible */
+.footer {
+  background: #ffffff;
+  color: #374151;
+  padding: 4rem 0 1rem;
+  margin-top: auto;
+  position: relative;
+  overflow: hidden;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* Efecto de Niebla MUY VISIBLE como aliento de hielo */
+.footer::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -20%;
+  width: 140%;
+  height: 200%;
+  background: 
+    /* Capa principal de niebla densa */
+    radial-gradient(ellipse at 30% 40%, rgba(124, 203, 221, 0.45) 0%, transparent 70%),
+    radial-gradient(ellipse at 70% 60%, rgba(72, 149, 207, 0.4) 0%, transparent 65%),
+    radial-gradient(ellipse at 50% 20%, rgba(124, 203, 221, 0.35) 0%, transparent 60%),
+    radial-gradient(ellipse at 20% 80%, rgba(44, 95, 142, 0.3) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 30%, rgba(22, 57, 92, 0.25) 0%, transparent 50%),
+    /* Refuerzo de densidad */
+    radial-gradient(ellipse at 40% 50%, rgba(124, 203, 221, 0.3) 0%, transparent 45%),
+    radial-gradient(ellipse at 60% 70%, rgba(72, 149, 207, 0.35) 0%, transparent 40%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 1;
+  animation: intenseFogDrift 20s ease-in-out infinite;
+}
+
+/* Animación intensa de niebla */
+@keyframes intenseFogDrift {
+  0%, 100% {
+    transform: translateX(0px) translateY(0px) scale(1) rotate(0deg);
+    opacity: 0.8;
+  }
+  15% {
+    transform: translateX(-40px) translateY(20px) scale(1.1) rotate(-2deg);
+    opacity: 0.9;
+  }
+  30% {
+    transform: translateX(30px) translateY(-15px) scale(1.05) rotate(1deg);
+    opacity: 0.85;
+  }
+  45% {
+    transform: translateX(-25px) translateY(25px) scale(1.15) rotate(-1deg);
+    opacity: 0.95;
+  }
+  60% {
+    transform: translateX(35px) translateY(-10px) scale(1.08) rotate(2deg);
+    opacity: 0.88;
+  }
+  75% {
+    transform: translateX(-20px) translateY(30px) scale(1.12) rotate(-3deg);
+    opacity: 0.92;
+  }
+  90% {
+    transform: translateX(25px) translateY(-20px) scale(1.06) rotate(1deg);
+    opacity: 0.87;
+  }
+}
+
+/* Partículas de niebla densas y muy visibles */
+.fog-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.fog-particle {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(25px);
+  animation: intenseParticleFloat 15s linear infinite;
+}
+
+/* Partículas grandes y muy visibles */
+.fog-particle:nth-child(1) {
+  width: 200px;
+  height: 120px;
+  top: 15%;
+  left: 5%;
+  animation-delay: 0s;
+  background: rgba(124, 203, 221, 0.4);
+  box-shadow: 0 0 80px rgba(124, 203, 221, 0.3);
+}
+
+.fog-particle:nth-child(2) {
+  width: 180px;
+  height: 150px;
+  top: 65%;
+  right: 8%;
+  animation-delay: 3s;
+  background: rgba(72, 149, 207, 0.35);
+  box-shadow: 0 0 70px rgba(72, 149, 207, 0.25);
+}
+
+.fog-particle:nth-child(3) {
+  width: 220px;
+  height: 130px;
+  bottom: 25%;
+  left: 12%;
+  animation-delay: 6s;
+  background: rgba(44, 95, 142, 0.3);
+  box-shadow: 0 0 90px rgba(44, 95, 142, 0.2);
+}
+
+.fog-particle:nth-child(4) {
+  width: 160px;
+  height: 140px;
+  top: 35%;
+  right: 15%;
+  animation-delay: 9s;
+  background: rgba(22, 57, 92, 0.25);
+  box-shadow: 0 0 60px rgba(22, 57, 92, 0.15);
+}
+
+.fog-particle:nth-child(5) {
+  width: 190px;
+  height: 110px;
+  bottom: 40%;
+  left: 20%;
+  animation-delay: 12s;
+  background: rgba(124, 203, 221, 0.35);
+  box-shadow: 0 0 75px rgba(124, 203, 221, 0.25);
+}
+
+@keyframes intenseParticleFloat {
+  0% {
+    transform: translateX(-150px) translateY(0px) scale(0.7);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  30% {
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateX(80px) translateY(-40px) scale(1.1);
+    opacity: 0.9;
+  }
+  70% {
+    opacity: 0.7;
+  }
+  90% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translateX(250px) translateY(20px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* Efecto de viento intenso */
+.wind-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 10%,
+    rgba(255, 255, 255, 0.25) 20%,
+    rgba(255, 255, 255, 0.15) 30%,
+    transparent 40%,
+    transparent 60%,
+    rgba(255, 255, 255, 0.12) 70%,
+    rgba(255, 255, 255, 0.2) 80%,
+    rgba(255, 255, 255, 0.12) 90%,
+    transparent 100%
+  );
+  animation: intenseWindSweep 25s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+
+@keyframes intenseWindSweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Brillo de hielo adicional */
+.ice-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(ellipse at 40% 60%, rgba(124, 203, 221, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 40%, rgba(72, 149, 207, 0.15) 0%, transparent 45%);
+  pointer-events: none;
+  z-index: 1;
+  animation: icePulse 8s ease-in-out infinite;
+}
+
+@keyframes icePulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Neblina de fondo adicional */
+.fog-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    linear-gradient(135deg, rgba(124, 203, 221, 0.1) 0%, transparent 50%),
+    linear-gradient(225deg, rgba(72, 149, 207, 0.08) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+  animation: fogBreath 12s ease-in-out infinite;
+}
+
+@keyframes fogBreath {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.05);
+  }
+}
+
+/* Asegurar que el contenido esté sobre la niebla */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  position: relative;
+  z-index: 10; /* Z-index alto para estar sobre toda la niebla */
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 10;
+}
+
+.footer-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Logo Section */
+.logo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.footer-logo {
+  height: 70px;
+  width: auto;
+  max-width: 250px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+}
+
+.footer-description {
+  line-height: 1.6;
+  color: #6b7280;
+  font-size: 1rem;
+  max-width: 350px;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* Redes Sociales */
+.social-links {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.social-link {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(124, 203, 221, 0.3);
+  text-decoration: none;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.social-link:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(72, 149, 207, 0.4);
+  border-color: transparent;
+}
+
+.social-link svg {
+  width: 20px;
+  height: 20px;
+  transition: all 0.3s ease;
+  fill: #4895CF;
+}
+
+/* Colores de hover usando tu paleta específica */
+.social-link:hover svg {
+  fill: white;
+  transform: scale(1.1);
+}
+
+.social-link:nth-child(1):hover {
+  background: #4895CF;
+}
+
+.social-link:nth-child(2):hover {
+  background: #7CCBDD;
+}
+
+.social-link:nth-child(3):hover {
+  background: #2C5F8E;
+}
+
+.social-link:nth-child(4):hover {
+  background: #16395C;
+}
+
+.social-link:nth-child(5):hover {
+  background: #4895CF;
+}
+
+/* Footer Titles */
+.footer-title {
+  color: #1f2937;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  position: relative;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.footer-title::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 35px;
+  height: 3px;
+  background: linear-gradient(90deg, #4895CF, #7CCBDD);
+  border-radius: 2px;
+}
+
+/* Footer Links */
+.footer-links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.footer-links li a {
+  color: #6b7280;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  position: relative;
+  padding: 0.25rem 0;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.footer-links li a:hover {
+  color: #4895CF;
+  transform: translateX(8px);
+}
+
+/* Contact Info */
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  color: #6b7280;
+  font-size: 1rem;
+  line-height: 1.5;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.contact-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.contact-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke: #4895CF;
+  stroke-width: 2;
+  fill: none;
+}
+
+/* Footer Divider */
+.footer-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(229, 231, 235, 0.8), transparent);
+  margin: 2rem 0;
+  position: relative;
+  z-index: 10;
+}
+
+/* Footer Bottom */
+.footer-bottom {
+  padding-top: 1.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+.footer-bottom-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-bottom p {
+  color: #6b7280;
+  font-size: 0.95rem;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* Crédito de desarrollo */
+.development-credit {
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-style: italic;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.footer-legal {
+  display: flex;
+  gap: 2rem;
+}
+
+.footer-legal a {
+  color: #6b7280;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.3s ease;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.footer-legal a:hover {
+  color: #4895CF;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .footer-content {
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+  
+  .footer-logo {
+    height: 60px;
+    max-width: 220px;
+  }
+  
+  .footer-bottom-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .footer {
+    padding: 3rem 0 1rem;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    text-align: center;
+  }
+
+  .footer-title::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .footer-links li a:hover {
+    transform: translateX(0);
+  }
+
+  .contact-info {
+    align-items: center;
+  }
+
+  .contact-item {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .footer-logo {
+    height: 55px;
+    max-width: 200px;
+    margin: 0 auto;
+  }
+  
+  .footer-description {
+    text-align: center;
+    margin: 0 auto;
+  }
+
+  .social-links {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  .footer-content {
+    gap: 2rem;
+  }
+
+  .footer-legal {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .footer-logo {
+    height: 50px;
+    max-width: 180px;
+  }
+  
+  .footer-description {
+    font-size: 0.95rem;
+  }
+
+  .social-links {
+    gap: 0.5rem;
+  }
+
+  .social-link {
+    width: 36px;
+    height: 36px;
+  }
+
+  .social-link svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .development-credit {
+    font-size: 0.8rem;
+  }
+}
