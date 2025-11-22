@@ -1,158 +1,184 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/Product Card/ProductCard';
 import QuickViewModal from '../components/QuickViewModal/QuickViewModal';
+import { useSearch } from '../context/SearchContext';
 import { 
   useProductos, 
-  useCategorias,
   useBuscarProductos 
 } from '../api/productosHooks';
 import './Products.css';
 
+// FUNCIONES MOVIDAS FUERA DEL COMPONENTE
+const generarIdDesdeNombre = (nombre) => {
+    if (!nombre) return `categoria-${Math.random().toString(36).substr(2, 9)}`;
+    
+    const nombreNormalizado = nombre.toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+    
+    let hash = 0;
+    for (let i = 0; i < nombre.length; i++) {
+        hash = ((hash << 5) - hash) + nombre.charCodeAt(i);
+        hash = hash & hash;
+    }
+    
+    return `${nombreNormalizado}-${Math.abs(hash).toString(36).substr(0, 6)}`;
+};
+
+const procesarProductos = (productosArray) => {
+    if (!productosArray || !Array.isArray(productosArray)) return [];
+    
+    return productosArray.map(product => ({
+        ...product,
+        id: product.idProducto || product.id || product.codigo,
+        codigo: product.codigo || product.clave,
+        nombre: product.nombre,
+        descripcion: product.descripcion_corta || product.descripcion,
+        precio: product.precio,
+        moneda: product.moneda,
+        tipoCambio: product.tipoCambio || 20,
+        marca: product.marca,
+        categoria: product.categoria,
+        subcategoria: product.subcategoria,
+        existencia: product.existencia,
+        promociones: product.promociones,
+        imagen: product.imagen
+    }));
+};
+
+const filtrarProductosPorCategoria = (productos, categoriaId) => {
+    if (categoriaId === 'todos' || !categoriaId) {
+        return productos;
+    }
+
+    console.log(`🎯 Filtrando productos para categoría ID: ${categoriaId}`);
+
+    if (categoriaId === 'otros') {
+        return productos.filter(producto => {
+            const tieneCategoriaValida = producto.categoria && 
+                typeof producto.categoria === 'string' && 
+                producto.categoria.trim() !== '' &&
+                producto.categoria.trim() !== 'N/A' &&
+                producto.categoria.trim() !== 'null' &&
+                producto.categoria.trim().length > 1;
+
+            const tieneSubcategoriaValida = producto.subcategoria && 
+                typeof producto.subcategoria === 'string' && 
+                producto.subcategoria.trim() !== '' &&
+                producto.subcategoria.trim() !== 'N/A' &&
+                producto.subcategoria.trim() !== 'null' &&
+                producto.subcategoria.trim().length > 1;
+
+            return !tieneCategoriaValida && !tieneSubcategoriaValida;
+        });
+    }
+
+    return productos.filter(producto => {
+        if (producto.categoria && 
+            typeof producto.categoria === 'string' && 
+            producto.categoria.trim() !== '' &&
+            producto.categoria.trim() !== 'N/A' &&
+            producto.categoria.trim() !== 'null' &&
+            producto.categoria.trim().length > 1) {
+            
+            const categoriaProducto = producto.categoria.trim();
+            const idCategoriaProducto = generarIdDesdeNombre(categoriaProducto);
+            
+            if (idCategoriaProducto === categoriaId) {
+                return true;
+            }
+        }
+
+        if (producto.subcategoria && 
+            typeof producto.subcategoria === 'string' && 
+            producto.subcategoria.trim() !== '' &&
+            producto.subcategoria.trim() !== 'N/A' &&
+            producto.subcategoria.trim() !== 'null' &&
+            producto.subcategoria.trim().length > 1) {
+            
+            const subcategoriaProducto = producto.subcategoria.trim();
+            const idSubcategoriaProducto = generarIdDesdeNombre(subcategoriaProducto);
+            
+            if (idSubcategoriaProducto === categoriaId) {
+                return true;
+            }
+        }
+
+        return false;
+    });
+};
+
+const getCategoryDisplayName = (categoryId) => {
+    if (categoryId === 'todos') return 'Todos los Productos';
+    if (categoryId === 'otros') return 'Otros';
+    
+    const partes = categoryId.split('-');
+    const nombrePartes = partes.slice(0, -1);
+    const nombre = nombrePartes.join(' ')
+        .replace(/\b\w/g, l => l.toUpperCase());
+    
+    return nombre || 'Categoría';
+};
+
 const Products = () => {
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('todos');
     const [sortBy, setSortBy] = useState('nombre');
     const [quickViewProduct, setQuickViewProduct] = useState(null);
     const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [productsPerPage] = useState(48);
 
-    // Obtener categoría desde URL si existe
+    const { searchTerm, setSearchTerm, clearSearch } = useSearch();
+
     const categoryFromUrl = searchParams.get('category');
 
-    // Usar hooks de la API
-    const { data: productosResponse, loading, error } = useProductos();
-    const { data: categoriasResponse } = useCategorias();
+    const { data: productosResponse, loading, error } = useProductos({
+      page: 1,
+      limit: 20000
+    });
+
     const { data: searchedProductsResponse, loading: searchLoading } = useBuscarProductos(searchTerm);
 
     const productos = productosResponse?.data || [];
-    const categoriasData = categoriasResponse?.data || [];
     const searchedProducts = searchedProductsResponse?.data || [];
 
-    // Configurar categoría inicial desde URL
-    useEffect(() => {
-        if (categoryFromUrl) {
-            setSelectedCategory(categoryFromUrl);
-        }
-    }, [categoryFromUrl]);
+    const handleAddToCart = useCallback((product) => {
+        console.log('Agregando al carrito:', product);
+    }, []);
 
-    // **FUNCIÓN: Procesar categorías (igual que en Categories.jsx)**
-    const procesarCategorias = (categoriasData, productos) => {
-        if (!categoriasData || !Array.isArray(categoriasData)) return [];
-
-        // Función para contar productos por categoría
-        const contarProductosPorCategoria = (nombreCategoria) => {
-            if (!Array.isArray(productos)) return 0;
-            
-            return productos.filter(producto => {
-                const categoriaProducto = producto.categoria || producto.subcategoria;
-                return categoriaProducto === nombreCategoria;
-            }).length;
-        };
-
-        // Función para generar ID desde nombre
-        const generarIdDesdeNombre = (nombre) => {
-            if (!nombre) return `categoria-${Math.random().toString(36).substr(2, 9)}`;
-            return nombre.toLowerCase()
-                .replace(/\s+/g, '-')
-                .replace(/[^a-z0-9-]/g, '')
-                .replace(/-+/g, '-')
-                .replace(/^-|-$/g, '');
-        };
-
-        const categoriasProcesadas = categoriasData.map((item) => {
-            // Si es un string, crear objeto básico
-            if (typeof item === 'string') {
-                const count = contarProductosPorCategoria(item);
-                return {
-                    id: generarIdDesdeNombre(item),
-                    nombre: item,
-                    count: count
-                };
-            }
-            // Si ya es un objeto, usar directamente
-            else if (typeof item === 'object') {
-                const count = contarProductosPorCategoria(item.nombre || item);
-                return {
-                    id: item.id || generarIdDesdeNombre(item.nombre),
-                    nombre: item.nombre || 'Sin nombre',
-                    count: count
-                };
-            }
-            return null;
-        }).filter(Boolean)
-          .sort((a, b) => b.count - a.count); // Ordenar por cantidad de productos
-
-        // Agregar categoría "Todos los Productos" al inicio
-        return [
-            { 
-                id: 'todos', 
-                nombre: 'Todos los Productos', 
-                count: Array.isArray(productos) ? productos.length : 0 
-            },
-            ...categoriasProcesadas
-        ];
+    const handleGoBack = () => {
+        navigate(-1);
     };
 
-    // Obtener categorías procesadas
-    const categories = procesarCategorias(categoriasData, productos);
-
-    // **FUNCIÓN: Procesar productos para normalizar estructura**
-    const procesarProductos = (productosArray) => {
-        if (!productosArray || !Array.isArray(productosArray)) return [];
-        
-        return productosArray.map(product => ({
-            ...product,
-            // Asegurar que tenga las propiedades necesarias para ProductCard
-            id: product.idProducto || product.id,
-            codigo: product.codigo || product.clave,
-            nombre: product.nombre,
-            descripcion: product.descripcion_corta || product.descripcion,
-            precio: product.precio,
-            moneda: product.moneda,
-            tipoCambio: product.tipoCambio || 20,
-            marca: product.marca,
-            categoria: product.categoria,
-            subcategoria: product.subcategoria,
-            existencia: product.existencia,
-            promociones: product.promociones,
-            imagen: product.imagen
-        }));
-    };
-
-    // Filtrar y ordenar productos
     useEffect(() => {
+        console.log('🔄 Effect principal ejecutado', {
+            selectedCategory,
+            productosCount: productos.length,
+            searchTerm
+        });
+
         let productsToDisplay = productos;
 
-        // Usar productos buscados si hay término de búsqueda
+        if (selectedCategory !== 'todos') {
+            productsToDisplay = filtrarProductosPorCategoria(productsToDisplay, selectedCategory);
+        }
+
         if (searchTerm && Array.isArray(searchedProducts)) {
             productsToDisplay = searchedProducts;
         }
 
-        // Validar que productsToDisplay sea un array
         if (!productsToDisplay || !Array.isArray(productsToDisplay)) {
             setFilteredProducts([]);
             return;
         }
 
-        let filtered = [...productsToDisplay];
-        
-        // Filtrar por categoría (usando nombres reales de categorías)
-        if (selectedCategory !== 'todos') {
-            // Encontrar la categoría seleccionada para obtener su nombre real
-            const categoriaSeleccionada = categories.find(cat => cat.id === selectedCategory);
-            
-            if (categoriaSeleccionada) {
-                filtered = productsToDisplay.filter(product => {
-                    const categoriaProducto = product.categoria || product.subcategoria || '';
-                    return categoriaProducto === categoriaSeleccionada.nombre;
-                });
-            }
-        }
-
-        // Ordenar productos
-        const sortedProducts = [...filtered].sort((a, b) => {
+        const sortedProducts = [...productsToDisplay].sort((a, b) => {
             switch (sortBy) {
                 case 'precio':
                     return (a.precio || 0) - (b.precio || 0);
@@ -175,10 +201,42 @@ const Products = () => {
             }
         });
 
-        // Procesar productos para normalizar estructura
         const productosProcesados = procesarProductos(sortedProducts);
         setFilteredProducts(productosProcesados);
-    }, [selectedCategory, productos, sortBy, searchTerm, searchedProducts, categories]);
+
+    }, [productos, selectedCategory, searchTerm, searchedProducts, sortBy]);
+
+    useEffect(() => {
+        if (categoryFromUrl && categoryFromUrl !== selectedCategory) {
+            setSelectedCategory(categoryFromUrl);
+            setCurrentPage(1);
+            if (searchTerm) {
+                clearSearch();
+            }
+        }
+    }, [categoryFromUrl]);
+
+    const { productosPaginados, totalPages } = useMemo(() => {
+        const startIndex = (currentPage - 1) * productsPerPage;
+        const endIndex = startIndex + productsPerPage;
+        const paginados = filteredProducts.slice(startIndex, endIndex);
+        const pages = Math.ceil(filteredProducts.length / productsPerPage);
+        
+        return {
+            productosPaginados: paginados,
+            totalPages: pages
+        };
+    }, [filteredProducts, currentPage, productsPerPage]);
+
+    const handleSearch = (e) => {
+        setSearchTerm(e.target.value);
+        setCurrentPage(1);
+    };
+
+    const handleClearSearch = () => {
+        clearSearch();
+        setCurrentPage(1);
+    };
 
     const handleQuickView = (product) => {
         setQuickViewProduct(product);
@@ -190,63 +248,55 @@ const Products = () => {
         setQuickViewProduct(null);
     };
 
-    const handleAddToCart = (product, quantity) => {
-        console.log('Agregado al carrito:', product, 'Cantidad:', quantity);
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleCategoryChange = (category) => {
+        if (category === selectedCategory) return;
         
-        // Guardar en localStorage
-        const cartItem = {
-            ...product,
-            quantity,
-            precioFinal: product.precio
-        };
-        
-        const existingCart = JSON.parse(localStorage.getItem('ctonline_cart') || '[]');
-        const existingItemIndex = existingCart.findIndex(item => item.id === product.id);
-        
-        if (existingItemIndex >= 0) {
-            existingCart[existingItemIndex].quantity += quantity;
-        } else {
-            existingCart.push(cartItem);
+        setSelectedCategory(category);
+        setCurrentPage(1);
+        if (searchTerm) {
+            clearSearch();
         }
-        
-        localStorage.setItem('ctonline_cart', JSON.stringify(existingCart));
-        
-        alert(`¡${quantity} x ${product.nombre} agregado al carrito!`);
-    };
-
-    const handleSearch = (e) => {
-        setSearchTerm(e.target.value);
-    };
-
-    const clearSearch = () => {
-        setSearchTerm('');
-    };
-
-    // **FUNCIÓN: Obtener nombre de categoría para mostrar**
-    const getCategoryDisplayName = () => {
-        if (selectedCategory === 'todos') return 'Todos los Productos';
-        const categoria = categories.find(cat => cat.id === selectedCategory);
-        return categoria ? categoria.nombre : 'Categoría';
     };
 
     if (loading) {
         return (
-            <div className="products-loading">
-                <div className="loading-spinner"></div>
-                <p>Cargando productos...</p>
+            <div className="products-page">
+                <div className="container">
+                    <div className="loading-products">
+                        <div className="loading-spinner"></div>
+                        <p>Cargando productos...</p>
+                        <button onClick={handleGoBack} className="btn-back" style={{marginTop: '20px'}}>
+                            ← Volver Atrás
+                        </button>
+                    </div>
+                </div>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="products-error">
-                <div className="error-icon">⚠️</div>
-                <h3>Error al cargar productos</h3>
-                <p>{error}</p>
-                <button onClick={() => window.location.reload()} className="btn-retry">
-                    Reintentar
-                </button>
+            <div className="products-page">
+                <div className="container">
+                    <div className="error-products">
+                        <div className="error-icon">⚠️</div>
+                        <h3>Error al cargar productos</h3>
+                        <p>{error.message || 'Ha ocurrido un error'}</p>
+                        <div className="error-actions">
+                            <button onClick={() => window.location.reload()} className="btn-retry">
+                                Reintentar
+                            </button>
+                            <button onClick={handleGoBack} className="btn-back">
+                                ← Volver Atrás
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -254,19 +304,25 @@ const Products = () => {
     return (
         <div className="products-page">
             <div className="container">
-                {/* Header de la página */}
                 <div className="products-header">
-                    <h1>
-                        {searchTerm ? `Buscando: "${searchTerm}"` : getCategoryDisplayName()}
-                    </h1>
+                    <div className="header-top">
+                        <button onClick={handleGoBack} className="back-button">
+                            ← Volver
+                        </button>
+                        <h1>
+                            {searchTerm ? `Buscando: "${searchTerm}"` : getCategoryDisplayName(selectedCategory)}
+                        </h1>
+                    </div>
+                    
                     <p>
                         {searchTerm 
                             ? `Resultados de búsqueda para "${searchTerm}"`
-                            : `Descubre nuestra amplia gama de productos ${selectedCategory !== 'todos' ? 'en ' + getCategoryDisplayName().toLowerCase() : 'tecnológicos'}`
+                            : selectedCategory !== 'todos'
+                            ? `Explorando productos de ${getCategoryDisplayName(selectedCategory).toLowerCase()}`
+                            : 'Descubre nuestra amplia gama de productos tecnológicos'
                         }
                     </p>
                     
-                    {/* Buscador */}
                     <div className="products-search">
                         <div className="search-box">
                             <input
@@ -277,7 +333,7 @@ const Products = () => {
                                 className="search-input"
                             />
                             {searchTerm && (
-                                <button onClick={clearSearch} className="search-clear">
+                                <button onClick={handleClearSearch} className="search-clear">
                                     ×
                                 </button>
                             )}
@@ -287,42 +343,46 @@ const Products = () => {
                                 {searchLoading ? (
                                     <span>Buscando...</span>
                                 ) : (
-                                    <span>{filteredProducts.length} resultados para "{searchTerm}"</span>
+                                    <span>{searchedProducts.length} resultados para "{searchTerm}"</span>
                                 )}
                             </div>
                         )}
                     </div>
 
-                    {Array.isArray(productos) && !searchTerm && (
-                        <div className="products-count">
-                            {filteredProducts.length} de {productos.length} productos encontrados
-                            {selectedCategory !== 'todos' && (
-                                <span className="category-indicator">
-                                    en {getCategoryDisplayName()}
+                    <div className="products-count">
+                        {searchTerm ? (
+                            <span>{searchedProducts.length} productos encontrados</span>
+                        ) : (
+                            <>
+                                <span>Mostrando {productosPaginados.length} de {filteredProducts.length} productos</span>
+                                {selectedCategory !== 'todos' && (
+                                    <span className="category-indicator">
+                                        en {getCategoryDisplayName(selectedCategory)}
+                                    </span>
+                                )}
+                                <span className="page-indicator">
+                                    - Página {currentPage} de {totalPages}
                                 </span>
-                            )}
-                        </div>
-                    )}
+                            </>
+                        )}
+                    </div>
                 </div>
 
-                {/* Filtros y Ordenamiento */}
                 <div className="products-controls">
-                    <div className="categories-filter">
-                        <h3>Categorías ({categories.length - 1})</h3>
-                        <div className="categories-list">
-                            {categories.map(category => (
-                                <button
-                                    key={category.id}
-                                    className={`category-btn ${selectedCategory === category.id ? 'active' : ''}`}
-                                    onClick={() => {
-                                        setSelectedCategory(category.id);
-                                        clearSearch();
-                                    }}
-                                >
-                                    <span className="category-name">{category.nombre}</span>
-                                    <span className="category-count">({category.count})</span>
-                                </button>
-                            ))}
+                    <div className="categories-navigation">
+                        <div className="categories-header">
+                            <h3>Navegación</h3>
+                        </div>
+                        <div className="categories-actions">
+                            <button
+                                className={`category-nav-btn ${selectedCategory === 'todos' ? 'active' : ''}`}
+                                onClick={() => handleCategoryChange('todos')}
+                            >
+                                ← Todas las Categorías
+                            </button>
+                            <Link to="/categories" className="category-nav-btn browse-categories">
+                                📁 Explorar Categorías
+                            </Link>
                         </div>
                     </div>
 
@@ -343,10 +403,9 @@ const Products = () => {
                     </div>
                 </div>
 
-                {/* Grid de Productos */}
                 <div className="products-grid">
-                    {filteredProducts.length > 0 ? (
-                        filteredProducts.map(product => (
+                    {productosPaginados.length > 0 ? (
+                        productosPaginados.map(product => (
                             <ProductCard 
                                 key={product.idProducto || product.id || product.codigo} 
                                 product={product}
@@ -361,19 +420,19 @@ const Products = () => {
                                 {searchTerm 
                                     ? `No hay resultados para "${searchTerm}". Intenta con otros términos.`
                                     : selectedCategory !== 'todos'
-                                    ? `No hay productos disponibles en ${getCategoryDisplayName()}.`
+                                    ? `No hay productos disponibles en ${getCategoryDisplayName(selectedCategory)}.`
                                     : 'No hay productos disponibles en este momento.'
                                 }
                             </p>
                             <div className="no-products-actions">
                                 {searchTerm && (
-                                    <button onClick={clearSearch} className="btn-clear-search">
+                                    <button onClick={handleClearSearch} className="btn-clear-search">
                                         Limpiar búsqueda
                                     </button>
                                 )}
                                 {selectedCategory !== 'todos' && (
                                     <button 
-                                        onClick={() => setSelectedCategory('todos')} 
+                                        onClick={() => handleCategoryChange('todos')} 
                                         className="btn-view-all"
                                     >
                                         Ver Todos los Productos
@@ -382,24 +441,70 @@ const Products = () => {
                                 <Link to="/categories" className="btn-browse-categories">
                                     Explorar Categorías
                                 </Link>
+                                <button onClick={handleGoBack} className="btn-back">
+                                    ← Volver Atrás
+                                </button>
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Paginación (placeholder) */}
-                {filteredProducts.length > 0 && filteredProducts.length > 12 && (
+                {!searchTerm && totalPages > 1 && (
                     <div className="products-pagination">
-                        <button className="pagination-btn active">1</button>
-                        <button className="pagination-btn">2</button>
-                        <button className="pagination-btn">3</button>
-                        <span className="pagination-ellipsis">...</span>
-                        <button className="pagination-btn">Siguiente</button>
+                        <button 
+                            className="pagination-btn"
+                            disabled={currentPage === 1}
+                            onClick={() => handlePageChange(currentPage - 1)}
+                        >
+                            ← Anterior
+                        </button>
+                        
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNumber;
+                            if (totalPages <= 5) {
+                                pageNumber = i + 1;
+                            } else if (currentPage <= 3) {
+                                pageNumber = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                                pageNumber = totalPages - 4 + i;
+                            } else {
+                                pageNumber = currentPage - 2 + i;
+                            }
+                            
+                            return (
+                                <button
+                                    key={pageNumber}
+                                    className={`pagination-btn ${currentPage === pageNumber ? 'active' : ''}`}
+                                    onClick={() => handlePageChange(pageNumber)}
+                                >
+                                    {pageNumber}
+                                </button>
+                            );
+                        })}
+
+                        {totalPages > 5 && currentPage < totalPages - 2 && (
+                            <>
+                                <span className="pagination-ellipsis">...</span>
+                                <button
+                                    className="pagination-btn"
+                                    onClick={() => handlePageChange(totalPages)}
+                                >
+                                    {totalPages}
+                                </button>
+                            </>
+                        )}
+
+                        <button 
+                            className="pagination-btn"
+                            disabled={currentPage === totalPages}
+                            onClick={() => handlePageChange(currentPage + 1)}
+                        >
+                            Siguiente →
+                        </button>
                     </div>
                 )}
             </div>
 
-            {/* Modal de Vista Rápida */}
             <QuickViewModal
                 product={quickViewProduct}
                 isOpen={isQuickViewOpen}

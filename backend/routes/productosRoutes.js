@@ -11,7 +11,7 @@ router.use(productosController.ensureInitialized);
 // Ruta de health check
 router.get('/health', productosController.getHealth);
 
-// Obtener productos
+// Obtener productos con paginación
 router.get('/todos', productosController.getTodosProductos);
 router.get('/existencias', productosController.getProductosConExistencia);
 

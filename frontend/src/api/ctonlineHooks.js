@@ -3,7 +3,7 @@
  * Para usar en componentes React con estado de carga y error
  */
 import { useState, useEffect } from 'react';
-import ctonlineAPI from './ctonlineApi';
+import productosAPI from './productosAPI'; // ✅ Cambiar a productosAPI
 
 /**
  * Hook para obtener datos con estado de carga y error
@@ -31,6 +31,7 @@ export const useCTOnlineAPI = (apiFunction, params = [], dependencies = []) => {
       } catch (err) {
         if (mounted) {
           setError(err.message);
+          console.error('API Error:', err);
         }
       } finally {
         if (mounted) {
@@ -68,34 +69,37 @@ export const useCTOnlineAPI = (apiFunction, params = [], dependencies = []) => {
   };
 };
 
-// Hooks específicos pre-configurados
-export const usePromociones = () => 
-  useCTOnlineAPI(() => ctonlineAPI.getPromociones());
+// Hooks específicos pre-configurados usando productosAPI
+export const useProductos = (options = {}) => 
+  useCTOnlineAPI(productosAPI.getTodosProductos, [options], [JSON.stringify(options)]);
 
-export const useExistencias = () => 
-  useCTOnlineAPI(() => ctonlineAPI.getExistencias());
+export const useProductosConExistencia = (options = {}) => 
+  useCTOnlineAPI(productosAPI.getProductosConExistencia, [options], [JSON.stringify(options)]);
 
-export const useAlmacenes = () => 
-  useCTOnlineAPI(() => ctonlineAPI.getAlmacenes());
+export const useBuscarProductos = (termino, options = {}) => 
+  useCTOnlineAPI(productosAPI.buscarProductos, [termino, options], [termino, JSON.stringify(options)]);
 
-export const useDetalleProducto = (codigo, almacen) => 
-  useCTOnlineAPI(ctonlineAPI.getDetalleProducto, [codigo, almacen], [codigo, almacen]);
-
-export const usePromocionPorCodigo = (codigo) => 
-  useCTOnlineAPI(ctonlineAPI.getPromocionPorCodigo, [codigo], [codigo]);
-
-export const useStatus = () => 
-  useCTOnlineAPI(() => ctonlineAPI.getStatus());
-
-// Nuevos hooks para productos y categorías
-export const useProductos = () => 
-  useCTOnlineAPI(() => ctonlineAPI.getProductos());
-
-export const useProductosPorCategoria = (categoria) => 
-  useCTOnlineAPI(ctonlineAPI.getProductosPorCategoria, [categoria], [categoria]);
-
-export const useBuscarProductos = (termino) => 
-  useCTOnlineAPI(ctonlineAPI.buscarProductos, [termino], [termino]);
+export const useProductoPorCodigo = (codigo, incluirSinExistencia = false) => 
+  useCTOnlineAPI(productosAPI.getProductoPorCodigo, [codigo, incluirSinExistencia], [codigo, incluirSinExistencia]);
 
 export const useCategorias = () => 
-  useCTOnlineAPI(() => ctonlineAPI.getCategorias());
+  useCTOnlineAPI(productosAPI.getCategorias);
+
+export const useMarcas = () => 
+  useCTOnlineAPI(productosAPI.getMarcas);
+
+export const useEstadisticas = () => 
+  useCTOnlineAPI(productosAPI.getEstadisticas);
+
+// Hooks legacy para compatibilidad (si los necesitas)
+export const usePromociones = () => 
+  useCTOnlineAPI(() => ({ data: [], success: true, message: 'No disponible' }));
+
+export const useExistencias = () => 
+  useCTOnlineAPI(() => ({ data: [], success: true, message: 'No disponible' }));
+
+export const useAlmacenes = () => 
+  useCTOnlineAPI(() => ({ data: [], success: true, message: 'No disponible' }));
+
+export const useStatus = () => 
+  useCTOnlineAPI(() => ({ status: 'ok', timestamp: new Date().toISOString() }));

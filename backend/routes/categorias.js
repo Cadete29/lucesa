@@ -2,19 +2,23 @@ const express = require('express');
 const router = express.Router();
 const categoriasController = require('../controllers/categoriasController');
 
-// Todas las categorías
+// Todas las categorías reales desde productos
+router.get('/reales', (req, res) => categoriasController.getCategoriasReales(req, res));
+
+// Categorías con estadísticas detalladas
+router.get('/estadisticas', (req, res) => categoriasController.getCategoriasConEstadisticas(req, res));
+
+// Categorías (endpoint original para compatibilidad)
 router.get('/', (req, res) => categoriasController.getCategorias(req, res));
 
-// Categoría específica por ID
-router.get('/:id', (req, res) => categoriasController.getCategoriaById(req, res));
-
-// Productos de una categoría específica
-router.get('/:id/productos', (req, res) => categoriasController.getProductosPorCategoria(req, res));
-
 // Health check
-router.get('/health/status', (req, res) => categoriasController.getHealth(req, res));
-
-// Estadísticas
-router.get('/estadisticas/resumen', (req, res) => categoriasController.getEstadisticas(req, res));
+router.get('/health/status', (req, res) => {
+    res.json({
+        success: true,
+        status: 'healthy',
+        message: 'API de Categorías funcionando correctamente',
+        timestamp: new Date().toISOString()
+    });
+});
 
 module.exports = router;

@@ -11,7 +11,7 @@ class ProductosAPI {
   }
 
   async request(endpoint, options = {}) {
-    const url = `${this.baseURL}/productos${endpoint}`;
+    const url = `${this.baseURL}${endpoint}`;
     
     try {
       const config = {
@@ -50,10 +50,10 @@ class ProductosAPI {
 
   // Health check
   async getHealth() {
-    return this.request('/health');
+    return this.request('/productos/health');
   }
 
-  // Obtener todos los productos
+  // Obtener todos los productos CON PAGINACIÓN
   async getTodosProductos(options = {}) {
     const { page = 1, limit = 50, categoria, marca, search } = options;
     const params = new URLSearchParams({
@@ -64,10 +64,10 @@ class ProductosAPI {
       ...(search && { search })
     });
     
-    return this.request(`/todos?${params}`);
+    return this.request(`/productos/todos?${params}`);
   }
 
-  // Obtener productos con existencia
+  // Obtener productos con existencia CON PAGINACIÓN
   async getProductosConExistencia(options = {}) {
     const { page = 1, limit = 50, almacen, minExistencia = 1 } = options;
     const params = new URLSearchParams({
@@ -77,7 +77,7 @@ class ProductosAPI {
       ...(almacen && { almacen })
     });
     
-    return this.request(`/existencias?${params}`);
+    return this.request(`/productos/existencias?${params}`);
   }
 
   // Buscar productos
@@ -89,7 +89,7 @@ class ProductosAPI {
       conExistencia
     });
     
-    return this.request(`/buscar?${params}`);
+    return this.request(`/productos/buscar?${params}`);
   }
 
   // Obtener producto por código
@@ -98,27 +98,37 @@ class ProductosAPI {
       incluirSinExistencia: incluirSinExistencia.toString()
     });
     
-    return this.request(`/producto/${codigo}?${params}`);
+    return this.request(`/productos/producto/${codigo}?${params}`);
   }
 
   // Obtener estadísticas
   async getEstadisticas() {
-    return this.request('/estadisticas');
+    return this.request('/productos/estadisticas');
   }
 
-  // Obtener categorías
+  // Obtener categorías (original)
   async getCategorias() {
     return this.request('/categorias');
   }
 
+  // Obtener categorías REALES
+  async getCategoriasReales() {
+    return this.request('/categorias/reales');
+  }
+
+  // Obtener categorías con estadísticas
+  async getCategoriasConEstadisticas() {
+    return this.request('/categorias/estadisticas');
+  }
+
   // Obtener marcas
   async getMarcas() {
-    return this.request('/marcas');
+    return this.request('/productos/marcas');
   }
 
   // Forzar actualización
   async actualizarDatos() {
-    return this.request('/actualizar', { method: 'POST' });
+    return this.request('/productos/actualizar', { method: 'POST' });
   }
 }
 

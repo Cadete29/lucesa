@@ -1,10 +1,14 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useSearch } from "../../context/SearchContext";
 import "../Header/Header.css";
 
 const Header = () => {
-    const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-    const [isScrolled, setIsScrolled] = React.useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
+    const [localSearchTerm, setLocalSearchTerm] = useState("");
+    
+    const { handleSearch, searchTerm } = useSearch();
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -20,9 +24,30 @@ const Header = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    useEffect(() => {
+        setLocalSearchTerm(searchTerm);
+    }, [searchTerm]);
+
     const handleNavClick = () => {
         if (isMenuOpen) {
             setIsMenuOpen(false);
+        }
+    };
+
+    const handleSearchInputChange = (e) => {
+        setLocalSearchTerm(e.target.value);
+    };
+
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        if (localSearchTerm.trim()) {
+            handleSearch(localSearchTerm.trim());
+        }
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleSearchSubmit(e);
         }
     };
 
@@ -74,18 +99,25 @@ const Header = () => {
                         </ul>
                     </nav>
 
-                    {/* Acciones - Todos los elementos en línea */}
+                    {/* Acciones */}
                     <div className="header-actions">
-                        <div className="search-bar">
+                        <form className="search-bar" onSubmit={handleSearchSubmit}>
                             <input 
                                 type="text" 
                                 placeholder="Buscar productos..." 
                                 className="search-input"
+                                value={localSearchTerm}
+                                onChange={handleSearchInputChange}
+                                onKeyPress={handleKeyPress}
                             />
-                            <button className="search-btn">
+                            <button 
+                                type="submit" 
+                                className="search-btn"
+                                disabled={!localSearchTerm.trim()}
+                            >
                                 <span className="search-icon">🔍</span>
                             </button>
-                        </div>
+                        </form>
                         
                         <div className="header-icons">
                             <button className="icon-btn">

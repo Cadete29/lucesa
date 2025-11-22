@@ -17,7 +17,6 @@ class ProductosController {
     };
     this.initialized = false;
     
-    // Bind de métodos para mantener el contexto de 'this'
     this.ensureInitialized = this.ensureInitialized.bind(this);
     this.getTodosProductos = this.getTodosProductos.bind(this);
     this.getProductosConExistencia = this.getProductosConExistencia.bind(this);
@@ -36,7 +35,6 @@ class ProductosController {
     try {
       logger.info('🔄 Inicializando ProductosController...');
       
-      // Esperar un momento para que el FTP service se inicialice
       setTimeout(async () => {
         await this.loadCache();
         this.initialized = true;
@@ -44,7 +42,6 @@ class ProductosController {
       }, 3000);
     } catch (error) {
       logger.error('❌ Error inicializando ProductosController:', error);
-      // Inicializar con datos vacíos pero funcional
       this.initialized = true;
     }
   }
@@ -58,7 +55,6 @@ class ProductosController {
       this.cache.existencias = cacheData.existencias || [];
       this.cache.lastUpdate = cacheData.lastUpdate || new Date().toISOString();
 
-      // Si no hay datos en existencias, usar carga de emergencia
       if (this.cache.existencias.length === 0) {
         logger.warn('⚠️  No hay datos en cache, intentando carga de emergencia...');
         await this.emergencyLoadJSON();
@@ -84,7 +80,6 @@ class ProductosController {
         return false;
       }
 
-      // Usar el nuevo JSONProcessor
       const productos = await jsonProcessor.processJSONFile(jsonPath);
       
       this.cache.existencias = productos;
@@ -111,7 +106,7 @@ class ProductosController {
     next();
   }
 
-  // Obtener todos los productos (desde XML procesado)
+  // Obtener todos los productos (desde XML procesado) CON PAGINACIÓN
   async getTodosProductos(req, res) {
     try {
       const { page = 1, limit = 50, categoria, marca, search } = req.query;
@@ -176,7 +171,7 @@ class ProductosController {
     }
   }
 
-  // Obtener productos con existencia (desde JSON procesado)
+  // Obtener productos con existencia (desde JSON procesado) CON PAGINACIÓN
   async getProductosConExistencia(req, res) {
     try {
       const { page = 1, limit = 50, almacen, minExistencia = 1 } = req.query;
@@ -273,7 +268,7 @@ class ProductosController {
         resultados.push(...todosResults.map(p => ({ ...p, fuente: 'XML' })));
       }
 
-      // Ordenar por relevancia (los que tienen existencia primero)
+      // Ordenar por relevancia
       resultados.sort((a, b) => {
         const existA = a.existencia || a.existenciaTotal || 0;
         const existB = b.existencia || b.existenciaTotal || 0;
@@ -282,7 +277,7 @@ class ProductosController {
 
       res.json({
         success: true,
-        data: resultados.slice(0, 50), // Limitar resultados
+        data: resultados.slice(0, 100), // Limitar resultados de búsqueda
         total: resultados.length,
         search: {
           term: q,
@@ -392,11 +387,11 @@ class ProductosController {
           },
           categorias: {
             total: categorias.length,
-            list: categorias.slice(0, 20) // Primeras 20 categorías
+            list: categorias.slice(0, 50)
           },
           marcas: {
             total: marcas.length,
-            list: marcas.slice(0, 20) // Primeras 20 marcas
+            list: marcas.slice(0, 50)
           },
           actualizacion: this.cache.lastUpdate
         },

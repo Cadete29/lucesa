@@ -11,6 +11,7 @@ const ProductDetails = () => {
     const [quantity, setQuantity] = useState(1);
     const [activeTab, setActiveTab] = useState('description');
     const [relatedProducts, setRelatedProducts] = useState([]);
+    const [imageErrors, setImageErrors] = useState(new Set());
 
     // Usar datos reales de la API con los nuevos hooks
     const { data: productResponse, loading, error } = useProductoPorId(productId);
@@ -64,6 +65,26 @@ const ProductDetails = () => {
         }
     }, [productoProcesado, allProducts]);
 
+    // ✅ MISMO SISTEMA DE IMÁGENES QUE PRODUCTCARD
+    const getImageUrl = (codigo, size = 'full') => {
+        return `http://localhost:4004/api/images/code/${codigo}?size=${size}`;
+    };
+
+    const handleImageError = (e, imageIndex) => {
+        console.log('❌ Error cargando imagen via proxy:', e.target.src);
+        
+        // Marcar esta imagen como fallida
+        setImageErrors(prev => {
+            const newErrors = new Set(prev);
+            newErrors.add(imageIndex);
+            return newErrors;
+        });
+        
+        // Usar placeholder SVG (igual que ProductCard)
+        e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDQwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMjAgMTIwSDE0MFYxNDBIMTIwVjEyMFpNMTYwIDEyMEgxODBWMTQwSDE2MFYxMjBaTTIwMCAxMjBIMjIwVjE0MEgyMDBWMTIwWk0xMjAgMTYwSDE0MFYxODBIMTIwVjE2MFpNMTYwIDE2MEgxODBWMTgwSDE2MFYxNjBaTTIwMCAxNjBIMjIwVjE4MEgyMDBWMTYwWk0xMjAgMjAwSDE0MFYyMjBIMTIwVjIwMFpNMTYwIDIwMEgxODBWMjIwSDE2MFYyMDBaTTIwMCAyMDBIMjIwVjIyMEgyMDBWMjAwWiIgZmlsbD0iI0RERURGMCIvPgo8dGV4dCB4PSIyMDAiIHk9IjI0MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTY5Njk2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5JbWFnZW4gTm8gRGlzcG9uaWJsZTwvdGV4dD4KPC9zdmc+';
+        e.target.onerror = null;
+    };
+
     // Cálculos de precios
     const hasActivePromotion = productoProcesado?.promociones && productoProcesado.promociones.length > 0;
     const currentPromotion = hasActivePromotion ? productoProcesado.promociones[0] : null;
@@ -80,17 +101,51 @@ const ProductDetails = () => {
         Math.round(((productoProcesado.precio - currentPromotion.promocion) / productoProcesado.precio) * 100) : 
         0;
 
-    // Stock total
+    // Stock total - CON DEBUG MEJORADO
     const getTotalStock = () => {
-        if (!productoProcesado?.existencia) return 0;
-        
-        // Si existencia es un objeto con ubicaciones
-        if (typeof productoProcesado.existencia === 'object') {
-            return Object.values(productoProcesado.existencia).reduce((total, stock) => total + stock, 0);
+        if (!productoProcesado?.existencia) {
+            console.log('❌ No hay existencia definida para:', productoProcesado?.nombre);
+            return 0;
         }
         
-        // Si existencia es un número directo
-        return productoProcesado.existencia;
+        console.log('🔍 Analizando existencia de:', productoProcesado.nombre);
+        console.log('📦 Existencia:', productoProcesado.existencia);
+        console.log('📊 Tipo de existencia:', typeof productoProcesado.existencia);
+        
+        let stockCalculado = 0;
+
+        try {
+            // Si existencia es un objeto con ubicaciones
+            if (typeof productoProcesado.existencia === 'object' && productoProcesado.existencia !== null) {
+                stockCalculado = Object.values(productoProcesado.existencia).reduce((total, stock) => {
+                    const stockNum = Number(stock);
+                    console.log('📋 Procesando ubicación - stock:', stock, 'convertido a:', stockNum);
+                    return total + (isNaN(stockNum) ? 0 : stockNum);
+                }, 0);
+                console.log('🎯 Stock total calculado desde objeto:', stockCalculado);
+            }
+            // Si existencia es un número directo
+            else if (typeof productoProcesado.existencia === 'number') {
+                stockCalculado = productoProcesado.existencia;
+                console.log('🎯 Stock directo (número):', stockCalculado);
+            }
+            // Si existencia es un string
+            else if (typeof productoProcesado.existencia === 'string') {
+                stockCalculado = Number(productoProcesado.existencia) || 0;
+                console.log('🎯 Stock desde string:', stockCalculado);
+            }
+            // Si es otro tipo
+            else {
+                console.log('⚠️ Tipo de existencia no manejado:', typeof productoProcesado.existencia);
+                stockCalculado = 0;
+            }
+        } catch (error) {
+            console.error('💥 Error calculando stock:', error);
+            stockCalculado = 0;
+        }
+
+        console.log('✅ Stock final para', productoProcesado.nombre + ':', stockCalculado);
+        return stockCalculado;
     };
 
     const totalStock = getTotalStock();
@@ -110,7 +165,7 @@ const ProductDetails = () => {
             precioFinal: hasActivePromotion ? precioPromoMXN : precioMXN
         };
         
-        console.log('Agregado al carrito:', cartItem);
+        console.log('🛒 Agregado al carrito:', cartItem);
         
         // Guardar en localStorage
         const existingCart = JSON.parse(localStorage.getItem('ctonline_cart') || '[]');
@@ -197,9 +252,12 @@ const ProductDetails = () => {
         );
     }
 
-    const images = productoProcesado.imagenes_adicionales ? 
-        [productoProcesado.imagen, ...productoProcesado.imagenes_adicionales] : 
-        [productoProcesado.imagen];
+    // ✅ CREAR ARRAY DE IMÁGENES USANDO EL PROXY (IGUAL QUE PRODUCTCARD)
+    const images = productoProcesado.imagenes_adicionales && productoProcesado.imagenes_adicionales.length > 0
+        ? [getImageUrl(productoProcesado.codigo), ...productoProcesado.imagenes_adicionales.map(img => 
+            img.startsWith('http') ? img : getImageUrl(productoProcesado.codigo)
+          )]
+        : [getImageUrl(productoProcesado.codigo)];
 
     return (
         <div className="product-details">
@@ -224,20 +282,20 @@ const ProductDetails = () => {
                             <img 
                                 src={images[selectedImage]} 
                                 alt={productoProcesado.nombre}
-                                onError={(e) => {
-                                    e.target.src = '/images/placeholder-product.jpg';
-                                }}
+                                onError={(e) => handleImageError(e, selectedImage)}
+                                crossOrigin="anonymous"
                             />
                             {activePromotion && (
                                 <div className="promotion-badge-large">
                                     -{discountPercentage}% OFF
                                 </div>
                             )}
-                            {totalStock === 0 && (
+                            {/* ✅ BADGE AGOTADO SOLO CUANDO REALMENTE NO HAY STOCK */}
+                            {totalStock <= 0 ? (
                                 <div className="out-of-stock-badge">
                                     AGOTADO
                                 </div>
-                            )}
+                            ) : null}
                         </div>
                         
                         {images.length > 1 && (
@@ -245,16 +303,19 @@ const ProductDetails = () => {
                                 {images.map((img, index) => (
                                     <button
                                         key={index}
-                                        className={`thumbnail ${selectedImage === index ? 'active' : ''}`}
+                                        className={`thumbnail ${selectedImage === index ? 'active' : ''} ${imageErrors.has(index) ? 'error' : ''}`}
                                         onClick={() => setSelectedImage(index)}
+                                        disabled={imageErrors.has(index)}
                                     >
                                         <img 
                                             src={img} 
                                             alt={`${productoProcesado.nombre} ${index + 1}`}
-                                            onError={(e) => {
-                                                e.target.src = '/images/placeholder-thumbnail.jpg';
-                                            }}
+                                            onError={(e) => handleImageError(e, index)}
+                                            crossOrigin="anonymous"
                                         />
+                                        {imageErrors.has(index) && (
+                                            <div className="thumbnail-error">❌</div>
+                                        )}
                                     </button>
                                 ))}
                             </div>
@@ -323,14 +384,15 @@ const ProductDetails = () => {
                                 <div className="stock-locations">
                                     <strong>Disponible en:</strong>
                                     <div className="locations-list">
-                                        {Object.entries(productoProcesado.existencia).map(([location, stock]) => (
-                                            stock > 0 && (
+                                        {Object.entries(productoProcesado.existencia).map(([location, stock]) => {
+                                            const stockNum = Number(stock) || 0;
+                                            return stockNum > 0 ? (
                                                 <div key={location} className="location-item">
                                                     <span className="location-name">{location}:</span>
-                                                    <span className="location-stock">{stock} unidades</span>
+                                                    <span className="location-stock">{stockNum} unidades</span>
                                                 </div>
-                                            )
-                                        ))}
+                                            ) : null;
+                                        })}
                                     </div>
                                 </div>
                             )}
