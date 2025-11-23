@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require('axios');
 
 /**
- * Proxy inteligente para imágenes - Prueba HTTP y HTTPS automáticamente
+ * Proxy inteligente para imágenes - Maneja todas las variaciones de nombres
  */
 router.get('/code/:imageCode', async (req, res) => {
     try {
@@ -19,23 +19,25 @@ router.get('/code/:imageCode', async (req, res) => {
             });
         }
 
-        // Generar todas las posibles URLs (HTTP y HTTPS)
+        // Generar TODAS las posibles URLs (HTTP y HTTPS)
         const imageUrls = generateImageUrls(imageCode, size);
-        console.log('🔍 URLs a probar:', imageUrls);
+        console.log(`🔍 ${imageCode}: Probando ${imageUrls.length} variaciones`);
 
         let success = false;
         let lastError = null;
         let workingUrl = null;
+        let testedUrls = [];
 
         for (const imageUrl of imageUrls) {
             try {
                 console.log('🔗 Probando URL:', imageUrl);
+                testedUrls.push(imageUrl);
                 
                 const response = await axios({
                     method: 'GET',
                     url: imageUrl,
                     responseType: 'stream',
-                    timeout: 8000, // Timeout más corto
+                    timeout: 5000, // Timeout más corto
                     headers: getImageHeaders(imageUrl),
                     validateStatus: function (status) {
                         return status >= 200 && status < 400;
@@ -55,28 +57,34 @@ router.get('/code/:imageCode', async (req, res) => {
             } catch (error) {
                 lastError = error;
                 const statusCode = error.response?.status;
-                console.log(`❌ Falló URL ${imageUrl}: ${statusCode || error.code}`);
                 
-                // Si es error 404, continuar con la siguiente URL
                 if (statusCode === 404) {
-                    continue;
+                    console.log(`❌ 404 - No existe: ${imageUrl}`);
+                } else if (error.code === 'ECONNABORTED') {
+                    console.log(`⏰ Timeout: ${imageUrl}`);
+                } else if (error.code === 'ENOTFOUND') {
+                    console.log(`🌐 DNS Error: ${imageUrl}`);
+                } else {
+                    console.log(`❌ Error ${statusCode || error.code}: ${imageUrl}`);
                 }
-                // Si es error de conexión (CORS, etc.), continuar
-                if (error.code === 'ECONNABORTED' || error.code === 'ENOTFOUND') {
-                    continue;
-                }
+                
+                // Continuar con la siguiente URL en todos los casos
+                continue;
             }
         }
 
         if (!success) {
             console.error('❌ Todas las URLs fallaron para:', imageCode);
+            console.log('📋 URLs probadas:', testedUrls);
+            
             setupResponseHeaders(res);
             return res.status(404).json({
                 success: false,
                 error: 'Imagen no disponible en ningún servidor',
                 imageCode: imageCode,
-                testedUrls: imageUrls,
-                lastError: lastError?.message
+                testedUrls: testedUrls,
+                lastError: lastError?.message,
+                timestamp: new Date().toISOString()
             });
         }
 
@@ -86,30 +94,60 @@ router.get('/code/:imageCode', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Error interno del servidor de imágenes',
-            message: error.message
+            message: error.message,
+            timestamp: new Date().toISOString()
         });
     }
 });
 
 /**
- * Genera todas las posibles URLs para una imagen
+ * Genera TODAS las posibles URLs para una imagen con todas las variaciones
  */
 function generateImageUrls(imageCode, size) {
+    // TODAS las posibles variaciones de nombres de archivo
     const basePaths = [
+        // Formato estándar: CODIGO/CODIGO_full.jpg
         `${imageCode}/${imageCode}_${size}.jpg`,
         `${imageCode}/${imageCode}.jpg`,
-        `${imageCode}.jpg`
+        
+        // Formato con _0, _1, _2, etc.: CODIGO/CODIGO_0_full.jpg
+        `${imageCode}/${imageCode}_0_${size}.jpg`,
+        `${imageCode}/${imageCode}_1_${size}.jpg`,
+        `${imageCode}/${imageCode}_2_${size}.jpg`,
+        `${imageCode}/${imageCode}_3_${size}.jpg`,
+        `${imageCode}/${imageCode}_0.jpg`,
+        `${imageCode}/${imageCode}_1.jpg`,
+        `${imageCode}/${imageCode}_2.jpg`,
+        `${imageCode}/${imageCode}_3.jpg`,
+        
+        // Formato directo sin subcarpeta
+        `${imageCode}.jpg`,
+        `${imageCode}_${size}.jpg`,
+        `${imageCode}_0_${size}.jpg`,
+        `${imageCode}_1_${size}.jpg`,
+        `${imageCode}_2_${size}.jpg`,
+        
+        // Formato alternativo para casos especiales
+        `${imageCode}/${imageCode}_large.jpg`,
+        `${imageCode}/${imageCode}_medium.jpg`,
+        `${imageCode}/${imageCode}_small.jpg`,
+        `${imageCode}_large.jpg`,
+        `${imageCode}_medium.jpg`,
+        `${imageCode}_small.jpg`
     ];
 
     const urls = [];
     
+    // Eliminar duplicados
+    const uniquePaths = [...new Set(basePaths)];
+    
     // Probar HTTP primero (más rápido para las que funcionan)
-    basePaths.forEach(path => {
+    uniquePaths.forEach(path => {
         urls.push(`http://static.ctonline.mx/imagenes/${path}`);
     });
     
     // Luego probar HTTPS
-    basePaths.forEach(path => {
+    uniquePaths.forEach(path => {
         urls.push(`https://static.ctonline.mx/imagenes/${path}`);
     });
 
@@ -179,129 +217,5 @@ function setupResponseHeaders(res, originalHeaders = {}) {
         res.setHeader('ETag', originalHeaders['etag']);
     }
 }
-
-/**
- * Endpoint para probar una imagen específica
- */
-router.get('/test/:imageCode', async (req, res) => {
-    try {
-        const { imageCode } = req.params;
-        const { size = 'full' } = req.query;
-
-        console.log('🧪 Testeando imagen:', imageCode);
-        
-        const imageUrls = generateImageUrls(imageCode, size);
-        const results = [];
-
-        for (const imageUrl of imageUrls) {
-            try {
-                console.log('🔍 Probando:', imageUrl);
-                const startTime = Date.now();
-                
-                const response = await axios({
-                    method: 'HEAD',
-                    url: imageUrl,
-                    timeout: 5000,
-                    headers: getImageHeaders(imageUrl)
-                });
-
-                const responseTime = Date.now() - startTime;
-                results.push({
-                    url: imageUrl,
-                    status: response.status,
-                    statusText: response.statusText,
-                    responseTime: `${responseTime}ms`,
-                    contentLength: response.headers['content-length'],
-                    contentType: response.headers['content-type'],
-                    success: true
-                });
-
-                console.log(`✅ ${imageUrl} - ${response.status} (${responseTime}ms)`);
-
-            } catch (error) {
-                const responseTime = Date.now() - startTime;
-                results.push({
-                    url: imageUrl,
-                    status: error.response?.status || 'ERROR',
-                    statusText: error.code || error.message,
-                    responseTime: `${responseTime}ms`,
-                    success: false
-                });
-
-                console.log(`❌ ${imageUrl} - ${error.response?.status || error.code}`);
-            }
-        }
-
-        // Encontrar la primera URL que funciona
-        const workingUrl = results.find(r => r.success);
-        
-        setupResponseHeaders(res);
-        res.json({
-            success: true,
-            imageCode,
-            workingUrl: workingUrl ? workingUrl.url : null,
-            results,
-            summary: {
-                totalTested: results.length,
-                working: results.filter(r => r.success).length,
-                failed: results.filter(r => !r.success).length,
-                recommendedUrl: workingUrl ? workingUrl.url : 'No disponible'
-            }
-        });
-
-    } catch (error) {
-        console.error('❌ Error en test:', error);
-        setupResponseHeaders(res);
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-/**
- * Endpoint OPTIONS para CORS preflight
- */
-router.options('/code/:imageCode', (req, res) => {
-    setupResponseHeaders(res);
-    res.status(200).end();
-});
-
-router.options('/test/:imageCode', (req, res) => {
-    setupResponseHeaders(res);
-    res.status(200).end();
-});
-
-/**
- * Health check mejorado
- */
-router.get('/health', async (req, res) => {
-    try {
-        // Probar una imagen conocida que funciona con HTTP
-        const testResponse = await axios.head('http://static.ctonline.mx/imagenes/ACPTPL290/ACPTPL290_full.jpg', {
-            timeout: 5000,
-            headers: getImageHeaders('http://static.ctonline.mx/imagenes/ACPTPL290/ACPTPL290_full.jpg')
-        });
-
-        setupResponseHeaders(res);
-        res.json({
-            success: true,
-            status: 'healthy',
-            staticServer: 'accessible via HTTP',
-            testedImage: 'ACPTPL290_full.jpg',
-            protocol: 'HTTP',
-            timestamp: new Date().toISOString()
-        });
-    } catch (error) {
-        setupResponseHeaders(res);
-        res.json({
-            success: false,
-            status: 'unhealthy', 
-            staticServer: 'HTTP failed, trying HTTPS...',
-            error: error.message,
-            timestamp: new Date().toISOString()
-        });
-    }
-});
 
 module.exports = router;

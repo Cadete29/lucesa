@@ -1,14 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSearch } from "../../context/SearchContext";
+import { useFavorites } from "../../context/FavoritesContext";
+import { useAuth } from "../../context/AuthContext";
+import { useCart } from "../../context/CartContext";
+import CartDropdown from "../CartDropdown/CartDropdown";
 import "../Header/Header.css";
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [localSearchTerm, setLocalSearchTerm] = useState("");
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
     
     const { handleSearch, searchTerm } = useSearch();
+    const { favoritesCount } = useFavorites();
+    const { user, logout } = useAuth();
+    const { getCartItemsCount, openCart, isCartOpen, closeCart } = useCart();
+    const navigate = useNavigate();
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -32,6 +41,8 @@ const Header = () => {
         if (isMenuOpen) {
             setIsMenuOpen(false);
         }
+        setUserMenuOpen(false);
+        closeCart();
     };
 
     const handleSearchInputChange = (e) => {
@@ -42,6 +53,9 @@ const Header = () => {
         e.preventDefault();
         if (localSearchTerm.trim()) {
             handleSearch(localSearchTerm.trim());
+            if (isMenuOpen) {
+                setIsMenuOpen(false);
+            }
         }
     };
 
@@ -51,13 +65,78 @@ const Header = () => {
         }
     };
 
+    const handleFavoritesClick = () => {
+        navigate('/favorites');
+        if (isMenuOpen) {
+            setIsMenuOpen(false);
+        }
+        setUserMenuOpen(false);
+        closeCart();
+    };
+
+    const handleCartClick = () => {
+        openCart();
+        setUserMenuOpen(false);
+        if (isMenuOpen) {
+            setIsMenuOpen(false);
+        }
+    };
+
+    const handleLoginClick = () => {
+        navigate('/login');
+        if (isMenuOpen) {
+            setIsMenuOpen(false);
+        }
+        setUserMenuOpen(false);
+        closeCart();
+    };
+
+    const handleLogout = () => {
+        logout();
+        setUserMenuOpen(false);
+        if (isMenuOpen) {
+            setIsMenuOpen(false);
+        }
+        closeCart();
+        navigate('/');
+    };
+
+    // Cerrar menús al hacer clic fuera
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (userMenuOpen && !event.target.closest('.user-menu')) {
+                setUserMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('click', handleClickOutside);
+        return () => {
+            document.removeEventListener('click', handleClickOutside);
+        };
+    }, [userMenuOpen]);
+
+    // Cerrar menú móvil al hacer clic en un enlace
+    useEffect(() => {
+        const handleRouteChange = () => {
+            if (isMenuOpen) {
+                setIsMenuOpen(false);
+            }
+        };
+
+        // Escuchar cambios de ruta
+        window.addEventListener('popstate', handleRouteChange);
+        return () => {
+            window.removeEventListener('popstate', handleRouteChange);
+        };
+    }, [isMenuOpen]);
+
     return (
         <header className={`header-lucesa ${isScrolled ? 'scrolled' : ''} ${isMenuOpen ? 'menu-open' : ''}`}>
             <div className="container-lucesa">
                 <div className="header-content-lucesa">
                     {/* Logo */}
                     <div className="logo">
-                        <Link to="/">
+                        <Link to="/" onClick={handleNavClick}>
                             <img 
                                 src="/LOGO_LUCESA.png" 
                                 alt="Lucesa Ecommerce" 
@@ -96,6 +175,42 @@ const Header = () => {
                                     Categorías
                                 </Link>
                             </li>
+                            <li>
+                                <Link 
+                                    to="/favorites" 
+                                    className="nav-link"
+                                    onClick={handleNavClick}
+                                >
+                                    Favoritos
+                                </Link>
+                            </li>
+                            {user && (
+                                <li className="nav-user-mobile">
+                                    <div className="user-info-mobile">
+                                        <span>Hola, {user.name}</span>
+                                    </div>
+                                    <Link 
+                                        to="/profile" 
+                                        className="nav-link"
+                                        onClick={handleNavClick}
+                                    >
+                                        Mi Perfil
+                                    </Link>
+                                    <Link 
+                                        to="/orders" 
+                                        className="nav-link"
+                                        onClick={handleNavClick}
+                                    >
+                                        Mis Pedidos
+                                    </Link>
+                                    <button 
+                                        onClick={handleLogout}
+                                        className="nav-link logout-btn-mobile"
+                                    >
+                                        Cerrar Sesión
+                                    </button>
+                                </li>
+                            )}
                         </ul>
                     </nav>
 
@@ -120,16 +235,95 @@ const Header = () => {
                         </form>
                         
                         <div className="header-icons">
-                            <button className="icon-btn">
+                            {/* Botón de Favoritos */}
+                            <button 
+                                onClick={handleFavoritesClick}
+                                className="icon-btn favorites-btn"
+                                title="Favoritos"
+                            >
                                 <span className="icon">❤️</span>
+                                {favoritesCount > 0 && (
+                                    <span className="favorites-count">{favoritesCount}</span>
+                                )}
                             </button>
-                            <button className="icon-btn cart-btn">
+
+                            {/* Botón de Carrito */}
+                            <button 
+                                onClick={handleCartClick}
+                                className="icon-btn cart-btn"
+                                title="Carrito"
+                            >
                                 <span className="icon">🛒</span>
-                                <span className="cart-count">3</span>
+                                {getCartItemsCount() > 0 && (
+                                    <span className="cart-count">{getCartItemsCount()}</span>
+                                )}
                             </button>
-                            <button className="icon-btn">
-                                <span className="icon">👤</span>
-                            </button>
+
+                            {/* Usuario */}
+                            {user ? (
+                                <div className="user-menu">
+                                    <button 
+                                        className="icon-btn user-btn"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setUserMenuOpen(!userMenuOpen);
+                                        }}
+                                        aria-label="Menú de usuario"
+                                        title="Mi Cuenta"
+                                    >
+                                        <span className="icon">👤</span>
+                                    </button>
+                                    
+                                    {userMenuOpen && (
+                                        <div className="user-dropdown">
+                                            <div className="user-info">
+                                                <strong>{user.name}</strong>
+                                                <span>{user.email}</span>
+                                            </div>
+                                            <Link 
+                                                to="/profile" 
+                                                className="dropdown-item"
+                                                onClick={() => setUserMenuOpen(false)}
+                                            >
+                                                <span className="dropdown-icon">👤</span>
+                                                Mi Perfil
+                                            </Link>
+                                            <Link 
+                                                to="/orders" 
+                                                className="dropdown-item"
+                                                onClick={() => setUserMenuOpen(false)}
+                                            >
+                                                <span className="dropdown-icon">📦</span>
+                                                Mis Pedidos
+                                            </Link>
+                                            <Link 
+                                                to="/favorites" 
+                                                className="dropdown-item"
+                                                onClick={() => setUserMenuOpen(false)}
+                                            >
+                                                <span className="dropdown-icon">❤️</span>
+                                                Mis Favoritos
+                                            </Link>
+                                            <div className="dropdown-divider"></div>
+                                            <button 
+                                                onClick={handleLogout}
+                                                className="dropdown-item logout-btn"
+                                            >
+                                                <span className="dropdown-icon">🚪</span>
+                                                Cerrar Sesión
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <button 
+                                    onClick={handleLoginClick}
+                                    className="icon-btn login-btn"
+                                    title="Iniciar Sesión"
+                                >
+                                    <span className="icon">👤</span>
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -145,6 +339,17 @@ const Header = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Overlay para móvil */}
+            {isMenuOpen && (
+                <div 
+                    className="menu-overlay"
+                    onClick={() => setIsMenuOpen(false)}
+                />
+            )}
+
+            {/* Carrito Desplegable */}
+            {isCartOpen && <CartDropdown />}
         </header>
     );
 };

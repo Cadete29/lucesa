@@ -1,58 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import './ProductCard.css';
 
 const ProductCard = ({ product, onQuickView }) => {
-    const [imageLoaded, setImageLoaded] = useState(false);
-    const [imageError, setImageError] = useState(false);
-    const [imageUrl, setImageUrl] = useState('');
-    const [finalImageUrl, setFinalImageUrl] = useState('');
-    const [retryCount, setRetryCount] = useState(0);
+    const [imageStatus, setImageStatus] = useState('loading'); // 'loading', 'loaded', 'error'
+    const [currentImageUrl, setCurrentImageUrl] = useState('');
+    const imgRef = useRef(null);
+    const retryCountRef = useRef(0);
 
-    // Prepara la URL de la imagen con proxy
     useEffect(() => {
-        if (product.imagen && product.codigo) {
-            // Siempre usar el proxy para evitar problemas de CORS
-            const proxyUrl = `http://localhost:4004/api/images/code/${product.codigo}?size=full`;
-            
-            console.log('🖼️ Usando proxy para imagen:', proxyUrl);
-            setImageUrl(proxyUrl);
-            setFinalImageUrl(proxyUrl);
-            setImageLoaded(false);
-            setImageError(false);
-            setRetryCount(0);
-        } else {
-            setImageError(true);
+        if (!product.codigo) {
+            setImageStatus('error');
+            return;
         }
-    }, [product.imagen, product.codigo]);
 
-    const handleImageLoad = () => {
-        setImageLoaded(true);
-        setImageError(false);
-        console.log('✅ Imagen cargada via proxy:', imageUrl);
-    };
-
-    const handleImageError = () => {
-        console.error('❌ Error cargando imagen via proxy:', imageUrl);
+        retryCountRef.current = 0;
+        setImageStatus('loading');
         
-        // Intentar reconexión (máximo 2 intentos)
-        if (retryCount < 2) {
-            const newRetryCount = retryCount + 1;
-            setRetryCount(newRetryCount);
-            console.log(`🔄 Reintento ${newRetryCount} para: ${product.codigo}`);
+        const url = `http://localhost:4004/api/images/code/${product.codigo}?size=full&t=${Date.now()}`;
+        console.log('🖼️ Configurando imagen:', product.codigo);
+        setCurrentImageUrl(url);
+
+    }, [product.codigo]);
+
+    useEffect(() => {
+        if (!imgRef.current || !currentImageUrl) return;
+
+        const img = imgRef.current;
+        
+        const handleLoad = () => {
+            console.log('✅ Imagen cargada:', product.codigo);
+            setImageStatus('loaded');
+        };
+
+        const handleError = () => {
+            console.error('❌ Error cargando:', product.codigo);
             
-            // Forzar recarga con timestamp para evitar cache
-            setTimeout(() => {
-                setFinalImageUrl(`${imageUrl}&t=${Date.now()}`);
-                setImageLoaded(false);
-                setImageError(false);
-            }, 1000 * newRetryCount);
-        } else {
-            setImageLoaded(false);
-            setImageError(true);
-            console.log('💥 Agotados los reintentos para:', product.codigo);
-        }
-    };
+            if (retryCountRef.current < 2) {
+                retryCountRef.current += 1;
+                console.log(`🔄 Reintento ${retryCountRef.current} para:`, product.codigo);
+                
+                setTimeout(() => {
+                    const retryUrl = `http://localhost:4004/api/images/code/${product.codigo}?size=full&t=${Date.now()}&retry=${retryCountRef.current}`;
+                    setCurrentImageUrl(retryUrl);
+                    setImageStatus('loading');
+                }, 1000);
+            } else {
+                setImageStatus('error');
+            }
+        };
+
+        img.addEventListener('load', handleLoad);
+        img.addEventListener('error', handleError);
+
+        // Forzar la carga de la imagen
+        img.src = currentImageUrl;
+
+        return () => {
+            img.removeEventListener('load', handleLoad);
+            img.removeEventListener('error', handleError);
+        };
+    }, [currentImageUrl, product.codigo]);
 
     // Verificar si hay promoción activa
     const hasActivePromotion = product.promociones && product.promociones.length > 0;
@@ -76,13 +84,14 @@ const ProductCard = ({ product, onQuickView }) => {
     const getTotalStock = () => {
         if (!product.existencia) return 0;
         
-        // Si existencia es un objeto con ubicaciones
         if (typeof product.existencia === 'object') {
-            return Object.values(product.existencia).reduce((total, stock) => total + stock, 0);
+            return Object.values(product.existencia).reduce((total, stock) => {
+                const stockValue = typeof stock === 'number' ? stock : parseInt(stock) || 0;
+                return total + stockValue;
+            }, 0);
         }
         
-        // Si existencia es un número directo
-        return product.existencia;
+        return typeof product.existencia === 'number' ? product.existencia : parseInt(product.existencia) || 0;
     };
 
     const totalStock = getTotalStock();
@@ -96,7 +105,7 @@ const ProductCard = ({ product, onQuickView }) => {
     };
 
     return (
-        <div className="product-card">
+        <div className="product-card" data-code={product.codigo}>
             {/* Badge de promoción */}
             {hasActivePromotion && (
                 <div className="promotion-badge">
@@ -106,66 +115,60 @@ const ProductCard = ({ product, onQuickView }) => {
 
             {/* Imagen del producto */}
             <div className="product-image">
-                {imageError ? (
+                {imageStatus === 'error' ? (
                     <div className="image-placeholder">
-                        <span>📷</span>
+                        <div className="placeholder-icon">📷</div>
                         <p>Imagen no disponible</p>
                         <small>{product.nombre}</small>
-                        {retryCount > 0 && (
-                            <div className="retry-info">
-                                <small>Intentos: {retryCount}/2</small>
-                            </div>
-                        )}
                     </div>
                 ) : (
                     <>
                         <img 
-                            src={finalImageUrl}
+                            ref={imgRef}
                             alt={product.nombre}
-                            onLoad={handleImageLoad}
-                            onError={handleImageError}
-                            className={imageLoaded ? 'loaded' : 'loading'}
-                            style={{
-                                opacity: imageLoaded ? 1 : 0,
-                                transition: 'opacity 0.3s ease-in-out'
-                            }}
-                            crossOrigin="anonymous" // Importante para CORS
+                            className={`product-img ${imageStatus === 'loaded' ? 'loaded' : 'loading'}`}
+                            crossOrigin="anonymous"
+                            loading="lazy"
                         />
-                        {!imageLoaded && !imageError && (
+                        
+                        {/* Loading - se oculta con CSS cuando la imagen está cargada */}
+                        {imageStatus === 'loading' && (
                             <div className="image-loading">
                                 <div className="loading-spinner"></div>
                                 <p>Cargando imagen...</p>
-                                {retryCount > 0 && (
-                                    <small>Reintento {retryCount}/2</small>
+                                {retryCountRef.current > 0 && (
+                                    <small>Reintento {retryCountRef.current}/2</small>
                                 )}
                             </div>
                         )}
                     </>
                 )}
                 
-                {/* Overlay de acciones */}
-                <div className="product-overlay">
-                    <button 
-                        className="btn-overlay btn-quick-view"
-                        onClick={handleQuickView}
-                    >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                        Vista Rápida
-                    </button>
-                    <Link 
-                        to={`/product/${product.idProducto || product.id}`}
-                        className="btn-overlay btn-view-details"
-                    >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
-                        </svg>
-                        Ver Detalles
-                    </Link>
-                </div>
+                {/* Overlay de acciones - solo cuando la imagen está cargada */}
+                {imageStatus === 'loaded' && (
+                    <div className="product-overlay">
+                        <button 
+                            className="btn-overlay btn-quick-view"
+                            onClick={handleQuickView}
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            Vista Rápida
+                        </button>
+                        <Link 
+                            to={`/product/${product.idProducto || product.id}`}
+                            className="btn-overlay btn-view-details"
+                        >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+                            </svg>
+                            Ver Detalles
+                        </Link>
+                    </div>
+                )}
             </div>
 
             {/* Información del producto */}
@@ -183,7 +186,9 @@ const ProductCard = ({ product, onQuickView }) => {
 
                 {/* Descripción corta */}
                 <p className="product-description">
-                    {product.descripcion_corta || product.descripcion?.substring(0, 100) + '...'}
+                    {product.descripcion_corta || (product.descripcion ? 
+                        (product.descripcion.length > 100 ? product.descripcion.substring(0, 100) + '...' : product.descripcion) 
+                        : 'Descripción no disponible')}
                 </p>
 
                 {/* Precios */}
@@ -213,7 +218,7 @@ const ProductCard = ({ product, onQuickView }) => {
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path d="M5 13l4 4L19 7"/>
                             </svg>
-                            Disponible
+                            {totalStock > 10 ? 'Disponible' : `Últimas ${totalStock} unidades`}
                         </span>
                     ) : (
                         <span className="stock-badge out-of-stock">

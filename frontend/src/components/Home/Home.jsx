@@ -1,11 +1,84 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../Product Card/ProductCard";
 import QuickViewModal from "../QuickViewModal/QuickViewModal";
-import { useProductosDestacados, useProductos } from "../../api/productosHooks";
+import { useProductosDestacados, useProductos, useCategoriasReales } from "../../api/productosHooks";
 import ImageDebug from '../ImageDebug/ImageDebug';
 
 import "./Home.css";
+
+// Mover las funciones auxiliares fuera del componente o usar useCallback
+const generarIdDesdeNombre = (nombre) => {
+  if (!nombre) return `categoria-${Math.random().toString(36).substr(2, 9)}`;
+  
+  const nombreNormalizado = nombre.toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  
+  let hash = 0;
+  for (let i = 0; i < nombre.length; i++) {
+      hash = ((hash << 5) - hash) + nombre.charCodeAt(i);
+      hash = hash & hash;
+  }
+  
+  return `${nombreNormalizado}-${Math.abs(hash).toString(36).substr(0, 6)}`;
+};
+
+const obtenerDescripcionCategoria = (nombreCategoria) => {
+  const descripciones = {
+      'Consumibles': 'Materiales de oficina, tecnología y uso diario esencial',
+      'Ensamble': 'Componentes para armar computadoras y equipos tecnológicos',
+      'Cables': 'Cables USB, HDMI, red, alimentación y todo tipo de conectores',
+      'Accesorios Gaming': 'Equipos especializados para gaming: mouse, teclados, headsets',
+      'Video Vigilancia': 'Sistemas completos de CCTV y seguridad visual',
+      'Accesorios para Componentes': 'Complementos para componentes de computadora',
+      'Red Activa': 'Routers, switches, firewalls y equipos de networking',
+      'Accesorios para Electronica': 'Componentes y herramientas para proyectos electrónicos',
+      'Accesorios para Cómputo': 'Accesorios esenciales para computación y oficina',
+      'Electrónica': 'Componentes electrónicos y equipos especializados',
+      'Respaldo y Regulación': 'Sistemas UPS, reguladores y protección de energía',
+      'Perifericos para POS': 'Equipos especializados para sistemas Point of Sale',
+      'Computadoras': 'Computadoras de escritorio, todo-en-uno y equipos completos',
+      'Almacenamiento Portatil': 'Discos duros externos y unidades portátiles',
+      'Tóners': 'Tóners y cartuchos de impresión para todas las marcas',
+      'No Breaks y UPS': 'Sistemas de energía ininterrumpida y respaldo',
+      'Impresión': 'Impresoras, plotters y equipos de impresión profesional',
+      'Red Pasiva': 'Cables, conectores, racks e infraestructura de red',
+      'Audio': 'Bocinas, audífonos, micrófonos y sistemas de sonido',
+      'Telefonía y Video Vigilancia': 'Sistemas integrados de comunicación y seguridad'
+  };
+
+  return descripciones[nombreCategoria] || `Productos de ${nombreCategoria} - Calidad y variedad para tus necesidades`;
+};
+
+const obtenerIconoCategoria = (nombreCategoria) => {
+  const iconos = {
+      'Consumibles': '🖨️',
+      'Ensamble': '⚙️',
+      'Cables': '🔌',
+      'Accesorios Gaming': '🎮',
+      'Video Vigilancia': '📹',
+      'Accesorios para Componentes': '💻',
+      'Red Activa': '🌐',
+      'Accesorios para Electronica': '🔧',
+      'Accesorios para Cómputo': '💾',
+      'Electrónica': '📟',
+      'Respaldo y Regulación': '⚡',
+      'Perifericos para POS': '💳',
+      'Computadoras': '🖥️',
+      'Almacenamiento Portatil': '💿',
+      'Tóners': '🖋️',
+      'No Breaks y UPS': '🔋',
+      'Impresión': '🖨️',
+      'Red Pasiva': '🔗',
+      'Audio': '🔊',
+      'Telefonía y Video Vigilancia': '📞'
+  };
+
+  return iconos[nombreCategoria] || '📦';
+};
 
 const Home = () => {
     const [quickViewProduct, setQuickViewProduct] = useState(null);
@@ -14,52 +87,77 @@ const Home = () => {
     // Usar datos reales de la API con nuevos hooks
     const { data: productosDestacadosData, loading: destacadosLoading, error: destacadosError } = useProductosDestacados();
     const { data: todosProductosData } = useProductos();
+    const { data: categoriasRealesResponse } = useCategoriasReales();
 
     // Extraer los arrays de productos de la respuesta
     const productosDestacados = productosDestacadosData?.data || [];
     const todosProductos = todosProductosData?.data || [];
+    const categoriasReales = categoriasRealesResponse?.data || [];
 
     console.log('📦 Productos destacados:', productosDestacados);
     console.log('📦 Todos los productos:', todosProductos);
+    console.log('🏷️ Categorías reales:', categoriasReales);
 
-    const categoriasTecnologia = [
-        {
-            title: "Laptops & Computadoras",
-            description: "Encuentra las mejores laptops y computadoras para trabajo, gaming y creatividad.",
-            icon: "💻",
-            link: "/products?category=laptops"
-        },
-        {
-            title: "Smartphones & Tablets",
-            description: "Los últimos modelos de smartphones y tablets con tecnología de punta.",
-            icon: "📱",
-            link: "/products?category=smartphones"
-        },
-        {
-            title: "Accesorios & Periféricos",
-            description: "Teclados, mouse, audífonos y todo lo que necesitas para tu setup.",
-            icon: "🎧",
-            link: "/products?category=accesorios"
-        },
-        {
-            title: "Monitores",
-            description: "Monitores gaming, 4K y profesionales para tu oficina o setup gaming.",
-            icon: "🖥️",
-            link: "/products?category=monitores"
-        },
-        {
-            title: "Telefonía",
-            description: "Sistemas de videoconferencia y equipos de telefonía empresarial.",
-            icon: "📞",
-            link: "/products?category=telefonia"
-        },
-        {
-            title: "Audio Profesional",
-            description: "Equipos de audio, micrófonos y sistemas de sonido profesional.",
-            icon: "🔊",
-            link: "/products?category=audio"
+    // **FUNCIÓN: Obtener las 5 categorías con más productos**
+    const obtenerTop5Categorias = useMemo(() => {
+        if (!todosProductos || !Array.isArray(todosProductos) || todosProductos.length === 0) {
+            console.log('📊 No hay productos para analizar categorías');
+            return [];
         }
-    ];
+
+        if (!categoriasReales || !Array.isArray(categoriasReales) || categoriasReales.length === 0) {
+            console.log('📊 No hay categorías reales disponibles');
+            return [];
+        }
+
+        // Contar productos por categoría
+        const categoriasMap = new Map();
+
+        console.log(`🔍 Analizando ${todosProductos.length} productos para categorías...`);
+
+        todosProductos.forEach(producto => {
+            // PRIORIDAD 1: Usar categoría principal si existe y es válida
+            if (producto.categoria && 
+                typeof producto.categoria === 'string' && 
+                producto.categoria.trim() !== '' &&
+                producto.categoria.trim() !== 'N/A' &&
+                producto.categoria.trim() !== 'null' &&
+                producto.categoria.trim().length > 1) {
+                
+                const categoria = producto.categoria.trim();
+                categoriasMap.set(categoria, (categoriasMap.get(categoria) || 0) + 1);
+            }
+            // PRIORIDAD 2: Si no tiene categoría principal, usar subcategoría
+            else if (producto.subcategoria && 
+                     typeof producto.subcategoria === 'string' && 
+                     producto.subcategoria.trim() !== '' &&
+                     producto.subcategoria.trim() !== 'N/A' &&
+                     producto.subcategoria.trim() !== 'null' &&
+                     producto.subcategoria.trim().length > 1) {
+                
+                const subcategoria = producto.subcategoria.trim();
+                categoriasMap.set(subcategoria, (categoriasMap.get(subcategoria) || 0) + 1);
+            }
+        });
+
+        // Convertir a array y ordenar por cantidad de productos (descendente)
+        const categoriasConConteo = Array.from(categoriasMap.entries())
+            .map(([nombre, count]) => ({
+                nombre,
+                count,
+                id: generarIdDesdeNombre(nombre),
+                descripcion: obtenerDescripcionCategoria(nombre),
+                icon: obtenerIconoCategoria(nombre)
+            }))
+            .filter(cat => cat.count > 0) // Solo categorías con productos
+            .sort((a, b) => b.count - a.count) // Ordenar por cantidad descendente
+            .slice(0, 5); // Tomar solo las 5 primeras
+
+        console.log('🏆 Top 5 categorías con más productos:', categoriasConConteo);
+
+        return categoriasConConteo;
+
+    }, [todosProductos, categoriasReales]);
 
     // Obtener productos destacados REALES de la API
     const getProductosDestacados = () => {
@@ -118,9 +216,11 @@ const Home = () => {
 
     const displayProductosDestacados = getProductosDestacados();
     const displayMasProductos = getMasProductos();
+    const top5Categorias = obtenerTop5Categorias;
 
     console.log('🎯 Display Productos Destacados:', displayProductosDestacados);
     console.log('📦 Display Más Productos:', displayMasProductos);
+    console.log('🏆 Top 5 Categorías:', top5Categorias);
 
     const handleQuickView = (product) => {
         setQuickViewProduct(product);
@@ -158,28 +258,46 @@ const Home = () => {
 
     return (
         <main className="home">
-            {/* Sección de Categorías */}
+            {/* Sección de Categorías - ACTUALIZADA con Top 5 */}
             <section className="categorias">
                 <div className="container">
-                    <h2 className="section-title">Explora por Categoría</h2>
-                    <p className="section-subtitle">Encuentra exactamente lo que necesitas en nuestra amplia selección</p>
-                    <div className="categorias-grid">
-                        {categoriasTecnologia.map((categoria, index) => (
-                            <div key={index} className="categoria-card">
-                                <div className="categoria-icon">
-                                    {categoria.icon}
+                    <h2 className="section-title">Categorías Populares</h2>
+                    <p className="section-subtitle">Las categorías con más productos disponibles</p>
+                    
+                    {top5Categorias.length > 0 ? (
+                        <div className="categorias-grid">
+                            {top5Categorias.map((categoria, index) => (
+                                <div key={categoria.id} className="categoria-card">
+                                    <div className="categoria-icon">
+                                        {categoria.icon}
+                                    </div>
+                                    <h3>{categoria.nombre}</h3>
+                                    <p>{categoria.descripcion}</p>
+                                    <div className="categoria-count">
+                                        {categoria.count} productos
+                                    </div>
+                                    <Link to={`/products?category=${categoria.id}`} className="btn-categoria">
+                                        Ver Productos
+                                    </Link>
                                 </div>
-                                <h3>{categoria.title}</h3>
-                                <p>{categoria.description}</p>
-                                <Link to={categoria.link} className="btn-categoria">
-                                    Ver Productos
-                                </Link>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="no-categories">
+                            <p>No hay categorías disponibles en este momento.</p>
+                        </div>
+                    )}
+                    
+                    {/* Enlace para ver todas las categorías */}
+                    <div className="view-all-container" style={{ marginTop: '2rem' }}>
+                        <Link to="/categories" className="btn-view-all">
+                            Ver Todas las Categorías
+                        </Link>
                     </div>
                 </div>
             </section>
 
+            {/* Resto del componente se mantiene igual */}
             {/* Sección de Productos Destacados */}
             <section className="productos-destacados">
                 <div className="container">

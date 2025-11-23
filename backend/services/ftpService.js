@@ -23,6 +23,9 @@ class FTPService {
       logs: './data/logs'
     };
     
+    this.downloadInterval = null; // Inicializar la variable para el intervalo
+    this.isShuttingDown = false; // Bandera de estado
+    
     this.createDirectories();
   }
 
@@ -401,17 +404,61 @@ class FTPService {
     };
   }
 
+  /**
+   * Programar descargas automáticas
+   */
   scheduleDownloads() {
-    setInterval(async () => {
+    // Guarda la referencia del intervalo para poder detenerlo después
+    this.downloadInterval = setInterval(async () => {
       try {
         logger.info('🔄 Descarga automática iniciada...');
         await this.downloadFiles();
       } catch (error) {
         logger.error('❌ Error en descarga automática:', error);
       }
-    }, 15 * 60 * 1000);
+    }, 15 * 60 * 1000); // 15 minutos
 
-    logger.info('✅ Descargas automáticas programadas');
+    logger.info('✅ Descargas automáticas programadas cada 15 minutos');
+  }
+
+  /**
+   * Detener las descargas programadas de manera segura
+   */
+  stopScheduledDownloads() {
+    if (this.isShuttingDown) {
+      logger.info('⚠️ Shutdown ya en progreso...');
+      return;
+    }
+    
+    this.isShuttingDown = true;
+    
+    if (this.downloadInterval) {
+      clearInterval(this.downloadInterval);
+      this.downloadInterval = null;
+      logger.info('🛑 Descargas programadas detenidas correctamente');
+    } else {
+      logger.info('ℹ️ No hay descargas programadas activas para detener');
+    }
+    
+    // Cerrar conexión FTP activa si existe
+    if (this.client && typeof this.client.close === 'function') {
+      try {
+        this.client.close();
+        logger.info('🔌 Conexión FTP cerrada');
+      } catch (error) {
+        logger.error('❌ Error cerrando conexión FTP:', error);
+      }
+    }
+  }
+
+  /**
+   * Reiniciar las descargas programadas
+   */
+  restartScheduledDownloads() {
+    this.stopScheduledDownloads();
+    this.isShuttingDown = false;
+    this.scheduleDownloads();
+    logger.info('🔄 Descargas programadas reiniciadas');
   }
 
   getCachedData(type = 'existencias') {
@@ -516,6 +563,29 @@ class FTPService {
       logger.error('❌ Error en reprocesamiento:', error);
       return false;
     }
+  }
+
+  /**
+   * Obtener estadísticas del servicio
+   */
+  getStats() {
+    const fileInfo = this.getFileInfo();
+    const cacheProductos = this.getCachedData('productos');
+    const cacheExistencias = this.getCachedData('existencias');
+    
+    return {
+      downloads: {
+        scheduled: !!this.downloadInterval,
+        status: this.isShuttingDown ? 'stopped' : 'running'
+      },
+      cache: {
+        productos: cacheProductos ? cacheProductos.data.length : 0,
+        existencias: cacheExistencias ? cacheExistencias.data.length : 0,
+        lastUpdate: cacheProductos?.lastUpdated || cacheExistencias?.lastUpdated
+      },
+      files: fileInfo.summary,
+      directories: this.dirs
+    };
   }
 }
 

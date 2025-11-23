@@ -169,8 +169,15 @@ const Products = () => {
             productsToDisplay = filtrarProductosPorCategoria(productsToDisplay, selectedCategory);
         }
 
-        if (searchTerm && Array.isArray(searchedProducts)) {
-            productsToDisplay = searchedProducts;
+        // SOLUCIÓN: Usar searchTerm para determinar cuándo mostrar productos buscados
+        if (searchTerm) {
+            // Si hay término de búsqueda, usar searchedProducts si está disponible
+            if (Array.isArray(searchedProducts) && searchedProducts.length > 0) {
+                productsToDisplay = searchedProducts;
+            } else {
+                // Si no hay resultados de búsqueda aún, mantener los productos filtrados
+                productsToDisplay = [];
+            }
         }
 
         if (!productsToDisplay || !Array.isArray(productsToDisplay)) {
@@ -204,7 +211,7 @@ const Products = () => {
         const productosProcesados = procesarProductos(sortedProducts);
         setFilteredProducts(productosProcesados);
 
-    }, [productos, selectedCategory, searchTerm, searchedProducts, sortBy]);
+    }, [productos, selectedCategory, searchTerm, sortBy]); // SOLUCIÓN: Remover searchedProducts de las dependencias
 
     useEffect(() => {
         if (categoryFromUrl && categoryFromUrl !== selectedCategory) {
@@ -351,7 +358,9 @@ const Products = () => {
 
                     <div className="products-count">
                         {searchTerm ? (
-                            <span>{searchedProducts.length} productos encontrados</span>
+                            <span>
+                                {searchLoading ? 'Buscando...' : `${searchedProducts.length} productos encontrados`}
+                            </span>
                         ) : (
                             <>
                                 <span>Mostrando {productosPaginados.length} de {filteredProducts.length} productos</span>
@@ -404,7 +413,12 @@ const Products = () => {
                 </div>
 
                 <div className="products-grid">
-                    {productosPaginados.length > 0 ? (
+                    {searchLoading ? (
+                        <div className="loading-search">
+                            <div className="loading-spinner"></div>
+                            <p>Buscando productos...</p>
+                        </div>
+                    ) : productosPaginados.length > 0 ? (
                         productosPaginados.map(product => (
                             <ProductCard 
                                 key={product.idProducto || product.id || product.codigo} 
