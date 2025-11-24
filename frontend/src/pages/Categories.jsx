@@ -295,11 +295,11 @@ const Categories = () => {
             <div className="container">
                 <div className="categories-header">
                     <h1>Explora por Categoría</h1>
-                    <p>
+                    {/* <p>
                         {displayCategories.length} categorías organizando {totalProductos.toLocaleString()} productos
-                    </p>
+                    </p> */}
                     
-                    <div className="categories-stats">
+                    {/* <div className="categories-stats">
                         <div className="stat-item">
                             <span className="stat-number">{displayCategories.length}</span>
                             <span className="stat-label">Categorías</span>
@@ -318,10 +318,10 @@ const Categories = () => {
                             <span className="stat-number">{totalProductosEnCategorias.toLocaleString()}</span>
                             <span className="stat-label">Productos Organizados</span>
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* Información de filtrado */}
-                    <div style={{ 
+                    {/* <div style={{ 
                         marginTop: '1rem', 
                         padding: '1rem',
                         backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -334,7 +334,7 @@ const Categories = () => {
                                 <span> + categoría "Otros" con <strong>{productosSinCategoria} productos</strong></span>
                             )}
                         </p>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Grid de Categorías - SOLO LAS QUE TIENEN PRODUCTOS */}
@@ -351,9 +351,9 @@ const Categories = () => {
                                 <span className="category-initial">
                                     {category.nombre.charAt(0).toUpperCase()}
                                 </span>
-                                {category.esReal && !category.esCategoriaOtros && (
+                               {/*  {category.esReal && !category.esCategoriaOtros && (
                                     <span className="real-badge">REAL</span>
-                                )}
+                                )} */}
                                 {category.esCategoriaOtros && (
                                     <span className="otros-badge">OTROS</span>
                                 )}
@@ -391,7 +391,7 @@ const Categories = () => {
                 </div>
 
                 {/* Información adicional */}
-                <div style={{ 
+                {/* <div style={{ 
                     textAlign: 'center', 
                     marginTop: '3rem', 
                     padding: '2rem',
@@ -415,7 +415,7 @@ const Categories = () => {
                     <p style={{ fontSize: '0.8rem', color: '#A0AEC0', marginTop: '0.5rem', fontStyle: 'italic' }}>
                         Las categorías sin productos se ocultan automáticamente
                     </p>
-                </div>
+                </div> */}
             </div>
         </div>
     );

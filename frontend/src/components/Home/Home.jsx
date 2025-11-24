@@ -1,11 +1,17 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../Product Card/ProductCard";
 import QuickViewModal from "../QuickViewModal/QuickViewModal";
-import { useProductosDestacados, useProductos, useCategoriasReales } from "../../api/productosHooks";
-import ImageDebug from '../ImageDebug/ImageDebug';
-
+import { 
+  useProductosDestacados, 
+  useProductos, 
+  useCategoriasReales, 
+  useMarcas 
+} from "../../api/productosHooks";
 import "./Home.css";
+/* import ImageDebug from '../ImageDebug/ImageDebug'; */
+
+
 
 // Mover las funciones auxiliares fuera del componente o usar useCallback
 const generarIdDesdeNombre = (nombre) => {
@@ -80,23 +86,169 @@ const obtenerIconoCategoria = (nombreCategoria) => {
   return iconos[nombreCategoria] || '📦';
 };
 
+// Componente de Carrusel integrado en Home
+const CarruselCategorias = ({ categorias }) => {
+  const carruselRef = useRef(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [cardWidth, setCardWidth] = useState(280);
+
+  // Calcular ancho de card basado en el viewport
+  useEffect(() => {
+    const updateCardWidth = () => {
+      const width = window.innerWidth;
+      if (width < 480) {
+        setCardWidth(180);
+      } else if (width < 640) {
+        setCardWidth(200);
+      } else if (width < 768) {
+        setCardWidth(220);
+      } else if (width < 992) {
+        setCardWidth(240);
+      } else if (width < 1200) {
+        setCardWidth(260);
+      } else {
+        setCardWidth(280);
+      }
+    };
+
+    updateCardWidth();
+    window.addEventListener('resize', updateCardWidth);
+    
+    return () => window.removeEventListener('resize', updateCardWidth);
+  }, []);
+
+  const scrollToIndex = (index) => {
+    if (!carruselRef.current) return;
+    
+    const gap = window.innerWidth < 480 ? 8 : 16;
+    const scrollAmount = index * (cardWidth + gap);
+    
+    carruselRef.current.scrollTo({
+      left: scrollAmount,
+      behavior: 'smooth'
+    });
+    setCurrentIndex(index);
+  };
+
+  const nextSlide = () => {
+    const maxIndex = Math.ceil(categorias.length / 1.5) - 1;
+    const nextIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1;
+    scrollToIndex(nextIndex);
+  };
+
+  const prevSlide = () => {
+    const maxIndex = Math.ceil(categorias.length / 1.5) - 1;
+    const prevIndex = currentIndex <= 0 ? maxIndex : currentIndex - 1;
+    scrollToIndex(prevIndex);
+  };
+
+  // Efecto para detectar scroll en móviles
+  useEffect(() => {
+    const carrusel = carruselRef.current;
+    if (!carrusel) return;
+
+    const handleScroll = () => {
+      if (window.innerWidth >= 768) return;
+      
+      const scrollLeft = carrusel.scrollLeft;
+      const gap = window.innerWidth < 480 ? 8 : 16;
+      const newIndex = Math.round(scrollLeft / (cardWidth + gap));
+      
+      setCurrentIndex(Math.max(0, Math.min(newIndex, Math.ceil(categorias.length / 1.5) - 1)));
+    };
+
+    carrusel.addEventListener('scroll', handleScroll);
+    return () => carrusel.removeEventListener('scroll', handleScroll);
+  }, [cardWidth, categorias.length]);
+
+  if (!categorias || categorias.length === 0) {
+    return (
+      <div className="no-categories">
+        <p>No hay categorías disponibles en este momento.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="carrusel-container">
+      <div className="carrusel-wrapper">
+        <button 
+          className="carrusel-btn carrusel-btn-prev" 
+          onClick={prevSlide}
+          aria-label="Categoría anterior"
+        >
+          ‹
+        </button>
+        
+        <div className="carrusel-categorias" ref={carruselRef}>
+          <div className="carrusel-track">
+            {categorias.map((categoria, index) => (
+              <div key={categoria.id || index} className="categoria-card-small">
+                <div className="categoria-icon-small">
+                  {categoria.icon}
+                </div>
+                <h3>{categoria.nombre}</h3>
+                <p>{categoria.descripcion}</p>
+                <div className="categoria-count-small">
+                  {categoria.count} productos
+                </div>
+                <Link 
+                  to={`/products?category=${encodeURIComponent(categoria.nombre)}`} 
+                  className="btn-categoria-small"
+                >
+                  Explorar
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <button 
+          className="carrusel-btn carrusel-btn-next" 
+          onClick={nextSlide}
+          aria-label="Siguiente categoría"
+        >
+          ›
+        </button>
+      </div>
+
+      {/* Indicadores - solo mostrar si hay más de una página */}
+      {categorias.length > 3 && (
+        <div className="carrusel-indicators">
+          {Array.from({ length: Math.ceil(categorias.length / 1.5) }).map((_, index) => (
+            <button
+              key={index}
+              className={`carrusel-indicator ${index === currentIndex ? 'active' : ''}`}
+              onClick={() => scrollToIndex(index)}
+              aria-label={`Ir a página ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Home = () => {
     const [quickViewProduct, setQuickViewProduct] = useState(null);
     const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
-    // Usar datos reales de la API con nuevos hooks
+    // Usar datos reales de la API con hooks
     const { data: productosDestacadosData, loading: destacadosLoading, error: destacadosError } = useProductosDestacados();
-    const { data: todosProductosData } = useProductos();
-    const { data: categoriasRealesResponse } = useCategoriasReales();
+    const { data: todosProductosData, loading: productosLoading } = useProductos({ limit: 50 });
+    const { data: categoriasRealesResponse, loading: categoriasLoading } = useCategoriasReales();
+    const { data: marcasData, loading: marcasLoading } = useMarcas();
 
-    // Extraer los arrays de productos de la respuesta
+    // Extraer los arrays de datos de la respuesta
     const productosDestacados = productosDestacadosData?.data || [];
     const todosProductos = todosProductosData?.data || [];
     const categoriasReales = categoriasRealesResponse?.data || [];
+    const marcasReales = marcasData?.data || [];
 
     console.log('📦 Productos destacados:', productosDestacados);
     console.log('📦 Todos los productos:', todosProductos);
     console.log('🏷️ Categorías reales:', categoriasReales);
+    console.log('🏷️ Marcas reales:', marcasReales);
 
     // **FUNCIÓN: Obtener las 5 categorías con más productos**
     const obtenerTop5Categorias = useMemo(() => {
@@ -214,13 +366,57 @@ const Home = () => {
         return masProductos;
     };
 
+    // Obtener marcas populares REALES de la API
+    const getMarcasPopulares = () => {
+        // Si hay marcas de la API, usarlas
+        if (Array.isArray(marcasReales) && marcasReales.length > 0) {
+            console.log('🏷️ Usando marcas reales de API:', marcasReales.slice(0, 20));
+            return marcasReales.slice(0, 20);
+        }
+        
+        // Si no hay marcas de la API, usar las marcas específicas proporcionadas
+        const marcasEspecificas = [
+            '4Gamers', 'ACER', 'ACTECK', 'ADATA', 'ADESSO',
+            'ALTER', 'AMD', 'AOC', 'APC', 'APPLE',
+            'ARUBA', 'ASPEL', 'ASUS', 'AUTODESK', 'AVAST',
+            'AZOR', 'Allied Telesis', 'Amazfit', 'Amazon', 'Anviz'
+        ];
+        
+        console.log('🏷️ Usando marcas específicas:', marcasEspecificas);
+        return marcasEspecificas;
+    };
+
+    // Función para obtener la URL del logo de la marca
+    const getLogoUrl = (marcaNombre) => {
+        const logos = {
+            '4GAMERS': '/logos/4gamers.jpeg',
+            'ACER': '/logos/acer.jpg',
+            'ACTECK': '/logos/acteck.png',
+            'ADATA': '/logos/ADATA.png',
+            'ADESSO': '/logos/adesso.svg',
+            'ALTER': '/logos/alter.png',
+            'AMD': '/logos/amd.png',
+            'AOC': '/logos/aoc.svg',
+            'APC': '/logos/apc.png',
+            'APPLE': '/logos/apple.svg',
+            'ARUBA': '/logos/aruba.png',
+            'ASPEL': '/logos/aspel.webp',
+            'ASUS': '/logos/asus.png',
+            'AUTODESK': '/logos/autodesk.png',
+            'AVAST': '/logos/avast.png',
+            'AZOR': '/logos/azor.png',
+            'ALLIED TELESIS': '/logos/allied.webp',
+            'AMAZFIT': '/logos/amazfit.jpeg',
+            'AMAZON': '/logos/amazon.jpg',
+            'ANVIZ': '/logos/anviz.png'
+        };
+        return logos[marcaNombre.toUpperCase()];
+    };
+
     const displayProductosDestacados = getProductosDestacados();
     const displayMasProductos = getMasProductos();
     const top5Categorias = obtenerTop5Categorias;
-
-    console.log('🎯 Display Productos Destacados:', displayProductosDestacados);
-    console.log('📦 Display Más Productos:', displayMasProductos);
-    console.log('🏆 Top 5 Categorías:', top5Categorias);
+    const displayMarcasPopulares = getMarcasPopulares();
 
     const handleQuickView = (product) => {
         setQuickViewProduct(product);
@@ -256,40 +452,36 @@ const Home = () => {
         alert(`¡${quantity} x ${product.nombre} agregado al carrito!`);
     };
 
+    // Estados de carga combinados
+    const isLoading = destacadosLoading || productosLoading || categoriasLoading || marcasLoading;
+
     return (
         <main className="home">
-            {/* Sección de Categorías - ACTUALIZADA con Top 5 */}
+            {/* Loading general */}
+            {isLoading && (
+                <div className="loading-overlay">
+                    <div className="loading-spinner-large"></div>
+                    <p>Cargando contenido...</p>
+                </div>
+            )}
+
+            {/* Sección de Categorías con Carrusel */}
             <section className="categorias">
                 <div className="container">
-                    <h2 className="section-title">Categorías Populares</h2>
-                    <p className="section-subtitle">Las categorías con más productos disponibles</p>
+                    <div className="section-header">
+                        <h2 className="section-title">Categorías Populares</h2>
+                        <p className="section-subtitle">Descubre nuestras categorías con mayor variedad de productos</p>
+                    </div>
                     
                     {top5Categorias.length > 0 ? (
-                        <div className="categorias-grid">
-                            {top5Categorias.map((categoria, index) => (
-                                <div key={categoria.id} className="categoria-card">
-                                    <div className="categoria-icon">
-                                        {categoria.icon}
-                                    </div>
-                                    <h3>{categoria.nombre}</h3>
-                                    <p>{categoria.descripcion}</p>
-                                    <div className="categoria-count">
-                                        {categoria.count} productos
-                                    </div>
-                                    <Link to={`/products?category=${categoria.id}`} className="btn-categoria">
-                                        Ver Productos
-                                    </Link>
-                                </div>
-                            ))}
-                        </div>
+                        <CarruselCategorias categorias={top5Categorias} />
                     ) : (
                         <div className="no-categories">
-                            <p>No hay categorías disponibles en este momento.</p>
+                            <p>{categoriasLoading ? 'Cargando categorías...' : 'No hay categorías disponibles en este momento.'}</p>
                         </div>
                     )}
                     
-                    {/* Enlace para ver todas las categorías */}
-                    <div className="view-all-container" style={{ marginTop: '2rem' }}>
+                    <div className="view-all-container">
                         <Link to="/categories" className="btn-view-all">
                             Ver Todas las Categorías
                         </Link>
@@ -297,21 +489,13 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* Resto del componente se mantiene igual */}
             {/* Sección de Productos Destacados */}
             <section className="productos-destacados">
                 <div className="container">
                     <div className="section-header">
                         <h2 className="section-title">Productos Destacados</h2>
-                        <p className="section-subtitle">Los productos más populares y mejor valorados</p>
+                        <p className="section-subtitle">Los productos más populares y mejor valorados por nuestros clientes</p>
                     </div>
-                    
-                    {destacadosLoading && (
-                        <div className="loading-section">
-                            <div className="loading-spinner"></div>
-                            <p>Cargando productos destacados...</p>
-                        </div>
-                    )}
                     
                     {destacadosError && (
                         <div className="error-section">
@@ -324,50 +508,46 @@ const Home = () => {
                         </div>
                     )}
 
-                    {!destacadosLoading && !destacadosError && (
+                    {displayProductosDestacados.length > 0 ? (
                         <>
-                            {displayProductosDestacados.length > 0 ? (
-                                <>
-                                    <div className="productos-grid">
-                                        {displayProductosDestacados.map((producto) => (
-                                            <ProductCard 
-                                                key={producto.idProducto || producto.codigo} 
-                                                product={producto}
-                                                onQuickView={handleQuickView}
-                                            />
-                                        ))}
-                                    </div>
-                                    
-                                    <div className="view-all-container">
-                                        <Link to="/products" className="btn-view-all">
-                                            Ver Todos los Productos
-                                        </Link>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="no-products">
-                                    <p>No hay productos destacados disponibles en este momento.</p>
-                                </div>
-                            )}
+                            <div className="productos-grid">
+                                {displayProductosDestacados.map((producto) => (
+                                    <ProductCard 
+                                        key={producto.idProducto || producto.codigo} 
+                                        product={producto}
+                                        onQuickView={handleQuickView}
+                                    />
+                                ))}
+                            </div>
+                            
+                            <div className="view-all-container">
+                                <Link to="/products" className="btn-view-all">
+                                    Ver Todos los Productos
+                                </Link>
+                            </div>
                         </>
+                    ) : (
+                        <div className="no-products">
+                            <p>No hay productos destacados disponibles en este momento.</p>
+                        </div>
                     )}
                 </div>
             </section>
 
-            {/* Sección de Ofertas Especiales */}
-            <section className="ofertas-especiales">
+            {/* Sección de Ofertas Especiales - COMPACTA */}
+            <section className="ofertas-compactas">
                 <div className="container">
-                    <div className="ofertas-content">
-                        <div className="ofertas-text">
+                    <div className="ofertas-compactas-content">
+                        <div className="ofertas-compactas-text">
                             <h2>Ofertas Especiales</h2>
-                            <p>Descuentos exclusivos en productos seleccionados. Aprovecha estas oportunidades únicas.</p>
-                            <Link to="/products?promociones=true" className="btn-ofertas">
+                            <p>Descuentos exclusivos en productos seleccionados</p>
+                            <Link to="/products?promociones=true" className="btn-ofertas-compactas">
                                 Ver Ofertas
                             </Link>
                         </div>
-                        <div className="ofertas-badge">
-                            <span className="badge-text">Hasta</span>
-                            <span className="badge-percent">50% OFF</span>
+                        <div className="ofertas-compactas-badge">
+                            <span className="badge-compacta-text">Hasta</span>
+                            <span className="badge-compacta-percent">50% OFF</span>
                         </div>
                     </div>
                 </div>
@@ -376,8 +556,10 @@ const Home = () => {
             {/* Sección de Más Productos */}
             <section className="mas-productos">
                 <div className="container">
-                    <h2 className="section-title">Descubre Más Productos</h2>
-                    <p className="section-subtitle">Una selección cuidadosamente curada para ti</p>
+                    <div className="section-header">
+                        <h2 className="section-title">Descubre Más Productos</h2>
+                        <p className="section-subtitle">Una selección cuidadosamente curada para tus necesidades tecnológicas</p>
+                    </div>
                     
                     {displayMasProductos.length > 0 ? (
                         <>
@@ -405,47 +587,83 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* Sección de Beneficios */}
-            <section className="beneficios">
+            {/* Sección de Beneficios - COMPACTA */}
+            <section className="beneficios-compactos">
                 <div className="container">
-                    <h2 className="section-title">¿Por qué elegirnos?</h2>
-                    <div className="beneficios-content">
-                        <div className="beneficio">
-                            <div className="beneficio-icon">🚚</div>
+                    <div className="section-header">
+                        <h2 className="section-title">¿Por qué elegirnos?</h2>
+                        <p className="section-subtitle">Ofrecemos la mejor experiencia de compra en tecnología</p>
+                    </div>
+                    <div className="beneficios-compactos-content">
+                        <div className="beneficio-compacto">
+                            <div className="beneficio-compacto-icon">🚚</div>
                             <h3>Envío Gratis</h3>
-                            <p>En compras mayores a $500 MXN a todo el país</p>
+                            <p>En compras mayores a $500 MXN</p>
                         </div>
-                        <div className="beneficio">
-                            <div className="beneficio-icon">🛡️</div>
-                            <h3>Garantía Extendida</h3>
-                            <p>Hasta 2 años en productos seleccionados con soporte especializado</p>
+                        <div className="beneficio-compacto">
+                            <div className="beneficio-compacto-icon">🛡️</div>
+                            <h3>Garantía</h3>
+                            <p>Hasta 2 años en productos seleccionados</p>
                         </div>
-                        <div className="beneficio">
-                            <div className="beneficio-icon">⏰</div>
+                        <div className="beneficio-compacto">
+                            <div className="beneficio-compacto-icon">⏰</div>
                             <h3>Soporte 24/7</h3>
-                            <p>Asistencia técnica especializada cuando la necesites</p>
+                            <p>Asistencia técnica especializada</p>
                         </div>
-                        <div className="beneficio">
-                            <div className="beneficio-icon">💳</div>
+                        <div className="beneficio-compacto">
+                            <div className="beneficio-compacto-icon">💳</div>
                             <h3>Pagos Seguros</h3>
-                            <p>Transacciones protegidas con encriptación de última generación</p>
+                            <p>Transacciones protegidas SSL</p>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Sección de Marcas */}
+            {/* Sección de Marcas REALES */}
             <section className="marcas">
                 <div className="container">
-                    <h2 className="section-title">Marcas Confiables</h2>
-                    <div className="marcas-grid">
-                        <div className="marca-item">ASUS</div>
-                        <div className="marca-item">SAMSUNG</div>
-                        <div className="marca-item">CORSAIR</div>
-                        <div className="marca-item">LOGITECH</div>
-                        <div className="marca-item">POLYCOM</div>
-                        <div className="marca-item">LG</div>
+                    <div className="section-header">
+                        <h2 className="section-title">Marcas Confiables</h2>
+                        <p className="section-subtitle">Trabajamos con las mejores marcas del mercado tecnológico</p>
                     </div>
+                    {displayMarcasPopulares.length > 0 ? (
+                        <div className="marcas-grid">
+                            {displayMarcasPopulares.map((marca, index) => {
+                                const logoUrl = getLogoUrl(marca);
+                                
+                                return (
+                                    <div key={index} className="marca-item">
+                                        {logoUrl ? (
+                                            <>
+                                                <img 
+                                                    src={logoUrl} 
+                                                    alt={`Logo ${marca}`}
+                                                    className="marca-logo"
+                                                    onError={(e) => {
+                                                        // Si el logo no carga, mostrar texto
+                                                        e.target.style.display = 'none';
+                                                        const textElement = e.target.nextSibling;
+                                                        if (textElement) {
+                                                            textElement.style.display = 'block';
+                                                        }
+                                                    }}
+                                                />
+                                                <span className="marca-texto" style={{display: 'none'}}>
+                                                    {marca}
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <span className="marca-texto">{marca}</span>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="no-marcas">
+                            <p>{marcasLoading ? 'Cargando marcas...' : 'No hay marcas disponibles en este momento.'}</p>
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -457,8 +675,8 @@ const Home = () => {
                 onAddToCart={handleAddToCart}
             />
 
-            {/* Debug solo en desarrollo */}
-            {process.env.NODE_ENV === 'development' && <ImageDebug />}
+            {/* Debug solo en desarrollo
+            {process.env.NODE_ENV === 'development' && <ImageDebug />} */}
         </main>
     );
 };

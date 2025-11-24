@@ -1,16 +1,5 @@
-/* Banner.css - Versión con colores forzados */
+/* Banner.css - Botones con estilo similar al existente */
 
-/* Variables CSS para consistencia */
-:root {
-  --primary-blue: #4895CF;
-  --dark-blue: #2C5F8E;
-  --darker-blue: #16395C;
-  --light-blue: #7CCBDD;
-  --white: #ffffff;
-  --transition: all 0.3s ease;
-}
-
-/* Banner Ecommerce - Iconos Profesionales */
 .banner-lucesa {
   position: relative;
   height: 80vh;
@@ -42,7 +31,6 @@
   will-change: transform;
 }
 
-/* Animación de zoom solo si no hay preferencia de movimiento reducido */
 @media (prefers-reduced-motion: no-preference) {
   .banner-background {
     animation: zoomEffect 20s ease-in-out infinite;
@@ -77,7 +65,7 @@
 }
 
 .banner-text {
-  color: var(--white);
+  color: #ffffff;
 }
 
 .banner-title {
@@ -89,7 +77,7 @@
 }
 
 .banner-title .highlight {
-  background: linear-gradient(135deg, var(--light-blue), var(--primary-blue));
+  background: linear-gradient(135deg, #4FC3F7, #2979FF);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -104,7 +92,7 @@
   left: 0;
   width: 100%;
   height: 3px;
-  background: linear-gradient(90deg, var(--light-blue), var(--primary-blue));
+  background: linear-gradient(90deg, #4FC3F7, #2979FF);
   border-radius: 2px;
 }
 
@@ -116,63 +104,120 @@
   text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
+/* BOTONES CON ESTILO SIMILAR AL HEADER */
 .banner-buttons {
   display: flex;
-  gap: 1.5rem;
+  gap: 1.2rem;
   margin-bottom: 3rem;
   flex-wrap: wrap;
 }
 
-.btn {
-  padding: 1rem 2.5rem;
+.cta-button {
+  position: relative;
+  padding: 1.2rem 2.5rem;
   border: none;
   border-radius: 8px;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 1rem;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 160px;
   text-decoration: none;
-  display: inline-block;
-  text-align: center;
-  position: relative;
   overflow: hidden;
-  min-width: 140px;
+  font-family: inherit;
 }
 
-.btn:focus {
-  outline: 2px solid var(--white);
-  outline-offset: 2px;
+.button-content {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  position: relative;
+  z-index: 2;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
-  color: var(--white);
-  box-shadow: 0 8px 25px rgba(72, 149, 207, 0.4);
-  border: 2px solid transparent;
+.button-icon {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
 }
 
-.btn-primary:hover,
-.btn-primary:focus {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgba(72, 149, 207, 0.6);
-  background: linear-gradient(135deg, var(--dark-blue), var(--darker-blue));
+.button-text {
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: transform 0.3s ease;
 }
 
-.btn-secondary {
-  background: transparent;
-  color: var(--white);
-  border: 2px solid rgba(255, 255, 255, 0.8);
+.button-arrow {
+  font-size: 1.1rem;
+  transition: transform 0.3s ease;
 }
 
-.btn-secondary:hover,
-.btn-secondary:focus {
+/* Botón Primario - Similar al estilo del header */
+.cta-button.primary {
+  background: linear-gradient(135deg, #4895CF, #2C5F8E);
+  color: #ffffff;
+  border: 2px solid #4895CF;
+  box-shadow: 0 4px 15px rgba(72, 149, 207, 0.3);
+}
+
+.cta-button.primary:hover {
+  background: linear-gradient(135deg, #2C5F8E, #4895CF);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(72, 149, 207, 0.4);
+  border-color: #7CCBDD;
+}
+
+.cta-button.primary:hover .button-icon {
+  transform: scale(1.1);
+}
+
+.cta-button.primary:hover .button-arrow {
+  transform: translateX(3px);
+}
+
+/* Botón Secundario - Similar al estilo del header */
+.cta-button.secondary {
   background: rgba(255, 255, 255, 0.1);
-  border-color: var(--white);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-/* FEATURES COMPLETAMENTE CORREGIDOS - SIN BLANCO */
+.cta-button.secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.1);
+}
+
+.cta-button.secondary:hover .button-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.cta-button.secondary:hover .button-arrow {
+  transform: translateX(2px) translateY(-2px);
+}
+
+/* Efecto de overlay sutil al hover */
+.cta-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.cta-button:hover::before {
+  left: 100%;
+}
+
+/* FEATURES - Manteniendo el estilo existente */
 .banner-features {
   display: flex;
   gap: 2rem;
@@ -183,25 +228,20 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  /* Fondo azul sólido sin transparencia */
-  background: #2C5F8E !important; /* Azul oscuro sólido */
+  background: #2C5F8E !important;
   padding: 1rem 1.5rem;
   border-radius: 12px;
-  border: 2px solid #4895CF !important; /* Borde azul primario */
-  transition: var(--transition);
+  border: 2px solid #4895CF !important;
+  transition: all 0.3s ease;
   min-width: 160px;
-  /* Reset completo de estilos que puedan causar blanco */
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
 }
 
-.feature:hover,
-.feature:focus-within {
-  background: #4895CF !important; /* Azul primario al hover */
+.feature:hover {
+  background: #4895CF !important;
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(72, 149, 207, 0.6) !important;
-  border-color: #7CCBDD !important; /* Azul claro al hover */
+  border-color: #7CCBDD !important;
 }
 
 .feature-icon {
@@ -216,26 +256,24 @@
 .feature-icon svg {
   width: 100%;
   height: 100%;
-  stroke: #7CCBDD !important; /* Azul claro forzado */
+  stroke: #7CCBDD !important;
   stroke-width: 2;
   fill: none !important;
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
-.feature:hover .feature-icon svg,
-.feature:focus-within .feature-icon svg {
-  stroke: #ffffff !important; /* Blanco al hover */
+.feature:hover .feature-icon svg {
+  stroke: #ffffff !important;
   transform: scale(1.1);
 }
 
 .feature span:last-child {
   font-weight: 600;
   font-size: 0.95rem;
-  color: white !important; /* Texto blanco forzado */
+  color: white !important;
   white-space: nowrap;
 }
 
-/* Reset específico para eliminar cualquier blanco residual */
 .feature * {
   background: transparent !important;
 }
@@ -250,7 +288,6 @@
   }
 }
 
-/* Efectos de partículas sutiles */
 .banner-background::before {
   content: '';
   position: absolute;
@@ -278,7 +315,7 @@
   }
 }
 
-/* Responsive mejorado */
+/* Responsive */
 @media (max-width: 1024px) {
   .banner-lucesa {
     height: 70vh;
@@ -303,11 +340,13 @@
   
   .banner-buttons {
     justify-content: center;
+    gap: 1rem;
   }
   
-  .btn {
-    padding: 0.875rem 2rem;
-    font-size: 1rem;
+  .cta-button {
+    padding: 1.1rem 2rem;
+    min-width: 150px;
+    font-size: 0.9rem;
   }
   
   .banner-features {
@@ -336,9 +375,10 @@
     align-items: center;
   }
   
-  .btn {
+  .cta-button {
     width: 100%;
-    max-width: 200px;
+    max-width: 260px;
+    padding: 1.2rem 2rem;
   }
   
   .banner-features {
@@ -353,7 +393,6 @@
   }
 }
 
-/* Mejoras de accesibilidad */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
@@ -369,29 +408,15 @@
     animation: none !important;
   }
   
-  .feature:hover,
-  .feature:focus-within {
+  .feature:hover {
     transform: none;
   }
   
-  .btn:hover,
-  .btn:focus {
+  .cta-button:hover {
     transform: none;
   }
-}
-
-/* Mejora de contraste para accesibilidad */
-@media (prefers-contrast: high) {
-  .banner-overlay {
-    background: rgba(22, 57, 92, 0.95);
-  }
   
-  .feature {
-    background: #16395C !important;
-    border: 2px solid var(--white) !important;
-  }
-  
-  .feature-icon svg {
-    stroke: var(--white) !important;
+  .cta-button::before {
+    display: none;
   }
 }

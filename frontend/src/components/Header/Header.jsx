@@ -23,6 +23,10 @@ const Header = () => {
         setIsMenuOpen(!isMenuOpen);
     };
 
+    const closeMobileMenu = () => {
+        setIsMenuOpen(false);
+    };
+
     useEffect(() => {
         const handleScroll = () => {
             const scrolled = window.scrollY > 50;
@@ -38,9 +42,7 @@ const Header = () => {
     }, [searchTerm]);
 
     const handleNavClick = () => {
-        if (isMenuOpen) {
-            setIsMenuOpen(false);
-        }
+        closeMobileMenu();
         setUserMenuOpen(false);
         closeCart();
     };
@@ -53,9 +55,7 @@ const Header = () => {
         e.preventDefault();
         if (localSearchTerm.trim()) {
             handleSearch(localSearchTerm.trim());
-            if (isMenuOpen) {
-                setIsMenuOpen(false);
-            }
+            closeMobileMenu();
         }
     };
 
@@ -67,9 +67,7 @@ const Header = () => {
 
     const handleFavoritesClick = () => {
         navigate('/favorites');
-        if (isMenuOpen) {
-            setIsMenuOpen(false);
-        }
+        closeMobileMenu();
         setUserMenuOpen(false);
         closeCart();
     };
@@ -77,16 +75,12 @@ const Header = () => {
     const handleCartClick = () => {
         openCart();
         setUserMenuOpen(false);
-        if (isMenuOpen) {
-            setIsMenuOpen(false);
-        }
+        closeMobileMenu();
     };
 
     const handleLoginClick = () => {
         navigate('/login');
-        if (isMenuOpen) {
-            setIsMenuOpen(false);
-        }
+        closeMobileMenu();
         setUserMenuOpen(false);
         closeCart();
     };
@@ -94,9 +88,7 @@ const Header = () => {
     const handleLogout = () => {
         logout();
         setUserMenuOpen(false);
-        if (isMenuOpen) {
-            setIsMenuOpen(false);
-        }
+        closeMobileMenu();
         closeCart();
         navigate('/');
     };
@@ -115,23 +107,21 @@ const Header = () => {
         };
     }, [userMenuOpen]);
 
-    // Cerrar menú móvil al hacer clic en un enlace
+    // Prevenir scroll cuando el menú está abierto
     useEffect(() => {
-        const handleRouteChange = () => {
-            if (isMenuOpen) {
-                setIsMenuOpen(false);
-            }
-        };
+        if (isMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
 
-        // Escuchar cambios de ruta
-        window.addEventListener('popstate', handleRouteChange);
         return () => {
-            window.removeEventListener('popstate', handleRouteChange);
+            document.body.style.overflow = 'unset';
         };
     }, [isMenuOpen]);
 
     return (
-        <header className={`header-lucesa ${isScrolled ? 'scrolled' : ''} ${isMenuOpen ? 'menu-open' : ''}`}>
+        <header className={`header-lucesa ${isScrolled ? 'scrolled' : ''}`}>
             <div className="container-lucesa">
                 <div className="header-content-lucesa">
                     {/* Logo */}
@@ -145,72 +135,21 @@ const Header = () => {
                         </Link>
                     </div>
 
-                    {/* Navegación */}
-                    <nav className={`nav ${isMenuOpen ? 'nav-open' : ''}`}>
+                    {/* Navegación Desktop */}
+                    <nav className="desktop-nav">
                         <ul className="nav-list-lucesa">
                             <li>
-                                <Link 
-                                    to="/" 
-                                    className="nav-link"
-                                    onClick={handleNavClick}
-                                >
-                                    Inicio
-                                </Link>
+                                <Link to="/" className="nav-link">Inicio</Link>
                             </li>
                             <li>
-                                <Link 
-                                    to="/products" 
-                                    className="nav-link"
-                                    onClick={handleNavClick}
-                                >
-                                    Productos
-                                </Link>
+                                <Link to="/products" className="nav-link">Productos</Link>
                             </li>
                             <li>
-                                <Link 
-                                    to="/categories" 
-                                    className="nav-link"
-                                    onClick={handleNavClick}
-                                >
-                                    Categorías
-                                </Link>
+                                <Link to="/categories" className="nav-link">Categorías</Link>
                             </li>
                             <li>
-                                <Link 
-                                    to="/favorites" 
-                                    className="nav-link"
-                                    onClick={handleNavClick}
-                                >
-                                    Favoritos
-                                </Link>
+                                <Link to="/favorites" className="nav-link">Favoritos</Link>
                             </li>
-                            {user && (
-                                <li className="nav-user-mobile">
-                                    <div className="user-info-mobile">
-                                        <span>Hola, {user.name}</span>
-                                    </div>
-                                    <Link 
-                                        to="/profile" 
-                                        className="nav-link"
-                                        onClick={handleNavClick}
-                                    >
-                                        Mi Perfil
-                                    </Link>
-                                    <Link 
-                                        to="/orders" 
-                                        className="nav-link"
-                                        onClick={handleNavClick}
-                                    >
-                                        Mis Pedidos
-                                    </Link>
-                                    <button 
-                                        onClick={handleLogout}
-                                        className="nav-link logout-btn-mobile"
-                                    >
-                                        Cerrar Sesión
-                                    </button>
-                                </li>
-                            )}
                         </ul>
                     </nav>
 
@@ -225,41 +164,26 @@ const Header = () => {
                                 onChange={handleSearchInputChange}
                                 onKeyPress={handleKeyPress}
                             />
-                            <button 
-                                type="submit" 
-                                className="search-btn"
-                                disabled={!localSearchTerm.trim()}
-                            >
+                            <button type="submit" className="search-btn">
                                 <span className="search-icon">🔍</span>
                             </button>
                         </form>
                         
                         <div className="header-icons">
-                            {/* Botón de Favoritos */}
-                            <button 
-                                onClick={handleFavoritesClick}
-                                className="icon-btn favorites-btn"
-                                title="Favoritos"
-                            >
+                            <button onClick={handleFavoritesClick} className="icon-btn favorites-btn" title="Favoritos">
                                 <span className="icon">❤️</span>
                                 {favoritesCount > 0 && (
                                     <span className="favorites-count">{favoritesCount}</span>
                                 )}
                             </button>
 
-                            {/* Botón de Carrito */}
-                            <button 
-                                onClick={handleCartClick}
-                                className="icon-btn cart-btn"
-                                title="Carrito"
-                            >
+                            <button onClick={handleCartClick} className="icon-btn cart-btn" title="Carrito">
                                 <span className="icon">🛒</span>
                                 {getCartItemsCount() > 0 && (
                                     <span className="cart-count">{getCartItemsCount()}</span>
                                 )}
                             </button>
 
-                            {/* Usuario */}
                             {user ? (
                                 <div className="user-menu">
                                     <button 
@@ -268,7 +192,6 @@ const Header = () => {
                                             e.stopPropagation();
                                             setUserMenuOpen(!userMenuOpen);
                                         }}
-                                        aria-label="Menú de usuario"
                                         title="Mi Cuenta"
                                     >
                                         <span className="icon">👤</span>
@@ -280,35 +203,20 @@ const Header = () => {
                                                 <strong>{user.name}</strong>
                                                 <span>{user.email}</span>
                                             </div>
-                                            <Link 
-                                                to="/profile" 
-                                                className="dropdown-item"
-                                                onClick={() => setUserMenuOpen(false)}
-                                            >
+                                            <Link to="/profile" className="dropdown-item" onClick={() => setUserMenuOpen(false)}>
                                                 <span className="dropdown-icon">👤</span>
                                                 Mi Perfil
                                             </Link>
-                                            <Link 
-                                                to="/orders" 
-                                                className="dropdown-item"
-                                                onClick={() => setUserMenuOpen(false)}
-                                            >
+                                            <Link to="/orders" className="dropdown-item" onClick={() => setUserMenuOpen(false)}>
                                                 <span className="dropdown-icon">📦</span>
                                                 Mis Pedidos
                                             </Link>
-                                            <Link 
-                                                to="/favorites" 
-                                                className="dropdown-item"
-                                                onClick={() => setUserMenuOpen(false)}
-                                            >
+                                            <Link to="/favorites" className="dropdown-item" onClick={() => setUserMenuOpen(false)}>
                                                 <span className="dropdown-icon">❤️</span>
                                                 Mis Favoritos
                                             </Link>
                                             <div className="dropdown-divider"></div>
-                                            <button 
-                                                onClick={handleLogout}
-                                                className="dropdown-item logout-btn"
-                                            >
+                                            <button onClick={handleLogout} className="dropdown-item logout-btn">
                                                 <span className="dropdown-icon">🚪</span>
                                                 Cerrar Sesión
                                             </button>
@@ -316,11 +224,7 @@ const Header = () => {
                                     )}
                                 </div>
                             ) : (
-                                <button 
-                                    onClick={handleLoginClick}
-                                    className="icon-btn login-btn"
-                                    title="Iniciar Sesión"
-                                >
+                                <button onClick={handleLoginClick} className="icon-btn login-btn" title="Iniciar Sesión">
                                     <span className="icon">👤</span>
                                 </button>
                             )}
@@ -329,9 +233,9 @@ const Header = () => {
 
                     {/* Menú Hamburguesa */}
                     <button
-                        className={`menu-toggle ${isMenuOpen ? 'menu-open' : ''}`}
+                        className={`menu-toggle ${isMenuOpen ? 'active' : ''}`}
                         onClick={toggleMenu}
-                        aria-label="Toggle menu"
+                        aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"}
                     >
                         <span></span>
                         <span></span>
@@ -340,13 +244,80 @@ const Header = () => {
                 </div>
             </div>
 
-            {/* Overlay para móvil */}
-            {isMenuOpen && (
-                <div 
-                    className="menu-overlay"
-                    onClick={() => setIsMenuOpen(false)}
-                />
-            )}
+            {/* Menú Móvil */}
+            <div className={`mobile-menu ${isMenuOpen ? 'active' : ''}`}>
+                <div className="mobile-menu-content">
+                    <div className="mobile-menu-header">
+                        <div className="mobile-logo">
+                            <img src="/LOGO_LUCESA.png" alt="Lucesa" className="mobile-logo-image" />
+                        </div>
+                    </div>
+
+                    <nav className="mobile-nav">
+                        <ul className="mobile-nav-list">
+                            <li>
+                                <Link to="/" className="mobile-nav-link" onClick={handleNavClick}>
+                                    <span className="nav-icon">🏠</span>
+                                    Inicio
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/products" className="mobile-nav-link" onClick={handleNavClick}>
+                                    <span className="nav-icon">📦</span>
+                                    Productos
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/categories" className="mobile-nav-link" onClick={handleNavClick}>
+                                    <span className="nav-icon">📑</span>
+                                    Categorías
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/favorites" className="mobile-nav-link" onClick={handleNavClick}>
+                                    <span className="nav-icon">❤️</span>
+                                    Favoritos
+                                    {favoritesCount > 0 && (
+                                        <span className="mobile-badge">{favoritesCount}</span>
+                                    )}
+                                </Link>
+                            </li>
+                        </ul>
+
+                        {user && (
+                            <div className="mobile-user-section">
+                                <div className="user-info-mobile">
+                                    <span className="user-greeting">Hola, {user.name}</span>
+                                    <span className="user-email">{user.email}</span>
+                                </div>
+                                <div className="mobile-user-links">
+                                    <Link to="/profile" className="mobile-user-link" onClick={handleNavClick}>
+                                        <span className="link-icon">👤</span>
+                                        Mi Perfil
+                                    </Link>
+                                    <Link to="/orders" className="mobile-user-link" onClick={handleNavClick}>
+                                        <span className="link-icon">📦</span>
+                                        Mis Pedidos
+                                    </Link>
+                                    <button onClick={handleLogout} className="mobile-logout-btn">
+                                        <span className="link-icon">🚪</span>
+                                        Cerrar Sesión
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {!user && (
+                            <div className="mobile-login-section">
+                                <button onClick={handleLoginClick} className="mobile-login-btn">
+                                    <span className="login-icon">👤</span>
+                                    Iniciar Sesión
+                                </button>
+                            </div>
+                        )}
+                    </nav>
+                </div>
+            </div>
 
             {/* Carrito Desplegable */}
             {isCartOpen && <CartDropdown />}

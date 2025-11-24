@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Banner.css";
 
 const Banner = () => {
     const bannerRef = useRef(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -13,6 +15,14 @@ const Banner = () => {
 
         return () => clearTimeout(timer);
     }, []);
+
+    const handleCatalogClick = () => {
+        navigate("/categories");
+    };
+
+    const handleAboutClick = () => {
+        window.open("https://lucesademexico.com/", "_blank");
+    };
 
     return (
         <section 
@@ -34,14 +44,32 @@ const Banner = () => {
                             Encuentra los mejores productos con calidad garantizada 
                             y envío rápido a todo el país.
                         </p>
+                        
+                        {/* BOTONES CON ESTILO SIMILAR AL EXISTENTE */}
                         <div className="banner-buttons">
-                            <button className="btn btn-primary">
-                                Ver Catálogo
+                            <button 
+                                className="cta-button primary"
+                                onClick={handleCatalogClick}
+                            >
+                                <span className="button-content">
+                                    <span className="button-icon">📦</span>
+                                    <span className="button-text">Ver Catálogo</span>
+                                    <span className="button-arrow">→</span>
+                                </span>
                             </button>
-                            <button className="btn btn-secondary">
-                                Conócenos
+                            
+                            <button 
+                                className="cta-button secondary"
+                                onClick={handleAboutClick}
+                            >
+                                <span className="button-content">
+                                    <span className="button-icon">🏢</span>
+                                    <span className="button-text">Conócenos</span>
+                                    <span className="button-arrow">↗</span>
+                                </span>
                             </button>
                         </div>
+
                         <div className="banner-features">
                             <div className="feature">
                                 <div className="feature-icon" aria-hidden="true">
