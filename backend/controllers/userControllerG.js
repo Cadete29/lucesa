@@ -1,7 +1,7 @@
 // backend/controllers/userController.js
 
 
-const userModel = require('../models/userModel');
+const userModel = require('../models/userModelG');
 
 const getMyProfile = async (req, res) => {
     try {
