@@ -7,10 +7,11 @@ const router = express.Router();
 //!Se hace para que en el archivo del servidor no se sature
 // const userRoutesG = require('./userRoutesG');
 const authRoutesG = require('./authRoutesG');
+const userRoutesG = require('./userRoutesG');
 
 
 //TODO Se le tiene que agregar un prefijo
-// router.use('/user',userRoutesG);
+router.use('/user',userRoutesG);
 router.use('/auth',authRoutesG);
 
 

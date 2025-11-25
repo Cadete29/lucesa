@@ -31,9 +31,47 @@ const findUserById = async (id) => {
     return rows[0];
 };
 
+// === ACTUALIZAR PERFIL (solo nombre y foto_perfil) ===
+const updateUserProfile = async (id, { nombre, foto_perfil }) => {
+    const query = `
+        UPDATE users 
+        SET nombre = COALESCE($1, nombre),
+            foto_perfil = COALESCE($2, foto_perfil),
+            updated_at = NOW()
+        WHERE id = $3
+        RETURNING id, username, email, nombre, foto_perfil, updated_at
+    `;
+    const values = [nombre, foto_perfil, id];
+    const { rows } = await pool.query(query, values);
+    return rows[0];
+};
+
+// === BORRAR USUARIO (sin cambios) ===
+const deleteUser = async (id) => {
+    const query = `DELETE FROM users WHERE id = $1 RETURNING id, username`;
+    const { rows } = await pool.query(query, [id]);
+    return rows[0];
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 module.exports = {
     createUser,
     findUserByEmail,
     findUserByUsername,
-    findUserById
+    findUserById,
+    updateUserProfile,
+    deleteUser
 };
