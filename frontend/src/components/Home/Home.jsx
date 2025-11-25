@@ -9,9 +9,8 @@ import {
   useMarcas 
 } from "../../api/productosHooks";
 import "./Home.css";
-/* import ImageDebug from '../ImageDebug/ImageDebug'; */
-
-
+import ImageDebug from '../ImageDebug/ImageDebug';
+import Compo from '../compo'
 
 // Mover las funciones auxiliares fuera del componente o usar useCallback
 const generarIdDesdeNombre = (nombre) => {
@@ -30,6 +29,18 @@ const generarIdDesdeNombre = (nombre) => {
   }
   
   return `${nombreNormalizado}-${Math.abs(hash).toString(36).substr(0, 6)}`;
+};
+
+// ✅ FUNCIÓN CORREGIDA PARA OBTENER ID SIN HASH (compatible con Products)
+const obtenerIdCategoriaParaURL = (categoriaNombre) => {
+  if (!categoriaNombre) return '';
+  
+  // ✅ CORRECCIÓN: Generar ID sin hash para compatibilidad con Products
+  return categoriaNombre.toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
 };
 
 const obtenerDescripcionCategoria = (nombreCategoria) => {
@@ -192,8 +203,9 @@ const CarruselCategorias = ({ categorias }) => {
                 <div className="categoria-count-small">
                   {categoria.count} productos
                 </div>
+                {/* ✅ CORRECCIÓN: Usar ID compatible con Products */}
                 <Link 
-                  to={`/products?category=${encodeURIComponent(categoria.nombre)}`} 
+                  to={`/products?category=${obtenerIdCategoriaParaURL(categoria.nombre)}`} 
                   className="btn-categoria-small"
                 >
                   Explorar
@@ -235,7 +247,7 @@ const Home = () => {
 
     // Usar datos reales de la API con hooks
     const { data: productosDestacadosData, loading: destacadosLoading, error: destacadosError } = useProductosDestacados();
-    const { data: todosProductosData, loading: productosLoading } = useProductos({ limit: 50 });
+    const { data: todosProductosData, loading: productosLoading } = useProductos({ limit: 200 });
     const { data: categoriasRealesResponse, loading: categoriasLoading } = useCategoriasReales();
     const { data: marcasData, loading: marcasLoading } = useMarcas();
 
@@ -246,26 +258,21 @@ const Home = () => {
     const marcasReales = marcasData?.data || [];
 
     console.log('📦 Productos destacados:', productosDestacados);
-    console.log('📦 Todos los productos:', todosProductos);
-    console.log('🏷️ Categorías reales:', categoriasReales);
-    console.log('🏷️ Marcas reales:', marcasReales);
+    console.log('📦 Todos los productos:', todosProductos?.length);
+    console.log('🏷️ Categorías reales:', categoriasReales?.length);
+    console.log('🏷️ Marcas reales:', marcasReales?.length);
 
-    // **FUNCIÓN: Obtener las 5 categorías con más productos**
-    const obtenerTop5Categorias = useMemo(() => {
+    // **FUNCIÓN: Obtener las categorías con más productos (misma lógica que Categories.jsx)**
+    const topCategorias = useMemo(() => {
         if (!todosProductos || !Array.isArray(todosProductos) || todosProductos.length === 0) {
             console.log('📊 No hay productos para analizar categorías');
             return [];
         }
 
-        if (!categoriasReales || !Array.isArray(categoriasReales) || categoriasReales.length === 0) {
-            console.log('📊 No hay categorías reales disponibles');
-            return [];
-        }
-
-        // Contar productos por categoría
-        const categoriasMap = new Map();
-
         console.log(`🔍 Analizando ${todosProductos.length} productos para categorías...`);
+
+        // MISMA LÓGICA QUE Categories.jsx
+        const categoriasMap = new Map();
 
         todosProductos.forEach(producto => {
             // PRIORIDAD 1: Usar categoría principal si existe y es válida
@@ -298,18 +305,18 @@ const Home = () => {
                 nombre,
                 count,
                 id: generarIdDesdeNombre(nombre),
+                idParaURL: obtenerIdCategoriaParaURL(nombre),
                 descripcion: obtenerDescripcionCategoria(nombre),
                 icon: obtenerIconoCategoria(nombre)
             }))
             .filter(cat => cat.count > 0) // Solo categorías con productos
             .sort((a, b) => b.count - a.count) // Ordenar por cantidad descendente
-            .slice(0, 5); // Tomar solo las 5 primeras
+            .slice(0, 8); // Tomar las 8 categorías con más productos
 
-        console.log('🏆 Top 5 categorías con más productos:', categoriasConConteo);
-
+        console.log('🎯 Top 8 categorías con más productos:', categoriasConConteo);
         return categoriasConConteo;
 
-    }, [todosProductos, categoriasReales]);
+    }, [todosProductos]);
 
     // Obtener productos destacados REALES de la API
     const getProductosDestacados = () => {
@@ -415,7 +422,6 @@ const Home = () => {
 
     const displayProductosDestacados = getProductosDestacados();
     const displayMasProductos = getMasProductos();
-    const top5Categorias = obtenerTop5Categorias;
     const displayMarcasPopulares = getMarcasPopulares();
 
     const handleQuickView = (product) => {
@@ -473,8 +479,8 @@ const Home = () => {
                         <p className="section-subtitle">Descubre nuestras categorías con mayor variedad de productos</p>
                     </div>
                     
-                    {top5Categorias.length > 0 ? (
-                        <CarruselCategorias categorias={top5Categorias} />
+                    {topCategorias.length > 0 ? (
+                        <CarruselCategorias categorias={topCategorias} />
                     ) : (
                         <div className="no-categories">
                             <p>{categoriasLoading ? 'Cargando categorías...' : 'No hay categorías disponibles en este momento.'}</p>
@@ -489,6 +495,7 @@ const Home = () => {
                 </div>
             </section>
 
+            {/* Resto del código se mantiene igual... */}
             {/* Sección de Productos Destacados */}
             <section className="productos-destacados">
                 <div className="container">
@@ -675,8 +682,8 @@ const Home = () => {
                 onAddToCart={handleAddToCart}
             />
 
-            {/* Debug solo en desarrollo
-            {process.env.NODE_ENV === 'development' && <ImageDebug />} */}
+            {/* Debug solo en desarrollo */}
+            {process.env.NODE_ENV === 'development' &&  <ImageDebug /> }
         </main>
     );
 };

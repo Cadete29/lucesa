@@ -1,15 +1,99 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import './ProductCard.css';
 
+// ✅ Función de normalización de producto
+const normalizarProducto = (producto) => {
+  if (!producto) return producto;
+  
+  const existencia = producto.existencia || producto.existenciaTotal || 0;
+  const existenciaTotal = producto.existenciaTotal || producto.existencia || 0;
+  
+  return {
+    ...producto,
+    existencia,
+    existenciaTotal,
+    disponible: existencia > 0,
+    tieneExistencia: existencia > 0,
+    stock: existencia,
+    sinStock: existencia === 0,
+    stockBajo: existencia > 0 && existencia <= 5,
+    stockSuficiente: existencia > 5
+  };
+};
+
+// ✅ Tipo de cambio fijo
+const TIPO_CAMBIO_MXN = 18.50;
+
 const ProductCard = ({ product, onQuickView }) => {
-    const [imageStatus, setImageStatus] = useState('loading'); // 'loading', 'loaded', 'error'
+    const [imageStatus, setImageStatus] = useState('loading');
     const [currentImageUrl, setCurrentImageUrl] = useState('');
     const imgRef = useRef(null);
     const retryCountRef = useRef(0);
 
+    // ✅ Normalizar el producto
+    const normalizedProduct = useMemo(() => {
+        return normalizarProducto(product);
+    }, [product]);
+
+    // ✅ CÁLCULO CORREGIDO DE PRECIOS EN MXN - CON PROMOCIONES
+    const productCalculations = useMemo(() => {
+        const hasActivePromotion = normalizedProduct.promociones && normalizedProduct.promociones.length > 0;
+        const currentPromotion = hasActivePromotion ? normalizedProduct.promociones[0] : null;
+        
+        // ✅ CORRECCIÓN: Siempre convertir a MXN ya que los precios vienen en USD
+        const convertirAMXN = (precio) => {
+            // Si no hay precio, retornar 0
+            if (!precio) return 0;
+            
+            // SIEMPRE convertir a MXN (los precios vienen en USD)
+            return precio * (normalizedProduct.tipoCambio || TIPO_CAMBIO_MXN);
+        };
+
+        // Precio base en MXN (SIEMPRE convertir)
+        const precioBaseMXN = convertirAMXN(normalizedProduct.precio);
+        
+        // Precio promocional en MXN (si existe promoción o precioPromocion)
+        const precioPromoMXN = currentPromotion ? 
+            convertirAMXN(currentPromotion.promocion) : 
+            (normalizedProduct.precioPromocion ? convertirAMXN(normalizedProduct.precioPromocion) : null);
+
+        // Determinar si tiene promoción activa
+        const tienePromocionActiva = precioPromoMXN !== null && precioPromoMXN < precioBaseMXN;
+
+        // Formatear a 2 decimales
+        const formatearPrecio = (precio) => {
+            if (typeof precio !== 'number') return '0.00';
+            return precio.toLocaleString('es-MX', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        };
+
+        const discountPercentage = tienePromocionActiva ? 
+            Math.round(((precioBaseMXN - precioPromoMXN) / precioBaseMXN) * 100) : 
+            0;
+
+        return {
+            tienePromocionActiva,
+            currentPromotion,
+            precioBaseMXN: formatearPrecio(precioBaseMXN),
+            precioPromoMXN: tienePromocionActiva ? formatearPrecio(precioPromoMXN) : null,
+            discountPercentage,
+            precioFinalMXN: tienePromocionActiva ? formatearPrecio(precioPromoMXN) : formatearPrecio(precioBaseMXN),
+            precioOriginalUSD: normalizedProduct.precio,
+            tipoCambioUsado: normalizedProduct.tipoCambio || TIPO_CAMBIO_MXN
+        };
+    }, [
+        normalizedProduct.promociones, 
+        normalizedProduct.precio, 
+        normalizedProduct.precioPromocion,
+        normalizedProduct.tipoCambio
+    ]);
+
+    // ✅ Configurar imagen
     useEffect(() => {
-        if (!product.codigo) {
+        if (!normalizedProduct.codigo) {
             setImageStatus('error');
             return;
         }
@@ -17,31 +101,31 @@ const ProductCard = ({ product, onQuickView }) => {
         retryCountRef.current = 0;
         setImageStatus('loading');
         
-        const url = `http://localhost:4004/api/images/code/${product.codigo}?size=full&t=${Date.now()}`;
-        console.log('🖼️ Configurando imagen:', product.codigo);
+        const url = `http://localhost:4004/api/images/code/${normalizedProduct.codigo}?size=full&t=${Date.now()}`;
         setCurrentImageUrl(url);
+    }, [normalizedProduct.codigo]);
 
-    }, [product.codigo]);
-
+    // ✅ Manejo de imagen con cleanup
     useEffect(() => {
         if (!imgRef.current || !currentImageUrl) return;
 
         const img = imgRef.current;
+        let isMounted = true;
         
         const handleLoad = () => {
-            console.log('✅ Imagen cargada:', product.codigo);
+            if (!isMounted) return;
             setImageStatus('loaded');
         };
 
         const handleError = () => {
-            console.error('❌ Error cargando:', product.codigo);
+            if (!isMounted) return;
             
             if (retryCountRef.current < 2) {
                 retryCountRef.current += 1;
-                console.log(`🔄 Reintento ${retryCountRef.current} para:`, product.codigo);
                 
                 setTimeout(() => {
-                    const retryUrl = `http://localhost:4004/api/images/code/${product.codigo}?size=full&t=${Date.now()}&retry=${retryCountRef.current}`;
+                    if (!isMounted) return;
+                    const retryUrl = `http://localhost:4004/api/images/code/${normalizedProduct.codigo}?size=full&t=${Date.now()}&retry=${retryCountRef.current}`;
                     setCurrentImageUrl(retryUrl);
                     setImageStatus('loading');
                 }, 1000);
@@ -53,61 +137,51 @@ const ProductCard = ({ product, onQuickView }) => {
         img.addEventListener('load', handleLoad);
         img.addEventListener('error', handleError);
 
-        // Forzar la carga de la imagen
         img.src = currentImageUrl;
 
         return () => {
+            isMounted = false;
             img.removeEventListener('load', handleLoad);
             img.removeEventListener('error', handleError);
         };
-    }, [currentImageUrl, product.codigo]);
+    }, [currentImageUrl, normalizedProduct.codigo]);
 
-    // Verificar si hay promoción activa
-    const hasActivePromotion = product.promociones && product.promociones.length > 0;
-    const currentPromotion = hasActivePromotion ? product.promociones[0] : null;
-    
-    // Calcular precio en MXN si está en USD
-    const precioMXN = product.moneda === 'USD' ? 
-        (product.precio * (product.tipoCambio || 20)).toFixed(2) : 
-        product.precio;
-
-    const precioPromoMXN = currentPromotion && product.moneda === 'USD' ?
-        (currentPromotion.promocion * (product.tipoCambio || 20)).toFixed(2) :
-        currentPromotion?.promocion;
-
-    // Calcular descuento porcentual
-    const discountPercentage = currentPromotion ? 
-        Math.round(((product.precio - currentPromotion.promocion) / product.precio) * 100) : 
-        0;
-
-    // Obtener existencia total
-    const getTotalStock = () => {
-        if (!product.existencia) return 0;
-        
-        if (typeof product.existencia === 'object') {
-            return Object.values(product.existencia).reduce((total, stock) => {
-                const stockValue = typeof stock === 'number' ? stock : parseInt(stock) || 0;
-                return total + stockValue;
-            }, 0);
-        }
-        
-        return typeof product.existencia === 'number' ? product.existencia : parseInt(product.existencia) || 0;
-    };
-
-    const totalStock = getTotalStock();
-
-    const handleQuickView = (e) => {
+    // ✅ CORRECCIÓN: Añadir handleQuickView que faltaba
+    const handleQuickView = useCallback((e) => {
         e.preventDefault();
         e.stopPropagation();
         if (onQuickView) {
-            onQuickView(product);
+            onQuickView(normalizedProduct);
         }
-    };
+    }, [onQuickView, normalizedProduct]);
+
+    // ✅ CORRECCIÓN: Añadir handleViewDetails para el botón móvil
+    const handleViewDetails = useCallback((e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Navegar a la página de detalles
+        window.location.href = `/product/${normalizedProduct.idProducto || normalizedProduct.id || normalizedProduct.codigo}`;
+    }, [normalizedProduct]);
+
+    const {
+        tienePromocionActiva,
+        precioBaseMXN,
+        precioPromoMXN,
+        discountPercentage,
+        precioFinalMXN,
+        precioOriginalUSD,
+        tipoCambioUsado
+    } = productCalculations;
+
+    // ✅ NO RENDERIZAR SI EL PRODUCTO NO TIENE EXISTENCIA
+    if (!normalizedProduct.disponible) {
+        return null;
+    }
 
     return (
-        <div className="product-card" data-code={product.codigo}>
-            {/* Badge de promoción */}
-            {hasActivePromotion && (
+        <div className="product-card" data-code={normalizedProduct.codigo}>
+            {/* Badge de promoción - SOLO SI TIENE PROMOCIÓN ACTIVA */}
+            {tienePromocionActiva && (
                 <div className="promotion-badge">
                     -{discountPercentage}%
                 </div>
@@ -119,19 +193,18 @@ const ProductCard = ({ product, onQuickView }) => {
                     <div className="image-placeholder">
                         <div className="placeholder-icon">📷</div>
                         <p>Imagen no disponible</p>
-                        <small>{product.nombre}</small>
+                        <small>{normalizedProduct.nombre}</small>
                     </div>
                 ) : (
                     <>
                         <img 
                             ref={imgRef}
-                            alt={product.nombre}
+                            alt={normalizedProduct.nombre}
                             className={`product-img ${imageStatus === 'loaded' ? 'loaded' : 'loading'}`}
                             crossOrigin="anonymous"
                             loading="lazy"
                         />
                         
-                        {/* Loading - se oculta con CSS cuando la imagen está cargada */}
                         {imageStatus === 'loading' && (
                             <div className="image-loading">
                                 <div className="loading-spinner"></div>
@@ -144,7 +217,6 @@ const ProductCard = ({ product, onQuickView }) => {
                     </>
                 )}
                 
-                {/* Overlay de acciones - solo cuando la imagen está cargada */}
                 {imageStatus === 'loaded' && (
                     <div className="product-overlay">
                         <button 
@@ -158,7 +230,7 @@ const ProductCard = ({ product, onQuickView }) => {
                             Vista Rápida
                         </button>
                         <Link 
-                            to={`/product/${product.idProducto || product.id}`}
+                            to={`/product/${normalizedProduct.idProducto || normalizedProduct.id || normalizedProduct.codigo}`}
                             className="btn-overlay btn-view-details"
                         >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -175,60 +247,78 @@ const ProductCard = ({ product, onQuickView }) => {
             <div className="product-info">
                 {/* Marca y categoría */}
                 <div className="product-meta">
-                    <span className="product-brand">{product.marca}</span>
-                    <span className="product-category">{product.subcategoria || product.categoria}</span>
+                    <span className="product-brand">{normalizedProduct.marca}</span>
+                    <span className="product-category">{normalizedProduct.subcategoria || normalizedProduct.categoria}</span>
                 </div>
 
                 {/* Nombre del producto */}
-                <h3 className="product-name" title={product.nombre}>
-                    {product.nombre}
+                <h3 className="product-name" title={normalizedProduct.nombre}>
+                    {normalizedProduct.nombre}
                 </h3>
 
                 {/* Descripción corta */}
                 <p className="product-description">
-                    {product.descripcion_corta || (product.descripcion ? 
-                        (product.descripcion.length > 100 ? product.descripcion.substring(0, 100) + '...' : product.descripcion) 
+                    {normalizedProduct.descripcion_corta || (normalizedProduct.descripcion ? 
+                        (normalizedProduct.descripcion.length > 100 ? normalizedProduct.descripcion.substring(0, 100) + '...' : normalizedProduct.descripcion) 
                         : 'Descripción no disponible')}
                 </p>
 
-                {/* Precios */}
+                {/* ✅ PRECIOS EN MXN - MOSTRAR ORIGINAL Y PROMOCIÓN SI APPLICA */}
                 <div className="product-prices">
-                    {hasActivePromotion ? (
+                    {tienePromocionActiva ? (
                         <>
+                            {/* PRECIO PROMOCIONAL (ACTUAL) */}
                             <div className="price-promo">
-                                <span className="current-price">${precioPromoMXN}</span>
+                                <span className="current-price">${precioFinalMXN}</span>
                                 <span className="currency">MXN</span>
                             </div>
+                            
+                            {/* PRECIO ORIGINAL (TACHADO) */}
                             <div className="price-original">
-                                <span className="original-price">${precioMXN}</span>
+                                <span className="original-price">${precioBaseMXN} MXN</span>
+                                <span className="discount-amount">
+                                    Ahorras ${(parseFloat(precioBaseMXN.replace(/,/g, '')) - parseFloat(precioPromoMXN.replace(/,/g, ''))).toFixed(2)}
+                                </span>
                             </div>
                         </>
                     ) : (
+                        /* PRECIO NORMAL (SIN PROMOCIÓN) */
                         <div className="price-normal">
-                            <span className="current-price">${precioMXN}</span>
+                            <span className="current-price">${precioFinalMXN}</span>
                             <span className="currency">MXN</span>
                         </div>
                     )}
                 </div>
 
+                {/* Información de conversión */}
+                <div className="conversion-info">
+                    <small>
+                        Precio original: ${precioOriginalUSD} USD • 
+                        Tipo de cambio: {tipoCambioUsado} MXN/USD
+                    </small>
+                </div>
+
                 {/* Existencia */}
                 <div className="product-stock">
-                    {totalStock > 0 ? (
-                        <span className="stock-badge in-stock">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M5 13l4 4L19 7"/>
-                            </svg>
-                            {totalStock > 10 ? 'Disponible' : `Últimas ${totalStock} unidades`}
-                        </span>
-                    ) : (
-                        <span className="stock-badge out-of-stock">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                            Agotado
-                        </span>
-                    )}
+                    <span className="stock-badge in-stock">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M5 13l4 4L19 7"/>
+                        </svg>
+                        {normalizedProduct.existencia > 10 ? 'Disponible' : `Últimas ${normalizedProduct.existencia} unidades`}
+                    </span>
                 </div>
+
+                {/* Información de debug */}
+                {process.env.NODE_ENV === 'development' && (
+                    <div className="debug-info">
+                        <strong>DEBUG:</strong> 
+                        Stock: {normalizedProduct.existencia} | 
+                        Precio USD: ${precioOriginalUSD} | 
+                        Precio MXN: ${precioFinalMXN} |
+                        Tipo Cambio: {tipoCambioUsado} |
+                        {tienePromocionActiva && ` Descuento: ${discountPercentage}%`}
+                    </div>
+                )}
 
                 {/* Botones de acción móviles */}
                 <div className="product-actions-mobile">
@@ -238,16 +328,16 @@ const ProductCard = ({ product, onQuickView }) => {
                     >
                         Vista Rápida
                     </button>
-                    <Link 
-                        to={`/product/${product.idProducto || product.id}`}
+                    <button 
                         className="btn-mobile btn-details-mobile"
+                        onClick={handleViewDetails}
                     >
                         Ver Detalles
-                    </Link>
+                    </button>
                 </div>
             </div>
         </div>
     );
 };
 
-export default ProductCard;
+export default React.memo(ProductCard);

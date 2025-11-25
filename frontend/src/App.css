@@ -1,19 +1,33 @@
+/* App.css - Corregido para eliminar scroll horizontal */
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden; /* CRUCIAL: Elimina scroll horizontal */
+  position: relative;
+}
+
 body {
   font-family: 'Arial', sans-serif;
   line-height: 1.6;
   color: #333;
+  width: 100%;
+  overflow-x: hidden; /* Doble protección */
 }
 
 .App {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden; /* Previene overflow en el contenedor principal */
 }
 
 /* Estilos globales */
@@ -21,6 +35,8 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  width: 100%;
+  overflow-x: hidden; /* Asegura que no haya overflow */
 }
 
 .btn {
@@ -33,8 +49,49 @@ body {
   border: none;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  white-space: nowrap; /* Evita que el texto del botón cause overflow */
 }
 
 .btn:hover {
   background-color: #0056b3;
 }
+
+/* Reglas adicionales de seguridad */
+img, video, iframe, canvas, svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Prevenir overflow en elementos flexibles */
+.flex-container {
+  min-width: 0;
+}
+
+/* Media queries para mayor seguridad en móviles */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 15px;
+  }
+  
+  body {
+    font-size: 14px; /* Ajuste opcional para mejor responsive */
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 10px;
+  }
+  
+  .btn {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+}
+
+/* Debug: Descomenta temporalmente si el problema persiste */
+/*
+* {
+  outline: 1px solid red !important;
+}
+*/

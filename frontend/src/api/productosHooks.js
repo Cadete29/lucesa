@@ -59,6 +59,37 @@ const useProductosAPI = (apiFunction, dependencies = []) => {
 };
 
 /**
+ * Función para normalizar la existencia de un producto
+ */
+export const normalizarProducto = (producto) => {
+  if (!producto) return producto;
+  
+  const existencia = producto.existencia || producto.existenciaTotal || 0;
+  const existenciaTotal = producto.existenciaTotal || producto.existencia || 0;
+  
+  return {
+    ...producto,
+    existencia,
+    existenciaTotal,
+    disponible: existencia > 0,
+    tieneExistencia: existencia > 0,
+    stock: existencia,
+    // Información adicional útil para UI
+    sinStock: existencia === 0,
+    stockBajo: existencia > 0 && existencia <= 5,
+    stockSuficiente: existencia > 5
+  };
+};
+
+/**
+ * Función para normalizar un array de productos
+ */
+export const normalizarProductos = (productos = []) => {
+  if (!Array.isArray(productos)) return [];
+  return productos.map(producto => normalizarProducto(producto));
+};
+
+/**
  * Función para extraer TODAS las categorías reales de los productos
  */
 export const extraerTodasLasCategoriasReales = (productos = []) => {
@@ -99,11 +130,6 @@ export const extraerTodasLasCategoriasReales = (productos = []) => {
       const subcategoria = producto.subcategoria.trim();
       subcategoriasSet.add(subcategoria);
     }
-
-    // Debug cada 1000 productos
-    if ((index + 1) % 1000 === 0) {
-      console.log(`📈 Procesados ${index + 1} productos - Categorías encontradas: ${categoriasSet.size}`);
-    }
   });
 
   // Combinar categorías y subcategorías
@@ -113,14 +139,6 @@ export const extraerTodasLasCategoriasReales = (productos = []) => {
   console.log(`   ✅ Categorías principales: ${categoriasSet.size}`);
   console.log(`   ✅ Subcategorías: ${subcategoriasSet.size}`);
   console.log(`   📊 TOTAL: ${todasLasCategorias.length} categorías reales`);
-  
-  // Mostrar ejemplos de categorías encontradas
-  if (todasLasCategorias.length > 0) {
-    console.log('🏷️ EJEMPLOS DE CATEGORÍAS ENCONTRADAS:');
-    todasLasCategorias.slice(0, 20).forEach((cat, i) => {
-      console.log(`   ${i + 1}. ${cat}`);
-    });
-  }
 
   return todasLasCategorias.sort();
 };
@@ -134,7 +152,7 @@ export const useCategoriasReales = (options = {}) => {
   const [error, setError] = useState(null);
 
   // Obtener una cantidad grande de productos para extraer todas las categorías
-  const { data: productosResponse, loading: productosLoading, error: productosError } = useProductos({
+  const { data: productosResponse, loading: productosLoading, error: productosError } = useProductosUnificados({
     page: 1,
     limit: 20000,
     ...options
@@ -182,10 +200,10 @@ export const useCategoriasReales = (options = {}) => {
   return { data, loading: loading || productosLoading, error, refetch };
 };
 
-// ==================== HOOKS PRINCIPALES ====================
+// ==================== HOOKS PRINCIPALES ACTUALIZADOS ====================
 
-// Hook para todos los productos con paginación real
-export const useProductos = (options = {}) => {
+// Hook para productos unificados (SIEMPRE con existencia)
+export const useProductosUnificados = (options = {}) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -197,7 +215,10 @@ export const useProductos = (options = {}) => {
       try {
         setLoading(true);
         setError(null);
-        const result = await productosAPI.getTodosProductos(options);
+        
+        // Usar el endpoint unificado
+        const result = await productosAPI.getProductosUnificados(options);
+        
         if (mounted) {
           if (result.success) {
             setData(result);
@@ -227,7 +248,7 @@ export const useProductos = (options = {}) => {
     try {
       setLoading(true);
       setError(null);
-      const result = await productosAPI.getTodosProductos(options);
+      const result = await productosAPI.getProductosUnificados(options);
       if (result.success) {
         setData(result);
       } else {
@@ -243,25 +264,108 @@ export const useProductos = (options = {}) => {
   return { data, loading, error, refetch };
 };
 
-// Hook para productos con existencia
-export const useProductosConExistencia = (options = {}) => 
-  useProductosAPI(() => productosAPI.getProductosConExistencia(options), [JSON.stringify(options)]);
+// Hook para productos con existencia (con polling automático)
+export const useProductosConExistencia = (options = {}) => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [lastUpdate, setLastUpdate] = useState(Date.now());
 
-// Hook para productos destacados
+  // Configurar intervalo de actualización automática
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLastUpdate(Date.now());
+    }, 30000); // Actualizar cada 30 segundos
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Siempre obtener productos con existencia
+        const result = await productosAPI.getProductosConExistencia({
+          minExistencia: 1, // Solo productos con stock
+          ...options
+        });
+        
+        if (mounted && result.success) {
+          console.log(`🔄 Productos con stock actualizados: ${result.data.length} productos`);
+          setData(result);
+        } else if (mounted) {
+          setError(result.error || 'Error en la respuesta del servidor');
+        }
+      } catch (err) {
+        if (mounted) {
+          setError(err.message);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [JSON.stringify(options), lastUpdate]); // Se ejecuta cuando cambian options o lastUpdate
+
+  const refetch = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await productosAPI.getProductosConExistencia({
+        minExistencia: 1,
+        ...options
+      });
+      
+      if (result.success) {
+        setData(result);
+      } else {
+        setError(result.error || 'Error en la respuesta del servidor');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { data, loading, error, refetch, lastUpdate };
+};
+
+// Hook para productos con existencia en tiempo real (con actualización automática)
+export const useProductosConExistenciaEnTiempoReal = (options = {}) => {
+  return useProductosConExistencia(options);
+};
+
+// Hook para todos los productos (legacy - puede no tener existencia)
+export const useProductos = (options = {}) => 
+  useProductosAPI(() => productosAPI.getTodosProductos(options), [JSON.stringify(options)]);
+
+// Hook para productos destacados (CON EXISTENCIA y actualización automática)
 export const useProductosDestacados = (options = {}) => {
-  const { limit = 12, minExistencia = 5, ...restOptions } = options;
+  const { limit = 12, minExistencia = 1, ...restOptions } = options;
   
-  return useProductosAPI(() => productosAPI.getProductosConExistencia({
+  return useProductosConExistencia({
     limit,
     minExistencia,
     ...restOptions
-  }), [JSON.stringify(options)]);
+  });
 };
 
-// Hook para productos en promoción
+// Hook para productos en promoción (CON EXISTENCIA)
 export const useProductosEnPromocion = (options = {}) => 
   useProductosAPI(async () => {
-    const result = await productosAPI.getTodosProductos(options);
+    const result = await productosAPI.getProductosUnificados(options);
     if (result.success && result.data) {
       const productosEnPromocion = result.data.filter(
         producto => producto.precioPromocion && producto.precioPromocion > 0
@@ -278,21 +382,21 @@ export const useProductosEnPromocion = (options = {}) =>
     return result;
   }, [JSON.stringify(options)]);
 
-// Hook para productos por categoría
+// Hook para productos por categoría (CON EXISTENCIA)
 export const useProductosPorCategoria = (categoria, options = {}) => 
-  useProductosAPI(() => productosAPI.getTodosProductos({
+  useProductosAPI(() => productosAPI.getProductosUnificados({
     categoria,
     ...options
   }), [categoria, JSON.stringify(options)]);
 
-// Hook para productos por marca
+// Hook para productos por marca (CON EXISTENCIA)
 export const useProductosPorMarca = (marca, options = {}) => 
-  useProductosAPI(() => productosAPI.getTodosProductos({
+  useProductosAPI(() => productosAPI.getProductosUnificados({
     marca,
     ...options
   }), [marca, JSON.stringify(options)]);
 
-// ==================== HOOKS DE PRODUCTOS ESPECÍFICOS ====================
+// ==================== HOOKS DE PRODUCTOS ESPECÍFICOS ACTUALIZADOS ====================
 
 export const useProductoPorCodigo = (codigo, incluirSinExistencia = false) => 
   useProductosAPI(() => productosAPI.getProductoPorCodigo(codigo, incluirSinExistencia), [codigo, incluirSinExistencia]);
@@ -300,18 +404,23 @@ export const useProductoPorCodigo = (codigo, incluirSinExistencia = false) =>
 export const useProductoPorId = (id, incluirSinExistencia = false) => 
   useProductosAPI(() => productosAPI.getProductoPorCodigo(id, incluirSinExistencia), [id, incluirSinExistencia]);
 
+// NUEVO: Hook para producto unificado (SIEMPRE con existencia normalizada)
+export const useProductoUnificado = (codigo) => 
+  useProductosAPI(() => productosAPI.getProductoUnificado(codigo), [codigo]);
+
 export const useProductoDetallado = (codigo) => 
   useProductosAPI(async () => {
-    const result = await productosAPI.getProductoPorCodigo(codigo, true);
+    const result = await productosAPI.getProductoUnificado(codigo);
     if (result.success && result.data) {
+      const producto = result.data;
       return {
         ...result,
         data: {
-          ...result.data,
-          tieneDescuento: result.data.precioPromocion > 0,
-          porcentajeDescuento: result.data.precioPromocion > 0 ? 
-            Math.round((1 - result.data.precioPromocion / result.data.precio) * 100) : 0,
-          disponible: (result.data.existencia || result.data.existenciaTotal) > 0
+          ...producto,
+          tieneDescuento: producto.precioPromocion > 0,
+          porcentajeDescuento: producto.precioPromocion > 0 ? 
+            Math.round((1 - producto.precioPromocion / producto.precio) * 100) : 0,
+          // La disponibilidad ya está normalizada en getProductoUnificado
         }
       };
     }
@@ -327,7 +436,7 @@ export const useProductosRelacionados = (productoActual, limit = 4) =>
     const resultados = [];
     
     if (productoActual.categoria) {
-      const porCategoria = await productosAPI.getTodosProductos({
+      const porCategoria = await productosAPI.getProductosUnificados({
         categoria: productoActual.categoria,
         limit: Math.ceil(limit / 2)
       });
@@ -337,7 +446,7 @@ export const useProductosRelacionados = (productoActual, limit = 4) =>
     }
 
     if (productoActual.marca) {
-      const porMarca = await productosAPI.getTodosProductos({
+      const porMarca = await productosAPI.getProductosUnificados({
         marca: productoActual.marca,
         limit: Math.ceil(limit / 2)
       });
@@ -366,7 +475,7 @@ export const useProductosRelacionados = (productoActual, limit = 4) =>
     };
   }, [productoActual?.codigo, limit]);
 
-// ==================== HOOKS DE BÚSQUEDA ====================
+// ==================== HOOKS DE BÚSQUEDA ACTUALIZADOS ====================
 
 export const useBuscarProductos = (termino, options = {}) => 
   useProductosAPI(() => productosAPI.buscarProductos(termino, options), [termino, JSON.stringify(options)]);
@@ -406,31 +515,46 @@ export const useProductosHealth = () =>
 
 // ==================== ALIAS Y COMPATIBILIDAD ====================
 
-export const useTodosProductos = useProductos;
+// ALIAS PRINCIPAL: usar useProductosUnificados en lugar de useProductos
+export const useTodosProductos = useProductosUnificados;
 export const useProductosDisponibles = useProductosConExistencia;
 
 // ==================== EXPORTACIÓN POR DEFECTO ====================
 
 export default {
-  useProductos,
+  // HOOKS PRINCIPALES (CON EXISTENCIA)
+  useProductos: useProductosUnificados, // ¡IMPORTANTE! Redirigir useProductos al unificado
+  useProductosUnificados,
   useTodosProductos,
   useProductosConExistencia,
+  useProductosConExistenciaEnTiempoReal,
   useProductosDisponibles,
   useProductosDestacados,
   useProductosEnPromocion,
   useProductosPorCategoria,
   useProductosPorMarca,
+  
+  // PRODUCTOS ESPECÍFICOS
   useProductoPorCodigo,
+  useProductoUnificado, // NUEVO - recomendado
   useProductoPorId,
   useProductoDetallado,
   useProductosRelacionados,
+  
+  // BÚSQUEDA
   useBuscarProductos,
   useBuscar,
   useBusquedaEnTiempoReal,
+  
+  // DATOS MAESTROS
   useEstadisticas,
   useCategorias,
   useCategoriasReales,
   useMarcas,
   useProductosHealth,
-  extraerTodasLasCategoriasReales
+  
+  // FUNCIONES HELPER
+  extraerTodasLasCategoriasReales,
+  normalizarProducto,
+  normalizarProductos
 };

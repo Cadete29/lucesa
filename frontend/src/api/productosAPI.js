@@ -53,7 +53,7 @@ class ProductosAPI {
     return this.request('/productos/health');
   }
 
-  // Obtener todos los productos CON PAGINACIÓN
+  // Obtener todos los productos CON PAGINACIÓN (desde XML - puede no tener existencia)
   async getTodosProductos(options = {}) {
     const { page = 1, limit = 50, categoria, marca, search } = options;
     const params = new URLSearchParams({
@@ -67,17 +67,39 @@ class ProductosAPI {
     return this.request(`/productos/todos?${params}`);
   }
 
-  // Obtener productos con existencia CON PAGINACIÓN
+  // Obtener productos con existencia CON PAGINACIÓN (desde JSON - siempre tiene existencia)
   async getProductosConExistencia(options = {}) {
-    const { page = 1, limit = 50, almacen, minExistencia = 1 } = options;
+    const { page = 1, limit = 50, almacen, minExistencia = 0 } = options;
     const params = new URLSearchParams({
       page,
       limit,
-      minExistencia,
+      minExistencia: minExistencia.toString(),
       ...(almacen && { almacen })
     });
     
     return this.request(`/productos/existencias?${params}`);
+  }
+
+  // NUEVO: Obtener productos unificados (con existencia normalizada)
+  async getProductosUnificados(options = {}) {
+    const { page = 1, limit = 50, categoria, marca, search, minExistencia = 0 } = options;
+    const params = new URLSearchParams({
+      page,
+      limit,
+      minExistencia: minExistencia.toString(),
+      ...(categoria && { categoria }),
+      ...(marca && { marca }),
+      ...(search && { search })
+    });
+    
+    const result = await this.request(`/productos/existencias?${params}`);
+    
+    // Normalizar la existencia en la respuesta
+    if (result.success && result.data) {
+      result.data = result.data.map(producto => this.normalizarProducto(producto));
+    }
+    
+    return result;
   }
 
   // Buscar productos
@@ -89,7 +111,14 @@ class ProductosAPI {
       conExistencia
     });
     
-    return this.request(`/productos/buscar?${params}`);
+    const result = await this.request(`/productos/buscar?${params}`);
+    
+    // Normalizar existencia en búsquedas
+    if (result.success && result.data) {
+      result.data = result.data.map(producto => this.normalizarProducto(producto));
+    }
+    
+    return result;
   }
 
   // Obtener producto por código
@@ -98,7 +127,25 @@ class ProductosAPI {
       incluirSinExistencia: incluirSinExistencia.toString()
     });
     
-    return this.request(`/productos/producto/${codigo}?${params}`);
+    const result = await this.request(`/productos/producto/${codigo}?${params}`);
+    
+    // Normalizar existencia
+    if (result.success && result.data) {
+      result.data = this.normalizarProducto(result.data);
+    }
+    
+    return result;
+  }
+
+  // Obtener producto unificado (siempre con existencia normalizada)
+  async getProductoUnificado(codigo) {
+    const result = await this.getProductoPorCodigo(codigo, true);
+    
+    if (result.success && result.data) {
+      result.data = this.normalizarProducto(result.data);
+    }
+    
+    return result;
   }
 
   // Obtener estadísticas
@@ -129,6 +176,23 @@ class ProductosAPI {
   // Forzar actualización
   async actualizarDatos() {
     return this.request('/productos/actualizar', { method: 'POST' });
+  }
+
+  // Helper para normalizar producto
+  normalizarProducto(producto) {
+    if (!producto) return producto;
+    
+    const existencia = producto.existencia || producto.existenciaTotal || 0;
+    const existenciaTotal = producto.existenciaTotal || producto.existencia || 0;
+    
+    return {
+      ...producto,
+      existencia,
+      existenciaTotal,
+      disponible: existencia > 0,
+      tieneExistencia: existencia > 0,
+      stock: existencia
+    };
   }
 }
 
