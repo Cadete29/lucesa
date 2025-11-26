@@ -3,6 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import './Cart.css';
 
+// ✅ Configuración de URLs por entorno
+const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://testpaginaweb.shop/api/images/code'
+  : 'http://localhost:4004/api/images/code';
+
 const Cart = () => {
   const { 
     cartItems, 
@@ -27,8 +32,9 @@ const Cart = () => {
     navigate('/checkout');
   };
 
+  // ✅ Función para obtener URL de imagen usando la configuración por entorno
   const getImageUrl = (codigo) => {
-    return `http://localhost:4004/api/images/code/${codigo}?size=medium`;
+    return `${IMAGE_BASE_URL}/${codigo}?size=medium`;
   };
 
   const subtotal = getCartTotal();

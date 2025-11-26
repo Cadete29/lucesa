@@ -4,6 +4,11 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import './Checkout.css';
 
+// ✅ Configuración de URLs por entorno
+const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://testpaginaweb.shop/api/images/code'
+  : 'http://localhost:4004/api/images/code';
+
 const Checkout = () => {
   const { cartItems, getCartTotal, clearCart } = useCart();
   const { user } = useAuth();
@@ -80,8 +85,9 @@ const Checkout = () => {
     }
   };
 
+  // ✅ Función para obtener URL de imagen usando la configuración por entorno
   const getImageUrl = (codigo) => {
-    return `http://localhost:4004/api/images/code/${codigo}?size=small`;
+    return `${IMAGE_BASE_URL}/${codigo}?size=small`;
   };
 
   if (cartItems.length === 0) {

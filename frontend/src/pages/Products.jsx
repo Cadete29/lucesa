@@ -309,9 +309,9 @@ const Products = () => {
     if (loading) {
         return (
             <div className="products-page">
-                <div className="container">
-                    <div className="loading-products">
-                        <div className="loading-spinner"></div>
+                <div className="products-container">
+                    <div className="products-loading-products">
+                        <div className="products-loading-spinner"></div>
                         <p>Cargando productos...</p>
                     </div>
                 </div>
@@ -322,12 +322,12 @@ const Products = () => {
     if (error) {
         return (
             <div className="products-page">
-                <div className="container">
-                    <div className="error-products">
-                        <div className="error-icon">⚠️</div>
+                <div className="products-container">
+                    <div className="products-error-products">
+                        <div className="products-error-icon">⚠️</div>
                         <h3>Error al cargar productos</h3>
                         <p>{error.message || 'Ha ocurrido un error'}</p>
-                        <button onClick={() => window.location.reload()} className="btn-retry">
+                        <button onClick={() => window.location.reload()} className="products-btn-retry">
                             Reintentar
                         </button>
                     </div>
@@ -338,10 +338,10 @@ const Products = () => {
 
     return (
         <div className="products-page">
-            <div className="container">
+            <div className="products-container">
                 <div className="products-header">
-                    <div className="header-top">
-                        <button onClick={handleGoBack} className="back-button">← Volver</button>
+                    <div className="products-header-top">
+                        <button onClick={handleGoBack} className="products-back-button">← Volver</button>
                         <h1>
                             {isModoPromociones ? (
                                 <>🎯 Ofertas Especiales</>
@@ -354,24 +354,24 @@ const Products = () => {
                         
                         {/* ✅ BADGE DE MODO PROMOCIONES */}
                         {isModoPromociones && (
-                            <div className="promociones-badge">
-                                <span className="badge-icon">🔥</span>
+                            <div className="products-promociones-badge">
+                                <span className="products-badge-icon">🔥</span>
                                 <span>Productos en promoción</span>
                             </div>
                         )}
                     </div>
                     
                     <div className="products-search">
-                        <div className="search-box">
+                        <div className="products-search-box">
                             <input
                                 type="text"
                                 placeholder="Buscar productos..."
                                 value={searchTerm}
                                 onChange={handleSearch}
-                                className="search-input"
+                                className="products-search-input"
                             />
                             {searchTerm && (
-                                <button onClick={handleClearSearch} className="search-clear">×</button>
+                                <button onClick={handleClearSearch} className="products-search-clear">×</button>
                             )}
                         </div>
                         
@@ -379,7 +379,7 @@ const Products = () => {
                         {isModoPromociones && (
                             <button 
                                 onClick={handleExitPromociones}
-                                className="btn-exit-promociones"
+                                className="products-btn-exit-promociones"
                             >
                                 🗙 Ver todos los productos
                             </button>
@@ -389,46 +389,70 @@ const Products = () => {
                     <div className="products-count">
                         <span>Mostrando {productosPaginados.length} de {filteredProducts.length} productos disponibles</span>
                         {isModoPromociones ? (
-                            <span className="promociones-indicator">en oferta especial</span>
+                            <span className="products-promociones-indicator">en oferta especial</span>
                         ) : selectedCategory !== 'todos' && (
-                            <span className="category-indicator">en {getCategoryDisplayName(selectedCategory)}</span>
+                            <span className="products-category-indicator">en {getCategoryDisplayName(selectedCategory)}</span>
                         )}
                     </div>
                 </div>
 
                 <div className="products-controls">
-                    <div className="sort-filter">
-                        <label htmlFor="sort">Ordenar por:</label>
-                        <select 
-                            id="sort"
-                            value={sortBy} 
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="sort-select"
-                        >
-                            <option value="nombre">Nombre A-Z</option>
-                            <option value="precio">Precio: Menor a Mayor</option>
-                            <option value="precio-desc">Precio: Mayor a Menor</option>
-                            <option value="existencia">Disponibilidad</option>
-                        </select>
-                    </div>
-                    
-                    {/* ✅ CONTADOR DE DESCUENTOS EN MODO PROMOCIONES */}
-                    {isModoPromociones && (
-                        <div className="promociones-stats">
-                            <span className="stats-icon">💰</span>
-                            <span>
-                                {filteredProducts.filter(p => 
-                                    p.precioPromocion && p.precioPromocion < p.precio
-                                ).length} productos con descuento
-                            </span>
+                    {/* ✅ NAVEGACIÓN DE CATEGORÍAS COMPLETA */}
+                    <div className="products-categories-navigation">
+                        <div className="products-categories-header">
+                            <h3>🧭 Navegación</h3>
                         </div>
-                    )}
+                        <div className="products-categories-actions">
+                            <button 
+                                onClick={() => handleCategoryChange('todos')}
+                                className={`products-category-nav-btn ${selectedCategory === 'todos' ? 'products-category-nav-active' : ''}`}
+                            >
+                                📦 Todos
+                            </button>
+                            <Link 
+                                to="/categories" 
+                                className="products-category-nav-btn products-browse-categories"
+                            >
+                                🗂️ Ver Categorías
+                            </Link>
+                        </div>
+                    </div>
+
+                    <div className="products-sort-filter">
+                        <div className="products-sort-filter-container">
+                            <label htmlFor="sort">↕️ Ordenar por:</label>
+                            <select 
+                                id="sort"
+                                value={sortBy} 
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="products-sort-select"
+                            >
+                                <option value="nombre">Nombre A-Z</option>
+                                <option value="precio">Precio: Menor a Mayor</option>
+                                <option value="precio-desc">Precio: Mayor a Menor</option>
+                                <option value="marca">Marca</option>
+                                <option value="existencia">Disponibilidad</option>
+                            </select>
+                        </div>
+                        
+                        {/* ✅ CONTADOR DE DESCUENTOS EN MODO PROMOCIONES */}
+                        {isModoPromociones && (
+                            <div className="products-promociones-stats">
+                                <span className="products-stats-icon">💰</span>
+                                <span>
+                                    {filteredProducts.filter(p => 
+                                        p.precioPromocion && p.precioPromocion < p.precio
+                                    ).length} productos con descuento
+                                </span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="products-grid">
                     {searchLoading ? (
-                        <div className="loading-search">
-                            <div className="loading-spinner"></div>
+                        <div className="products-loading-search">
+                            <div className="products-loading-spinner"></div>
                             <p>Buscando productos...</p>
                         </div>
                     ) : productosPaginados.length > 0 ? (
@@ -440,8 +464,8 @@ const Products = () => {
                             />
                         ))
                     ) : (
-                        <div className="no-products">
-                            <div className="no-products-icon">
+                        <div className="products-no-products">
+                            <div className="products-no-products-icon">
                                 {isModoPromociones ? '💰' : '📦'}
                             </div>
                             <h3>
@@ -456,15 +480,24 @@ const Products = () => {
                                     : 'No hay productos disponibles en esta categoría o búsqueda.'
                                 }
                             </p>
-                            {isModoPromociones ? (
-                                <button onClick={handleExitPromociones} className="btn-back">
-                                    ← Ver todos los productos
-                                </button>
-                            ) : (
-                                <button onClick={handleGoBack} className="btn-back">
+                            <div className="products-no-products-actions">
+                                {isModoPromociones ? (
+                                    <button onClick={handleExitPromociones} className="products-btn-view-all">
+                                        ← Ver todos los productos
+                                    </button>
+                                ) : searchTerm ? (
+                                    <button onClick={handleClearSearch} className="products-btn-clear-search">
+                                        🗙 Limpiar búsqueda
+                                    </button>
+                                ) : (
+                                    <Link to="/categories" className="products-btn-browse-categories">
+                                        🗂️ Explorar Categorías
+                                    </Link>
+                                )}
+                                <button onClick={handleGoBack} className="products-btn-back">
                                     ← Volver Atrás
                                 </button>
-                            )}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -475,7 +508,7 @@ const Products = () => {
                         <button 
                             disabled={currentPage === 1}
                             onClick={() => handlePageChange(currentPage - 1)}
-                            className="pagination-btn"
+                            className="products-pagination-btn"
                         >
                             ← Anterior
                         </button>
@@ -497,7 +530,7 @@ const Products = () => {
                             return (
                                 <button
                                     key={pageNumber}
-                                    className={`pagination-btn ${currentPage === pageNumber ? 'active' : ''}`}
+                                    className={`products-pagination-btn ${currentPage === pageNumber ? 'products-pagination-active' : ''}`}
                                     onClick={() => handlePageChange(pageNumber)}
                                 >
                                     {pageNumber}
@@ -505,10 +538,12 @@ const Products = () => {
                             );
                         })}
 
+                        <span className="products-pagination-ellipsis">...</span>
+
                         <button 
                             disabled={currentPage === totalPages}
                             onClick={() => handlePageChange(currentPage + 1)}
-                            className="pagination-btn"
+                            className="products-pagination-btn"
                         >
                             Siguiente →
                         </button>

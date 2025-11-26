@@ -1,6 +1,6 @@
-/* Banner.css - Botones con estilo similar al existente */
+/* Banner.css - Completamente corregido */
 
-.banner-lucesa {
+.banner-bnr {
   position: relative;
   height: 80vh;
   min-height: 600px;
@@ -11,14 +11,15 @@
   opacity: 0;
   transform: translateY(30px);
   transition: all 0.8s ease;
+  background: #0f2642;
 }
 
-.banner-lucesa.animate-in {
+.banner-bnr.animate-in-bnr {
   opacity: 1;
   transform: translateY(0);
 }
 
-.banner-background {
+.banner-background-bnr {
   position: absolute;
   top: 0;
   left: 0;
@@ -32,12 +33,12 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .banner-background {
-    animation: zoomEffect 20s ease-in-out infinite;
+  .banner-background-bnr {
+    animation: zoomEffectBnr 20s ease-in-out infinite;
   }
 }
 
-.banner-overlay {
+.banner-overlay-bnr {
   position: absolute;
   top: 0;
   left: 0;
@@ -45,13 +46,24 @@
   height: 100%;
   background: linear-gradient(
     135deg,
-    rgba(22, 57, 92, 0.85) 0%,
-    rgba(44, 95, 142, 0.75) 50%,
-    rgba(72, 149, 207, 0.6) 100%
+    rgba(22, 57, 92, 0.95) 0%,
+    rgba(44, 95, 142, 0.85) 50%,
+    rgba(72, 149, 207, 0.75) 100%
   );
 }
 
-.banner-container-lucesa {
+.banner-bnr::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #4895CF, #7CCBDD);
+  z-index: 3;
+}
+
+.banner-container-bnr {
   position: relative;
   z-index: 2;
   width: 100%;
@@ -60,15 +72,15 @@
   padding: 0 1.5rem;
 }
 
-.banner-content {
+.banner-content-bnr {
   max-width: 600px;
 }
 
-.banner-text {
+.banner-text-bnr {
   color: #ffffff;
 }
 
-.banner-title {
+.banner-title-bnr {
   font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 800;
   line-height: 1.1;
@@ -76,7 +88,7 @@
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-.banner-title .highlight {
+.banner-title-bnr .highlight-bnr {
   background: linear-gradient(135deg, #4FC3F7, #2979FF);
   -webkit-background-clip: text;
   background-clip: text;
@@ -85,7 +97,7 @@
   display: inline-block;
 }
 
-.banner-title .highlight::after {
+.banner-title-bnr .highlight-bnr::after {
   content: '';
   position: absolute;
   bottom: -5px;
@@ -96,7 +108,7 @@
   border-radius: 2px;
 }
 
-.banner-description {
+.banner-description-bnr {
   font-size: clamp(1rem, 2.5vw, 1.3rem);
   line-height: 1.6;
   margin-bottom: 2.5rem;
@@ -104,15 +116,14 @@
   text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* BOTONES CON ESTILO SIMILAR AL HEADER */
-.banner-buttons {
+.banner-buttons-bnr {
   display: flex;
   gap: 1.2rem;
   margin-bottom: 3rem;
   flex-wrap: wrap;
 }
 
-.cta-button {
+.cta-button-bnr {
   position: relative;
   padding: 1.2rem 2.5rem;
   border: none;
@@ -130,7 +141,7 @@
   font-family: inherit;
 }
 
-.button-content {
+.button-content-bnr {
   display: flex;
   align-items: center;
   gap: 0.8rem;
@@ -138,47 +149,45 @@
   z-index: 2;
 }
 
-.button-icon {
+.button-icon-bnr {
   font-size: 1.2rem;
   transition: transform 0.3s ease;
 }
 
-.button-text {
+.button-text-bnr {
   font-weight: 600;
   font-size: 0.95rem;
   transition: transform 0.3s ease;
 }
 
-.button-arrow {
+.button-arrow-bnr {
   font-size: 1.1rem;
   transition: transform 0.3s ease;
 }
 
-/* Botón Primario - Similar al estilo del header */
-.cta-button.primary {
+.cta-button-bnr.primary-bnr {
   background: linear-gradient(135deg, #4895CF, #2C5F8E);
   color: #ffffff;
   border: 2px solid #4895CF;
   box-shadow: 0 4px 15px rgba(72, 149, 207, 0.3);
 }
 
-.cta-button.primary:hover {
+.cta-button-bnr.primary-bnr:hover {
   background: linear-gradient(135deg, #2C5F8E, #4895CF);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(72, 149, 207, 0.4);
   border-color: #7CCBDD;
 }
 
-.cta-button.primary:hover .button-icon {
+.cta-button-bnr.primary-bnr:hover .button-icon-bnr {
   transform: scale(1.1);
 }
 
-.cta-button.primary:hover .button-arrow {
+.cta-button-bnr.primary-bnr:hover .button-arrow-bnr {
   transform: translateX(3px);
 }
 
-/* Botón Secundario - Similar al estilo del header */
-.cta-button.secondary {
+.cta-button-bnr.secondary-bnr {
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
   border: 2px solid rgba(255, 255, 255, 0.3);
@@ -186,23 +195,22 @@
   -webkit-backdrop-filter: blur(10px);
 }
 
-.cta-button.secondary:hover {
+.cta-button-bnr.secondary-bnr:hover {
   background: rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.5);
   box-shadow: 0 6px 20px rgba(255, 255, 255, 0.1);
 }
 
-.cta-button.secondary:hover .button-icon {
+.cta-button-bnr.secondary-bnr:hover .button-icon-bnr {
   transform: scale(1.1) rotate(5deg);
 }
 
-.cta-button.secondary:hover .button-arrow {
+.cta-button-bnr.secondary-bnr:hover .button-arrow-bnr {
   transform: translateX(2px) translateY(-2px);
 }
 
-/* Efecto de overlay sutil al hover */
-.cta-button::before {
+.cta-button-bnr::before {
   content: '';
   position: absolute;
   top: 0;
@@ -213,18 +221,17 @@
   transition: left 0.5s ease;
 }
 
-.cta-button:hover::before {
+.cta-button-bnr:hover::before {
   left: 100%;
 }
 
-/* FEATURES - Manteniendo el estilo existente */
-.banner-features {
+.banner-features-bnr {
   display: flex;
   gap: 2rem;
   flex-wrap: wrap;
 }
 
-.feature {
+.feature-bnr {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -237,14 +244,14 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
 }
 
-.feature:hover {
+.feature-bnr:hover {
   background: #4895CF !important;
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(72, 149, 207, 0.6) !important;
   border-color: #7CCBDD !important;
 }
 
-.feature-icon {
+.feature-icon-bnr {
   width: 24px;
   height: 24px;
   display: flex;
@@ -253,7 +260,7 @@
   flex-shrink: 0;
 }
 
-.feature-icon svg {
+.feature-icon-bnr svg {
   width: 100%;
   height: 100%;
   stroke: #7CCBDD !important;
@@ -262,24 +269,23 @@
   transition: all 0.3s ease;
 }
 
-.feature:hover .feature-icon svg {
+.feature-bnr:hover .feature-icon-bnr svg {
   stroke: #ffffff !important;
   transform: scale(1.1);
 }
 
-.feature span:last-child {
+.feature-bnr span:last-child {
   font-weight: 600;
   font-size: 0.95rem;
   color: white !important;
   white-space: nowrap;
 }
 
-.feature * {
+.feature-bnr * {
   background: transparent !important;
 }
 
-/* Animaciones */
-@keyframes zoomEffect {
+@keyframes zoomEffectBnr {
   0%, 100% {
     transform: scale(1);
   }
@@ -288,7 +294,7 @@
   }
 }
 
-.banner-background::before {
+.banner-background-bnr::before {
   content: '';
   position: absolute;
   top: 0;
@@ -301,12 +307,12 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .banner-background::before {
-    animation: floatParticles 15s ease-in-out infinite;
+  .banner-background-bnr::before {
+    animation: floatParticlesBnr 15s ease-in-out infinite;
   }
 }
 
-@keyframes floatParticles {
+@keyframes floatParticlesBnr {
   0%, 100% {
     transform: translateX(0) translateY(0);
   }
@@ -315,78 +321,77 @@
   }
 }
 
-/* Responsive */
 @media (max-width: 1024px) {
-  .banner-lucesa {
+  .banner-bnr {
     height: 70vh;
     min-height: 500px;
   }
   
-  .banner-features {
+  .banner-features-bnr {
     gap: 1.5rem;
   }
 }
 
 @media (max-width: 768px) {
-  .banner-lucesa {
+  .banner-bnr {
     height: 60vh;
     min-height: 400px;
     text-align: center;
   }
   
-  .banner-container-lucesa {
+  .banner-container-bnr {
     padding: 0 1rem;
   }
   
-  .banner-buttons {
+  .banner-buttons-bnr {
     justify-content: center;
     gap: 1rem;
   }
   
-  .cta-button {
+  .cta-button-bnr {
     padding: 1.1rem 2rem;
     min-width: 150px;
     font-size: 0.9rem;
   }
   
-  .banner-features {
+  .banner-features-bnr {
     justify-content: center;
     gap: 1rem;
   }
   
-  .feature {
+  .feature-bnr {
     padding: 0.8rem 1.2rem;
     min-width: 140px;
   }
 }
 
 @media (max-width: 480px) {
-  .banner-lucesa {
+  .banner-bnr {
     height: 70vh;
     min-height: 450px;
   }
   
-  .banner-description {
+  .banner-description-bnr {
     margin-bottom: 2rem;
   }
   
-  .banner-buttons {
+  .banner-buttons-bnr {
     flex-direction: column;
     align-items: center;
   }
   
-  .cta-button {
+  .cta-button-bnr {
     width: 100%;
     max-width: 260px;
     padding: 1.2rem 2rem;
   }
   
-  .banner-features {
+  .banner-features-bnr {
     flex-direction: column;
     align-items: center;
   }
   
-  .feature {
+  .feature-bnr {
     width: 100%;
     max-width: 200px;
     justify-content: flex-start;
@@ -400,23 +405,23 @@
     transition-duration: 0.01ms !important;
   }
   
-  .banner-background {
+  .banner-background-bnr {
     animation: none !important;
   }
   
-  .banner-background::before {
+  .banner-background-bnr::before {
     animation: none !important;
   }
   
-  .feature:hover {
+  .feature-bnr:hover {
     transform: none;
   }
   
-  .cta-button:hover {
+  .cta-button-bnr:hover {
     transform: none;
   }
   
-  .cta-button::before {
+  .cta-button-bnr::before {
     display: none;
   }
 }

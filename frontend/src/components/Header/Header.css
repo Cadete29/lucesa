@@ -1,4 +1,4 @@
-/* Header.css - Versión Corregida */
+/* Header.css - Con prefijos únicos */
 
 /* Reset y base */
 * {
@@ -11,7 +11,7 @@ body {
   font-family: 'Arial', sans-serif;
   line-height: 1.6;
   color: #333;
-  overflow-x: hidden; /* Previene scroll horizontal */
+  overflow-x: hidden;
 }
 
 .App {
@@ -21,7 +21,7 @@ body {
 }
 
 /* Header Principal */
-.header-lucesa {
+.header-hdr {
   background: #fff;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   position: fixed;
@@ -32,17 +32,17 @@ body {
   transition: all 0.3s ease;
 }
 
-.header-lucesa.scrolled {
+.header-hdr.scrolled-hdr {
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
-.container-lucesa {
+.container-hdr {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
 }
 
-.header-content-lucesa {
+.header-content-hdr {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -51,26 +51,26 @@ body {
 }
 
 /* Logo */
-.logo {
+.logo-hdr {
   flex-shrink: 0;
   z-index: 1001;
 }
 
-.logo-image {
+.logo-image-hdr {
   height: 40px;
   width: auto;
   object-fit: contain;
 }
 
 /* Navegación Desktop */
-.desktop-nav {
+.desktop-nav-hdr {
   display: flex;
   align-items: center;
   flex: 1;
   justify-content: center;
 }
 
-.nav-list-lucesa {
+.nav-list-hdr {
   display: flex;
   list-style: none;
   gap: 2rem;
@@ -78,7 +78,7 @@ body {
   padding: 0;
 }
 
-.nav-link {
+.nav-link-hdr {
   text-decoration: none;
   color: #333;
   font-weight: 500;
@@ -87,12 +87,12 @@ body {
   position: relative;
 }
 
-.nav-link:hover {
+.nav-link-hdr:hover {
   color: #007bff;
 }
 
 /* Acciones del Header */
-.header-actions {
+.header-actions-hdr {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -100,7 +100,7 @@ body {
 }
 
 /* Barra de búsqueda */
-.search-bar {
+.search-bar-hdr {
   display: flex;
   align-items: center;
   background: #f8f9fa;
@@ -109,7 +109,7 @@ body {
   min-width: 300px;
 }
 
-.search-input {
+.search-input-hdr {
   border: none;
   background: transparent;
   padding: 0.5rem 1rem;
@@ -118,11 +118,11 @@ body {
   font-size: 0.9rem;
 }
 
-.search-input::placeholder {
+.search-input-hdr::placeholder {
   color: #6c757d;
 }
 
-.search-btn {
+.search-btn-hdr {
   background: #007bff;
   border: none;
   border-radius: 50%;
@@ -136,22 +136,22 @@ body {
   flex-shrink: 0;
 }
 
-.search-btn:hover {
+.search-btn-hdr:hover {
   background: #0056b3;
 }
 
-.search-icon {
+.search-icon-hdr {
   font-size: 0.9rem;
 }
 
 /* Iconos del Header */
-.header-icons {
+.header-icons-hdr {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.icon-btn {
+.icon-btn-hdr {
   background: none;
   border: none;
   cursor: pointer;
@@ -166,17 +166,17 @@ body {
   height: 40px;
 }
 
-.icon-btn:hover {
+.icon-btn-hdr:hover {
   background: #f8f9fa;
 }
 
-.icon {
+.icon-hdr {
   font-size: 1.2rem;
 }
 
 /* Contadores */
-.favorites-count,
-.cart-count {
+.favorites-count-hdr,
+.cart-count-hdr {
   position: absolute;
   top: -2px;
   right: -2px;
@@ -193,11 +193,11 @@ body {
 }
 
 /* Menú de Usuario */
-.user-menu {
+.user-menu-hdr {
   position: relative;
 }
 
-.user-dropdown {
+.user-dropdown-hdr {
   position: absolute;
   top: 100%;
   right: 0;
@@ -210,22 +210,22 @@ body {
   z-index: 1002;
 }
 
-.user-info {
+.user-info-hdr {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #e9ecef;
 }
 
-.user-info strong {
+.user-info-hdr strong {
   display: block;
   margin-bottom: 0.25rem;
 }
 
-.user-info span {
+.user-info-hdr span {
   font-size: 0.8rem;
   color: #6c757d;
 }
 
-.dropdown-item {
+.dropdown-item-hdr {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -241,28 +241,28 @@ body {
   font-size: 0.9rem;
 }
 
-.dropdown-item:hover {
+.dropdown-item-hdr:hover {
   background: #f8f9fa;
 }
 
-.dropdown-icon {
+.dropdown-icon-hdr {
   font-size: 1rem;
   width: 16px;
   text-align: center;
 }
 
-.dropdown-divider {
+.dropdown-divider-hdr {
   height: 1px;
   background: #e9ecef;
   margin: 0.5rem 0;
 }
 
-.logout-btn {
+.logout-btn-hdr {
   color: #dc3545;
 }
 
 /* Menú Hamburguesa */
-.menu-toggle {
+.menu-toggle-hdr {
   display: none;
   flex-direction: column;
   background: none;
@@ -273,7 +273,7 @@ body {
   z-index: 1001;
 }
 
-.menu-toggle span {
+.menu-toggle-hdr span {
   width: 25px;
   height: 3px;
   background: #333;
@@ -281,20 +281,20 @@ body {
   transform-origin: center;
 }
 
-.menu-toggle.active span:nth-child(1) {
+.menu-toggle-hdr.active-hdr span:nth-child(1) {
   transform: rotate(45deg) translate(6px, 6px);
 }
 
-.menu-toggle.active span:nth-child(2) {
+.menu-toggle-hdr.active-hdr span:nth-child(2) {
   opacity: 0;
 }
 
-.menu-toggle.active span:nth-child(3) {
+.menu-toggle-hdr.active-hdr span:nth-child(3) {
   transform: rotate(-45deg) translate(6px, -6px);
 }
 
 /* Menú Móvil */
-.mobile-menu {
+.mobile-menu-hdr {
   position: fixed;
   top: 0;
   left: 0;
@@ -307,12 +307,12 @@ body {
   transition: all 0.3s ease;
 }
 
-.mobile-menu.active {
+.mobile-menu-hdr.active-hdr {
   opacity: 1;
   visibility: visible;
 }
 
-.mobile-menu-content {
+.mobile-menu-content-hdr {
   position: absolute;
   top: 0;
   right: 0;
@@ -327,11 +327,11 @@ body {
   overflow-y: auto;
 }
 
-.mobile-menu.active .mobile-menu-content {
+.mobile-menu-hdr.active-hdr .mobile-menu-content-hdr {
   transform: translateX(0);
 }
 
-.mobile-menu-header {
+.mobile-menu-header-hdr {
   padding: 1rem;
   border-bottom: 1px solid #e9ecef;
   display: flex;
@@ -339,22 +339,22 @@ body {
   justify-content: space-between;
 }
 
-.mobile-logo-image {
+.mobile-logo-image-hdr {
   height: 35px;
   width: auto;
 }
 
-.mobile-nav {
+.mobile-nav-hdr {
   flex: 1;
   padding: 1rem;
 }
 
-.mobile-nav-list {
+.mobile-nav-list-hdr {
   list-style: none;
   margin-bottom: 2rem;
 }
 
-.mobile-nav-link {
+.mobile-nav-link-hdr {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -365,13 +365,13 @@ body {
   font-weight: 500;
 }
 
-.nav-icon {
+.nav-icon-hdr {
   font-size: 1.2rem;
   width: 24px;
   text-align: center;
 }
 
-.mobile-badge {
+.mobile-badge-hdr {
   background: #dc3545;
   color: white;
   border-radius: 10px;
@@ -381,36 +381,36 @@ body {
 }
 
 /* Sección de Usuario Móvil */
-.mobile-user-section {
+.mobile-user-section-hdr {
   background: #f8f9fa;
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1rem;
 }
 
-.user-info-mobile {
+.user-info-mobile-hdr {
   margin-bottom: 1rem;
 }
 
-.user-greeting {
+.user-greeting-hdr {
   display: block;
   font-weight: bold;
   margin-bottom: 0.25rem;
 }
 
-.user-email {
+.user-email-hdr {
   font-size: 0.8rem;
   color: #6c757d;
 }
 
-.mobile-user-links {
+.mobile-user-links-hdr {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.mobile-user-link,
-.mobile-logout-btn {
+.mobile-user-link-hdr,
+.mobile-logout-btn-hdr {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -425,27 +425,27 @@ body {
   transition: background-color 0.3s ease;
 }
 
-.mobile-user-link:hover,
-.mobile-logout-btn:hover {
+.mobile-user-link-hdr:hover,
+.mobile-logout-btn-hdr:hover {
   background: #e9ecef;
 }
 
-.mobile-logout-btn {
+.mobile-logout-btn-hdr {
   color: #dc3545;
 }
 
-.link-icon {
+.link-icon-hdr {
   font-size: 1rem;
   width: 20px;
   text-align: center;
 }
 
 /* Sección de Login Móvil */
-.mobile-login-section {
+.mobile-login-section-hdr {
   padding: 1rem 0;
 }
 
-.mobile-login-btn {
+.mobile-login-btn-hdr {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -460,11 +460,11 @@ body {
   transition: background-color 0.3s ease;
 }
 
-.mobile-login-btn:hover {
+.mobile-login-btn-hdr:hover {
   background: #0056b3;
 }
 
-.login-icon {
+.login-icon-hdr {
   font-size: 1.2rem;
 }
 
@@ -472,104 +472,104 @@ body {
 
 /* Tablets */
 @media (max-width: 1024px) {
-  .container-lucesa {
+  .container-hdr {
     padding: 0 15px;
   }
   
-  .nav-list-lucesa {
+  .nav-list-hdr {
     gap: 1.5rem;
   }
   
-  .search-bar {
+  .search-bar-hdr {
     min-width: 250px;
   }
 }
 
 /* Tablets pequeñas y móviles grandes */
 @media (max-width: 768px) {
-  .header-content-lucesa {
+  .header-content-hdr {
     padding: 0.75rem 0;
   }
   
-  .desktop-nav {
+  .desktop-nav-hdr {
     display: none;
   }
   
-  .menu-toggle {
+  .menu-toggle-hdr {
     display: flex;
   }
   
-  .search-bar {
+  .search-bar-hdr {
     display: none;
   }
   
-  .header-actions {
+  .header-actions-hdr {
     gap: 0.5rem;
   }
   
-  .logo-image {
+  .logo-image-hdr {
     height: 35px;
   }
 }
 
 /* Móviles */
 @media (max-width: 480px) {
-  .container-lucesa {
+  .container-hdr {
     padding: 0 10px;
   }
   
-  .header-content-lucesa {
+  .header-content-hdr {
     padding: 0.5rem 0;
   }
   
-  .logo-image {
+  .logo-image-hdr {
     height: 30px;
   }
   
-  .icon-btn {
+  .icon-btn-hdr {
     width: 36px;
     height: 36px;
   }
   
-  .icon {
+  .icon-hdr {
     font-size: 1.1rem;
   }
   
-  .mobile-menu-content {
+  .mobile-menu-content-hdr {
     width: 85%;
   }
   
-  .mobile-menu-header {
+  .mobile-menu-header-hdr {
     padding: 0.75rem;
   }
   
-  .mobile-nav {
+  .mobile-nav-hdr {
     padding: 0.75rem;
   }
   
-  .mobile-nav-link {
+  .mobile-nav-link-hdr {
     padding: 0.75rem 0;
   }
 }
 
 /* Móviles muy pequeños */
 @media (max-width: 360px) {
-  .header-icons {
+  .header-icons-hdr {
     gap: 0.25rem;
   }
   
-  .icon-btn {
+  .icon-btn-hdr {
     width: 32px;
     height: 32px;
     padding: 0.25rem;
   }
   
-  .icon {
+  .icon-hdr {
     font-size: 1rem;
   }
   
-  .favorites-count,
-  .cart-count {
+  .favorites-count-hdr,
+  .cart-count-hdr {
     width: 16px;
     height: 16px;
     font-size: 0.6rem;
@@ -578,32 +578,32 @@ body {
 
 /* Orientación landscape en móviles */
 @media (max-height: 500px) and (orientation: landscape) {
-  .mobile-menu-content {
+  .mobile-menu-content-hdr {
     height: 100vh;
     overflow-y: auto;
   }
   
-  .mobile-nav {
+  .mobile-nav-hdr {
     padding: 0.5rem;
   }
   
-  .mobile-nav-link {
+  .mobile-nav-link-hdr {
     padding: 0.5rem 0;
   }
   
-  .mobile-user-section,
-  .mobile-login-section {
+  .mobile-user-section-hdr,
+  .mobile-login-section-hdr {
     padding: 0.5rem;
   }
 }
 
 /* Correcciones para Safari iOS */
 @supports (-webkit-touch-callout: none) {
-  .mobile-menu {
+  .mobile-menu-hdr {
     height: -webkit-fill-available;
   }
   
-  .mobile-menu-content {
+  .mobile-menu-content-hdr {
     height: -webkit-fill-available;
   }
 }

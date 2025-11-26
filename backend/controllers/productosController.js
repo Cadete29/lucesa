@@ -55,17 +55,42 @@ class ProductosController {
       this.cache.existencias = cacheData.existencias || [];
       this.cache.lastUpdate = cacheData.lastUpdate || new Date().toISOString();
 
+      // SI LA CACHE ESTÁ VACÍA, CARGAR DIRECTAMENTE DEL ARCHIVO PROCESADO
       if (this.cache.existencias.length === 0) {
-        logger.warn('⚠️  No hay datos en cache, intentando carga de emergencia...');
-        await this.emergencyLoadJSON();
+        logger.warn('⚠️  Cache de existencias vacía, cargando desde archivo procesado...');
+        await this.loadFromProcessedFile();
       }
 
       logger.info(`📦 Cache final cargado: ${this.cache.productos.length} productos, ${this.cache.existencias.length} existencias`);
     } catch (error) {
       logger.error('❌ Error cargando cache en controller:', error);
-      this.cache.productos = this.cache.productos || [];
-      this.cache.existencias = this.cache.existencias || [];
-      this.cache.lastUpdate = this.cache.lastUpdate || new Date().toISOString();
+      await this.loadFromProcessedFile();
+    }
+  }
+
+  /**
+   * Carga datos directamente desde el archivo procesado
+   */
+  async loadFromProcessedFile() {
+    try {
+      const processedPath = './data/ftp/processed/existencias_processed.json';
+      
+      if (fs.existsSync(processedPath)) {
+        logger.info('📂 Cargando desde archivo procesado...');
+        const processedData = JSON.parse(fs.readFileSync(processedPath, 'utf8'));
+        
+        this.cache.existencias = processedData.productos || [];
+        this.cache.lastUpdate = processedData.metadata?.timestamp || new Date().toISOString();
+        
+        logger.info(`✅ Cargados ${this.cache.existencias.length} productos desde archivo procesado`);
+        return true;
+      } else {
+        logger.error('❌ Archivo procesado no encontrado');
+        return false;
+      }
+    } catch (error) {
+      logger.error('❌ Error cargando desde archivo procesado:', error);
+      return false;
     }
   }
 
@@ -188,7 +213,7 @@ class ProductosController {
       // Filtrar por almacén si se especifica
       if (almacen) {
         productos = productos.filter(p => 
-          p.almacen === almacen || (p.almacenes && p.almacenes.some(a => a.codigo === almacen))
+          p.almacen === almacen || (p.almacenes && p.almacenes[almacen])
         );
       }
 
@@ -277,7 +302,7 @@ class ProductosController {
 
       res.json({
         success: true,
-        data: resultados.slice(0, 100), // Limitar resultados de búsqueda
+        data: resultados.slice(0, 100),
         total: resultados.length,
         search: {
           term: q,

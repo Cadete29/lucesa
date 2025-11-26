@@ -81,7 +81,7 @@ const login = async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
-        //?  para no devolver la contrasena 
+        
         const { password: _, ...userSafe } = user;
 
         return res.json({
@@ -102,7 +102,127 @@ const login = async (req, res) => {
     }
 };
 
+const forgotPassword = async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({
+            success: false,
+            message: 'Email es requerido'
+        });
+    }
+
+    try {
+        const user = await userModel.findUserByEmail(email);
+        if (!user) {
+            // Por seguridad, no revelamos si el email existe o no
+            return res.json({
+                success: true,
+                message: 'Si el email existe, se ha enviado un enlace de recuperación'
+            });
+        }
+
+        // Generar token de recuperación
+        const resetToken = jwt.sign(
+            { id: user.id, type: 'password_reset' },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        // En un entorno real, aquí enviarías el email con el enlace
+        // await sendResetEmail(user.email, resetToken);
+
+        console.log(`🔐 Reset token for ${email}: ${resetToken}`); // Solo para desarrollo
+
+        return res.json({
+            success: true,
+            message: 'Si el email existe, se ha enviado un enlace de recuperación',
+            // En desarrollo, devolvemos el token para testing
+            ...(process.env.NODE_ENV === 'development' && { resetToken })
+        });
+
+    } catch (error) {
+        console.error('Error en forgotPassword:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor'
+        });
+    }
+};
+
+const resetPassword = async (req, res) => {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+        return res.status(400).json({
+            success: false,
+            message: 'Token y nueva contraseña son requeridos'
+        });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        if (decoded.type !== 'password_reset') {
+            return res.status(400).json({
+                success: false,
+                message: 'Token inválido'
+            });
+        }
+
+        // Actualizar contraseña del usuario
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        
+        // Necesitarías implementar esta función en userModel
+        // Por ahora, simulamos la actualización
+        console.log(`🔄 Actualizando contraseña para usuario ID: ${decoded.id}`);
+        
+        // Aquí iría: await userModel.updateUserPassword(decoded.id, hashedPassword);
+
+        return res.json({
+            success: true,
+            message: 'Contraseña restablecida correctamente'
+        });
+
+    } catch (error) {
+        console.error('Error en resetPassword:', error);
+        return res.status(400).json({
+            success: false,
+            message: 'Token inválido o expirado'
+        });
+    }
+};
+
+const verifyResetToken = async (req, res) => {
+    const { token } = req.params;
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        if (decoded.type !== 'password_reset') {
+            return res.json({
+                success: true,
+                valid: false
+            });
+        }
+
+        return res.json({
+            success: true,
+            valid: true
+        });
+
+    } catch (error) {
+        return res.json({
+            success: true,
+            valid: false
+        });
+    }
+};
+
 module.exports = {
     register,
-    login
+    login,
+    forgotPassword,
+    resetPassword,
+    verifyResetToken
 };

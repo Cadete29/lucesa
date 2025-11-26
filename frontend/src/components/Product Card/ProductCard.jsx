@@ -2,8 +2,13 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom';
 import './ProductCard.css';
 
+// ✅ Configuración de URLs por entorno
+const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://testpaginaweb.shop/api/images/code'
+  : 'http://localhost:4004/api/images/code';
+
 // ✅ Función de normalización de producto
-const normalizarProducto = (producto) => {
+const normalizarProductoPcard = (producto) => {
   if (!producto) return producto;
   
   const existencia = producto.existencia || producto.existenciaTotal || 0;
@@ -23,46 +28,46 @@ const normalizarProducto = (producto) => {
 };
 
 // ✅ Tipo de cambio fijo
-const TIPO_CAMBIO_MXN = 18.50;
+const TIPO_CAMBIO_MXN_PCARD = 18.50;
 
 const ProductCard = ({ product, onQuickView }) => {
-    const [imageStatus, setImageStatus] = useState('loading');
-    const [currentImageUrl, setCurrentImageUrl] = useState('');
-    const imgRef = useRef(null);
-    const retryCountRef = useRef(0);
+    const [imageStatusPcard, setImageStatusPcard] = useState('loading');
+    const [currentImageUrlPcard, setCurrentImageUrlPcard] = useState('');
+    const imgRefPcard = useRef(null);
+    const retryCountRefPcard = useRef(0);
 
     // ✅ Normalizar el producto
-    const normalizedProduct = useMemo(() => {
-        return normalizarProducto(product);
+    const normalizedProductPcard = useMemo(() => {
+        return normalizarProductoPcard(product);
     }, [product]);
 
     // ✅ CÁLCULO CORREGIDO DE PRECIOS EN MXN - CON PROMOCIONES
-    const productCalculations = useMemo(() => {
-        const hasActivePromotion = normalizedProduct.promociones && normalizedProduct.promociones.length > 0;
-        const currentPromotion = hasActivePromotion ? normalizedProduct.promociones[0] : null;
+    const productCalculationsPcard = useMemo(() => {
+        const hasActivePromotionPcard = normalizedProductPcard.promociones && normalizedProductPcard.promociones.length > 0;
+        const currentPromotionPcard = hasActivePromotionPcard ? normalizedProductPcard.promociones[0] : null;
         
         // ✅ CORRECCIÓN: Siempre convertir a MXN ya que los precios vienen en USD
-        const convertirAMXN = (precio) => {
+        const convertirAMXNPcard = (precio) => {
             // Si no hay precio, retornar 0
             if (!precio) return 0;
             
             // SIEMPRE convertir a MXN (los precios vienen en USD)
-            return precio * (normalizedProduct.tipoCambio || TIPO_CAMBIO_MXN);
+            return precio * (normalizedProductPcard.tipoCambio || TIPO_CAMBIO_MXN_PCARD);
         };
 
         // Precio base en MXN (SIEMPRE convertir)
-        const precioBaseMXN = convertirAMXN(normalizedProduct.precio);
+        const precioBaseMXNPcard = convertirAMXNPcard(normalizedProductPcard.precio);
         
         // Precio promocional en MXN (si existe promoción o precioPromocion)
-        const precioPromoMXN = currentPromotion ? 
-            convertirAMXN(currentPromotion.promocion) : 
-            (normalizedProduct.precioPromocion ? convertirAMXN(normalizedProduct.precioPromocion) : null);
+        const precioPromoMXNPcard = currentPromotionPcard ? 
+            convertirAMXNPcard(currentPromotionPcard.promocion) : 
+            (normalizedProductPcard.precioPromocion ? convertirAMXNPcard(normalizedProductPcard.precioPromocion) : null);
 
         // Determinar si tiene promoción activa
-        const tienePromocionActiva = precioPromoMXN !== null && precioPromoMXN < precioBaseMXN;
+        const tienePromocionActivaPcard = precioPromoMXNPcard !== null && precioPromoMXNPcard < precioBaseMXNPcard;
 
         // Formatear a 2 decimales
-        const formatearPrecio = (precio) => {
+        const formatearPrecioPcard = (precio) => {
             if (typeof precio !== 'number') return '0.00';
             return precio.toLocaleString('es-MX', {
                 minimumFractionDigits: 2,
@@ -70,158 +75,158 @@ const ProductCard = ({ product, onQuickView }) => {
             });
         };
 
-        const discountPercentage = tienePromocionActiva ? 
-            Math.round(((precioBaseMXN - precioPromoMXN) / precioBaseMXN) * 100) : 
+        const discountPercentagePcard = tienePromocionActivaPcard ? 
+            Math.round(((precioBaseMXNPcard - precioPromoMXNPcard) / precioBaseMXNPcard) * 100) : 
             0;
 
         return {
-            tienePromocionActiva,
-            currentPromotion,
-            precioBaseMXN: formatearPrecio(precioBaseMXN),
-            precioPromoMXN: tienePromocionActiva ? formatearPrecio(precioPromoMXN) : null,
-            discountPercentage,
-            precioFinalMXN: tienePromocionActiva ? formatearPrecio(precioPromoMXN) : formatearPrecio(precioBaseMXN),
-            precioOriginalUSD: normalizedProduct.precio,
-            tipoCambioUsado: normalizedProduct.tipoCambio || TIPO_CAMBIO_MXN
+            tienePromocionActivaPcard,
+            currentPromotionPcard,
+            precioBaseMXNPcard: formatearPrecioPcard(precioBaseMXNPcard),
+            precioPromoMXNPcard: tienePromocionActivaPcard ? formatearPrecioPcard(precioPromoMXNPcard) : null,
+            discountPercentagePcard,
+            precioFinalMXNPcard: tienePromocionActivaPcard ? formatearPrecioPcard(precioPromoMXNPcard) : formatearPrecioPcard(precioBaseMXNPcard),
+            precioOriginalUSDPcard: normalizedProductPcard.precio,
+            tipoCambioUsadoPcard: normalizedProductPcard.tipoCambio || TIPO_CAMBIO_MXN_PCARD
         };
     }, [
-        normalizedProduct.promociones, 
-        normalizedProduct.precio, 
-        normalizedProduct.precioPromocion,
-        normalizedProduct.tipoCambio
+        normalizedProductPcard.promociones, 
+        normalizedProductPcard.precio, 
+        normalizedProductPcard.precioPromocion,
+        normalizedProductPcard.tipoCambio
     ]);
 
-    // ✅ Configurar imagen
+    // ✅ Configurar imagen con URL dinámica por entorno
     useEffect(() => {
-        if (!normalizedProduct.codigo) {
-            setImageStatus('error');
+        if (!normalizedProductPcard.codigo) {
+            setImageStatusPcard('error');
             return;
         }
 
-        retryCountRef.current = 0;
-        setImageStatus('loading');
+        retryCountRefPcard.current = 0;
+        setImageStatusPcard('loading');
         
-        const url = `http://localhost:4004/api/images/code/${normalizedProduct.codigo}?size=full&t=${Date.now()}`;
-        setCurrentImageUrl(url);
-    }, [normalizedProduct.codigo]);
+        const url = `${IMAGE_BASE_URL}/${normalizedProductPcard.codigo}?size=full&t=${Date.now()}`;
+        setCurrentImageUrlPcard(url);
+    }, [normalizedProductPcard.codigo]);
 
     // ✅ Manejo de imagen con cleanup
     useEffect(() => {
-        if (!imgRef.current || !currentImageUrl) return;
+        if (!imgRefPcard.current || !currentImageUrlPcard) return;
 
-        const img = imgRef.current;
-        let isMounted = true;
+        const img = imgRefPcard.current;
+        let isMountedPcard = true;
         
-        const handleLoad = () => {
-            if (!isMounted) return;
-            setImageStatus('loaded');
+        const handleLoadPcard = () => {
+            if (!isMountedPcard) return;
+            setImageStatusPcard('loaded');
         };
 
-        const handleError = () => {
-            if (!isMounted) return;
+        const handleErrorPcard = () => {
+            if (!isMountedPcard) return;
             
-            if (retryCountRef.current < 2) {
-                retryCountRef.current += 1;
+            if (retryCountRefPcard.current < 2) {
+                retryCountRefPcard.current += 1;
                 
                 setTimeout(() => {
-                    if (!isMounted) return;
-                    const retryUrl = `http://localhost:4004/api/images/code/${normalizedProduct.codigo}?size=full&t=${Date.now()}&retry=${retryCountRef.current}`;
-                    setCurrentImageUrl(retryUrl);
-                    setImageStatus('loading');
+                    if (!isMountedPcard) return;
+                    const retryUrl = `${IMAGE_BASE_URL}/${normalizedProductPcard.codigo}?size=full&t=${Date.now()}&retry=${retryCountRefPcard.current}`;
+                    setCurrentImageUrlPcard(retryUrl);
+                    setImageStatusPcard('loading');
                 }, 1000);
             } else {
-                setImageStatus('error');
+                setImageStatusPcard('error');
             }
         };
 
-        img.addEventListener('load', handleLoad);
-        img.addEventListener('error', handleError);
+        img.addEventListener('load', handleLoadPcard);
+        img.addEventListener('error', handleErrorPcard);
 
-        img.src = currentImageUrl;
+        img.src = currentImageUrlPcard;
 
         return () => {
-            isMounted = false;
-            img.removeEventListener('load', handleLoad);
-            img.removeEventListener('error', handleError);
+            isMountedPcard = false;
+            img.removeEventListener('load', handleLoadPcard);
+            img.removeEventListener('error', handleErrorPcard);
         };
-    }, [currentImageUrl, normalizedProduct.codigo]);
+    }, [currentImageUrlPcard, normalizedProductPcard.codigo]);
 
     // ✅ CORRECCIÓN: Añadir handleQuickView que faltaba
-    const handleQuickView = useCallback((e) => {
+    const handleQuickViewPcard = useCallback((e) => {
         e.preventDefault();
         e.stopPropagation();
         if (onQuickView) {
-            onQuickView(normalizedProduct);
+            onQuickView(normalizedProductPcard);
         }
-    }, [onQuickView, normalizedProduct]);
+    }, [onQuickView, normalizedProductPcard]);
 
     // ✅ CORRECCIÓN: Añadir handleViewDetails para el botón móvil
-    const handleViewDetails = useCallback((e) => {
+    const handleViewDetailsPcard = useCallback((e) => {
         e.preventDefault();
         e.stopPropagation();
         // Navegar a la página de detalles
-        window.location.href = `/product/${normalizedProduct.idProducto || normalizedProduct.id || normalizedProduct.codigo}`;
-    }, [normalizedProduct]);
+        window.location.href = `/product/${normalizedProductPcard.idProducto || normalizedProductPcard.id || normalizedProductPcard.codigo}`;
+    }, [normalizedProductPcard]);
 
     const {
-        tienePromocionActiva,
-        precioBaseMXN,
-        precioPromoMXN,
-        discountPercentage,
-        precioFinalMXN,
-        precioOriginalUSD,
-        tipoCambioUsado
-    } = productCalculations;
+        tienePromocionActivaPcard,
+        precioBaseMXNPcard,
+        precioPromoMXNPcard,
+        discountPercentagePcard,
+        precioFinalMXNPcard,
+        precioOriginalUSDPcard,
+        tipoCambioUsadoPcard
+    } = productCalculationsPcard;
 
     // ✅ NO RENDERIZAR SI EL PRODUCTO NO TIENE EXISTENCIA
-    if (!normalizedProduct.disponible) {
+    if (!normalizedProductPcard.disponible) {
         return null;
     }
 
     return (
-        <div className="product-card" data-code={normalizedProduct.codigo}>
+        <div className="product-card-pcard" data-code={normalizedProductPcard.codigo}>
             {/* Badge de promoción - SOLO SI TIENE PROMOCIÓN ACTIVA */}
-            {tienePromocionActiva && (
-                <div className="promotion-badge">
-                    -{discountPercentage}%
+            {tienePromocionActivaPcard && (
+                <div className="promotion-badge-pcard">
+                    -{discountPercentagePcard}%
                 </div>
             )}
 
             {/* Imagen del producto */}
-            <div className="product-image">
-                {imageStatus === 'error' ? (
-                    <div className="image-placeholder">
-                        <div className="placeholder-icon">📷</div>
+            <div className="product-image-pcard">
+                {imageStatusPcard === 'error' ? (
+                    <div className="image-placeholder-pcard">
+                        <div className="placeholder-icon-pcard">📷</div>
                         <p>Imagen no disponible</p>
-                        <small>{normalizedProduct.nombre}</small>
+                        <small>{normalizedProductPcard.nombre}</small>
                     </div>
                 ) : (
                     <>
                         <img 
-                            ref={imgRef}
-                            alt={normalizedProduct.nombre}
-                            className={`product-img ${imageStatus === 'loaded' ? 'loaded' : 'loading'}`}
+                            ref={imgRefPcard}
+                            alt={normalizedProductPcard.nombre}
+                            className={`product-img-pcard ${imageStatusPcard === 'loaded' ? 'loaded-pcard' : 'loading-pcard'}`}
                             crossOrigin="anonymous"
                             loading="lazy"
                         />
                         
-                        {imageStatus === 'loading' && (
-                            <div className="image-loading">
-                                <div className="loading-spinner"></div>
+                        {imageStatusPcard === 'loading' && (
+                            <div className="image-loading-pcard">
+                                <div className="loading-spinner-pcard"></div>
                                 <p>Cargando imagen...</p>
-                                {retryCountRef.current > 0 && (
-                                    <small>Reintento {retryCountRef.current}/2</small>
+                                {retryCountRefPcard.current > 0 && (
+                                    <small>Reintento {retryCountRefPcard.current}/2</small>
                                 )}
                             </div>
                         )}
                     </>
                 )}
                 
-                {imageStatus === 'loaded' && (
-                    <div className="product-overlay">
+                {imageStatusPcard === 'loaded' && (
+                    <div className="product-overlay-pcard">
                         <button 
-                            className="btn-overlay btn-quick-view"
-                            onClick={handleQuickView}
+                            className="btn-overlay-pcard btn-quick-view-pcard"
+                            onClick={handleQuickViewPcard}
                         >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -230,8 +235,8 @@ const ProductCard = ({ product, onQuickView }) => {
                             Vista Rápida
                         </button>
                         <Link 
-                            to={`/product/${normalizedProduct.idProducto || normalizedProduct.id || normalizedProduct.codigo}`}
-                            className="btn-overlay btn-view-details"
+                            to={`/product/${normalizedProductPcard.idProducto || normalizedProductPcard.id || normalizedProductPcard.codigo}`}
+                            className="btn-overlay-pcard btn-view-details-pcard"
                         >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
@@ -244,93 +249,95 @@ const ProductCard = ({ product, onQuickView }) => {
             </div>
 
             {/* Información del producto */}
-            <div className="product-info">
+            <div className="product-info-pcard">
                 {/* Marca y categoría */}
-                <div className="product-meta">
-                    <span className="product-brand">{normalizedProduct.marca}</span>
-                    <span className="product-category">{normalizedProduct.subcategoria || normalizedProduct.categoria}</span>
+                <div className="product-meta-pcard">
+                    <span className="product-brand-pcard">{normalizedProductPcard.marca}</span>
+                    <span className="product-category-pcard">{normalizedProductPcard.subcategoria || normalizedProductPcard.categoria}</span>
                 </div>
 
                 {/* Nombre del producto */}
-                <h3 className="product-name" title={normalizedProduct.nombre}>
-                    {normalizedProduct.nombre}
+                <h3 className="product-name-pcard" title={normalizedProductPcard.nombre}>
+                    {normalizedProductPcard.nombre}
                 </h3>
 
                 {/* Descripción corta */}
-                <p className="product-description">
-                    {normalizedProduct.descripcion_corta || (normalizedProduct.descripcion ? 
-                        (normalizedProduct.descripcion.length > 100 ? normalizedProduct.descripcion.substring(0, 100) + '...' : normalizedProduct.descripcion) 
+                <p className="product-description-pcard">
+                    {normalizedProductPcard.descripcion_corta || (normalizedProductPcard.descripcion ? 
+                        (normalizedProductPcard.descripcion.length > 100 ? normalizedProductPcard.descripcion.substring(0, 100) + '...' : normalizedProductPcard.descripcion) 
                         : 'Descripción no disponible')}
                 </p>
 
                 {/* ✅ PRECIOS EN MXN - MOSTRAR ORIGINAL Y PROMOCIÓN SI APPLICA */}
-                <div className="product-prices">
-                    {tienePromocionActiva ? (
+                <div className="product-prices-pcard">
+                    {tienePromocionActivaPcard ? (
                         <>
                             {/* PRECIO PROMOCIONAL (ACTUAL) */}
-                            <div className="price-promo">
-                                <span className="current-price">${precioFinalMXN}</span>
-                                <span className="currency">MXN</span>
+                            <div className="price-promo-pcard">
+                                <span className="current-price-pcard">${precioFinalMXNPcard}</span>
+                                <span className="currency-pcard">MXN</span>
                             </div>
                             
                             {/* PRECIO ORIGINAL (TACHADO) */}
-                            <div className="price-original">
-                                <span className="original-price">${precioBaseMXN} MXN</span>
-                                <span className="discount-amount">
-                                    Ahorras ${(parseFloat(precioBaseMXN.replace(/,/g, '')) - parseFloat(precioPromoMXN.replace(/,/g, ''))).toFixed(2)}
-                                </span>
+                            <div className="price-original-pcard">
+                                <span className="original-price-pcard">${precioBaseMXNPcard} MXN</span>
+                                {/* <span className="discount-amount-pcard">
+                                    Ahorras ${(parseFloat(precioBaseMXNPcard.replace(/,/g, '')) - parseFloat(precioPromoMXNPcard.replace(/,/g, ''))).toFixed(2)}
+                                </span> */}
                             </div>
                         </>
                     ) : (
                         /* PRECIO NORMAL (SIN PROMOCIÓN) */
-                        <div className="price-normal">
-                            <span className="current-price">${precioFinalMXN}</span>
-                            <span className="currency">MXN</span>
+                        <div className="price-normal-pcard">
+                            <span className="current-price-pcard">${precioFinalMXNPcard}</span>
+                            <span className="currency-pcard">MXN</span>
                         </div>
                     )}
                 </div>
 
                 {/* Información de conversión */}
-                <div className="conversion-info">
+                {/* <div className="conversion-info-pcard">
                     <small>
-                        Precio original: ${precioOriginalUSD} USD • 
-                        Tipo de cambio: {tipoCambioUsado} MXN/USD
+                        Precio original: ${precioOriginalUSDPcard} USD • 
+                        Tipo de cambio: {tipoCambioUsadoPcard} MXN/USD
                     </small>
-                </div>
+                </div> */}
 
                 {/* Existencia */}
-                <div className="product-stock">
-                    <span className="stock-badge in-stock">
+                <div className="product-stock-pcard">
+                    <span className="stock-badge-pcard in-stock-pcard">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path d="M5 13l4 4L19 7"/>
                         </svg>
-                        {normalizedProduct.existencia > 10 ? 'Disponible' : `Últimas ${normalizedProduct.existencia} unidades`}
+                        {normalizedProductPcard.existencia > 10 ? 'Disponible' : `Últimas ${normalizedProductPcard.existencia} unidades`}
                     </span>
                 </div>
 
                 {/* Información de debug */}
                 {process.env.NODE_ENV === 'development' && (
-                    <div className="debug-info">
+                    <div className="debug-info-pcard">
                         <strong>DEBUG:</strong> 
-                        Stock: {normalizedProduct.existencia} | 
-                        Precio USD: ${precioOriginalUSD} | 
-                        Precio MXN: ${precioFinalMXN} |
-                        Tipo Cambio: {tipoCambioUsado} |
-                        {tienePromocionActiva && ` Descuento: ${discountPercentage}%`}
+                        Entorno: {process.env.NODE_ENV} | 
+                        URL Base: {IMAGE_BASE_URL} |
+                        Stock: {normalizedProductPcard.existencia} | 
+                        Precio USD: ${precioOriginalUSDPcard} | 
+                        Precio MXN: ${precioFinalMXNPcard} |
+                        Tipo Cambio: {tipoCambioUsadoPcard} |
+                        {tienePromocionActivaPcard && ` Descuento: ${discountPercentagePcard}%`}
                     </div>
                 )}
 
                 {/* Botones de acción móviles */}
-                <div className="product-actions-mobile">
+                <div className="product-actions-mobile-pcard">
                     <button 
-                        className="btn-mobile btn-quick-view-mobile"
-                        onClick={handleQuickView}
+                        className="btn-mobile-pcard btn-quick-view-mobile-pcard"
+                        onClick={handleQuickViewPcard}
                     >
                         Vista Rápida
                     </button>
                     <button 
-                        className="btn-mobile btn-details-mobile"
-                        onClick={handleViewDetails}
+                        className="btn-mobile-pcard btn-details-mobile-pcard"
+                        onClick={handleViewDetailsPcard}
                     >
                         Ver Detalles
                     </button>

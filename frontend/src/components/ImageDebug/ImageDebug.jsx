@@ -13,7 +13,7 @@ const ImageDebug = () => {
         if (!producto.imagen) return null;
         
         if (producto.imagen.includes('static.ctonline.mx') && producto.codigo) {
-            return `http://localhost:4004/api/images/code/${producto.codigo}?size=full`;
+            return `https://testpaginaweb.shop/api/images/code/${producto.codigo}?size=full`;
         }
         
         return producto.imagen;
@@ -29,7 +29,7 @@ const ImageDebug = () => {
         }}>
             <h3 style={{ color: '#dc3545', marginBottom: '15px' }}>🔍 DEBUG de Imágenes - Primeros 3 productos</h3>
             <p><strong>Total productos recibidos:</strong> {productos.length}</p>
-            <p><strong>Proxy activo:</strong> http://localhost:4004/api/images/code/</p>
+            <p><strong>Proxy activo:</strong> https://testpaginaweb.shop/api/images/code/</p>
             
             {productos.length === 0 ? (
                 <div style={{ 
@@ -45,7 +45,7 @@ const ImageDebug = () => {
                 productos.slice(0, 3).map((producto, index) => {
                     const imageUrl = getImageUrl(producto);
                     const proxyUrl = producto.codigo ? 
-                        `http://localhost:4004/api/images/code/${producto.codigo}?size=full` : 
+                        `https://testpaginaweb.shop/api/images/code/${producto.codigo}?size=full` : 
                         null;
 
                     return (

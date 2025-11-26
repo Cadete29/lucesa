@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import authService from '../api/authService'; // Importación corregida
 
 const AuthContext = createContext();
 
@@ -13,96 +14,149 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState(null);
 
   useEffect(() => {
     // Verificar si hay usuario logueado al cargar la app
     const savedUser = localStorage.getItem('lucesa-user');
-    const token = localStorage.getItem('lucesa-token');
+    const savedToken = localStorage.getItem('lucesa-token');
     
-    if (savedUser && token) {
+    if (savedUser && savedToken) {
       setUser(JSON.parse(savedUser));
+      setToken(savedToken);
     }
     setLoading(false);
   }, []);
 
   const login = async (email, password) => {
     try {
-      // Simulación de API call - reemplaza con tu backend real
-      const response = await mockLoginAPI(email, password);
+      setLoading(true);
+      const response = await authService.login(email, password);
       
       if (response.success) {
-        setUser(response.user);
-        localStorage.setItem('lucesa-user', JSON.stringify(response.user));
-        localStorage.setItem('lucesa-token', response.token);
+        const userData = response.data.user;
+        const userToken = response.data.token;
+        
+        setUser(userData);
+        setToken(userToken);
+        localStorage.setItem('lucesa-user', JSON.stringify(userData));
+        localStorage.setItem('lucesa-token', userToken);
+        
         return { success: true };
       } else {
-        return { success: false, error: response.error };
+        return { success: false, error: response.message };
       }
     } catch (error) {
-      return { success: false, error: 'Error de conexión' };
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
     }
   };
 
   const register = async (userData) => {
     try {
-      const response = await mockRegisterAPI(userData);
+      setLoading(true);
+      const response = await authService.register(userData);
       
       if (response.success) {
-        setUser(response.user);
-        localStorage.setItem('lucesa-user', JSON.stringify(response.user));
-        localStorage.setItem('lucesa-token', response.token);
+        const userData = response.data.user;
+        const userToken = response.data?.token || `demo-token-${Date.now()}`;
+        
+        setUser(userData);
+        setToken(userToken);
+        localStorage.setItem('lucesa-user', JSON.stringify(userData));
+        localStorage.setItem('lucesa-token', userToken);
+        
         return { success: true };
       } else {
-        return { success: false, error: response.error };
+        return { success: false, error: response.message };
       }
     } catch (error) {
-      return { success: false, error: 'Error de conexión' };
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = () => {
     setUser(null);
+    setToken(null);
     localStorage.removeItem('lucesa-user');
     localStorage.removeItem('lucesa-token');
   };
 
-  const resetPassword = async (email) => {
+  const forgotPassword = async (email) => {
     try {
-      // Simulación de reset password
-      await mockResetPasswordAPI(email);
-      return { success: true };
+      setLoading(true);
+      const response = await authService.forgotPassword(email);
+      
+      if (response.success) {
+        return { success: true, message: response.message };
+      } else {
+        return { success: false, error: response.message };
+      }
     } catch (error) {
-      return { success: false, error: 'Error al enviar email' };
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
     }
   };
 
-  const socialLogin = async (provider) => {
+  const resetPassword = async (token, newPassword) => {
     try {
-      // Aquí integrarías con Firebase Auth o tu backend
-      const response = await mockSocialLoginAPI(provider);
+      setLoading(true);
+      const response = await authService.resetPassword(token, newPassword);
       
       if (response.success) {
-        setUser(response.user);
-        localStorage.setItem('lucesa-user', JSON.stringify(response.user));
-        localStorage.setItem('lucesa-token', response.token);
-        return { success: true };
+        return { success: true, message: response.message };
       } else {
-        return { success: false, error: response.error };
+        return { success: false, error: response.message };
       }
     } catch (error) {
-      return { success: false, error: 'Error en login social' };
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyResetToken = async (token) => {
+    try {
+      const response = await authService.verifyResetToken(token);
+      return { success: response.success, valid: response.valid };
+    } catch (error) {
+      return { success: false, valid: false, error: error.message };
+    }
+  };
+
+  const updateProfile = async (profileData) => {
+    try {
+      const response = await authService.updateProfile(token, profileData);
+      
+      if (response.success) {
+        const updatedUser = { ...user, ...response.data.user };
+        setUser(updatedUser);
+        localStorage.setItem('lucesa-user', JSON.stringify(updatedUser));
+        return { success: true, user: updatedUser };
+      } else {
+        return { success: false, error: response.message };
+      }
+    } catch (error) {
+      return { success: false, error: error.message };
     }
   };
 
   const value = {
     user,
+    token,
     login,
     register,
     logout,
+    forgotPassword,
     resetPassword,
-    socialLogin,
+    verifyResetToken,
+    updateProfile,
     loading,
-    isAuthenticated: !!user
+    isAuthenticated: !!user && !!token
   };
 
   return (
@@ -110,68 +164,4 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-// Funciones mock - reemplaza con tus API calls reales
-const mockLoginAPI = (email, password) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      if (email === 'usuario@ejemplo.com' && password === 'password') {
-        resolve({
-          success: true,
-          user: {
-            id: 1,
-            name: 'Usuario Ejemplo',
-            email: email
-          },
-          token: 'mock-jwt-token'
-        });
-      } else {
-        resolve({
-          success: false,
-          error: 'Credenciales incorrectas'
-        });
-      }
-    }, 1000);
-  });
-};
-
-const mockRegisterAPI = (userData) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        success: true,
-        user: {
-          id: Date.now(),
-          name: userData.name,
-          email: userData.email
-        },
-        token: 'mock-jwt-token'
-      });
-    }, 1000);
-  });
-};
-
-const mockResetPasswordAPI = (email) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ success: true });
-    }, 1000);
-  });
-};
-
-const mockSocialLoginAPI = (provider) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        success: true,
-        user: {
-          id: Date.now(),
-          name: `Usuario ${provider}`,
-          email: `usuario@${provider}.com`
-        },
-        token: 'mock-jwt-token'
-      });
-    }, 1000);
-  });
 };

@@ -8,7 +8,7 @@ class CTOnlineAPI {
   constructor() {
     // URL base dinámica para desarrollo y producción
     this.baseURL = import.meta.env.PROD 
-      ? 'https://tu-dominio.com/api'  // URL de producción
+      ? 'https://testpaginaweb.shop//api'  // URL de producción
       : 'http://localhost:4004/api';   // URL de desarrollo
     
     this.defaultHeaders = {

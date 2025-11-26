@@ -12,8 +12,7 @@ import "./Home.css";
 import ImageDebug from '../ImageDebug/ImageDebug';
 import Compo from '../compo'
 
-// Mover las funciones auxiliares fuera del componente o usar useCallback
-const generarIdDesdeNombre = (nombre) => {
+const generarIdDesdeNombreHome = (nombre) => {
   if (!nombre) return `categoria-${Math.random().toString(36).substr(2, 9)}`;
   
   const nombreNormalizado = nombre.toLowerCase()
@@ -31,11 +30,9 @@ const generarIdDesdeNombre = (nombre) => {
   return `${nombreNormalizado}-${Math.abs(hash).toString(36).substr(0, 6)}`;
 };
 
-// ✅ FUNCIÓN CORREGIDA PARA OBTENER ID SIN HASH (compatible con Products)
-const obtenerIdCategoriaParaURL = (categoriaNombre) => {
+const obtenerIdCategoriaParaURLHome = (categoriaNombre) => {
   if (!categoriaNombre) return '';
   
-  // ✅ CORRECCIÓN: Generar ID sin hash para compatibilidad con Products
   return categoriaNombre.toLowerCase()
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-]/g, '')
@@ -43,7 +40,7 @@ const obtenerIdCategoriaParaURL = (categoriaNombre) => {
       .replace(/^-|-$/g, '');
 };
 
-const obtenerDescripcionCategoria = (nombreCategoria) => {
+const obtenerDescripcionCategoriaHome = (nombreCategoria) => {
   const descripciones = {
       'Consumibles': 'Materiales de oficina, tecnología y uso diario esencial',
       'Ensamble': 'Componentes para armar computadoras y equipos tecnológicos',
@@ -70,7 +67,7 @@ const obtenerDescripcionCategoria = (nombreCategoria) => {
   return descripciones[nombreCategoria] || `Productos de ${nombreCategoria} - Calidad y variedad para tus necesidades`;
 };
 
-const obtenerIconoCategoria = (nombreCategoria) => {
+const obtenerIconoCategoriaHome = (nombreCategoria) => {
   const iconos = {
       'Consumibles': '🖨️',
       'Ensamble': '⚙️',
@@ -97,116 +94,70 @@ const obtenerIconoCategoria = (nombreCategoria) => {
   return iconos[nombreCategoria] || '📦';
 };
 
-// Componente de Carrusel integrado en Home
-const CarruselCategorias = ({ categorias }) => {
-  const carruselRef = useRef(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [cardWidth, setCardWidth] = useState(280);
+const CarruselCategoriasHome = ({ categorias }) => {
+  const carruselRefHome = useRef(null);
+  const [currentIndexHome, setCurrentIndexHome] = useState(0);
 
-  // Calcular ancho de card basado en el viewport
-  useEffect(() => {
-    const updateCardWidth = () => {
-      const width = window.innerWidth;
-      if (width < 480) {
-        setCardWidth(180);
-      } else if (width < 640) {
-        setCardWidth(200);
-      } else if (width < 768) {
-        setCardWidth(220);
-      } else if (width < 992) {
-        setCardWidth(240);
-      } else if (width < 1200) {
-        setCardWidth(260);
-      } else {
-        setCardWidth(280);
-      }
-    };
-
-    updateCardWidth();
-    window.addEventListener('resize', updateCardWidth);
+  const scrollToIndexHome = (index) => {
+    if (!carruselRefHome.current) return;
     
-    return () => window.removeEventListener('resize', updateCardWidth);
-  }, []);
-
-  const scrollToIndex = (index) => {
-    if (!carruselRef.current) return;
-    
-    const gap = window.innerWidth < 480 ? 8 : 16;
+    const cardWidth = 280;
+    const gap = 16;
     const scrollAmount = index * (cardWidth + gap);
     
-    carruselRef.current.scrollTo({
+    carruselRefHome.current.scrollTo({
       left: scrollAmount,
       behavior: 'smooth'
     });
-    setCurrentIndex(index);
+    setCurrentIndexHome(index);
   };
 
-  const nextSlide = () => {
+  const nextSlideHome = () => {
     const maxIndex = Math.ceil(categorias.length / 1.5) - 1;
-    const nextIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1;
-    scrollToIndex(nextIndex);
+    const nextIndex = currentIndexHome >= maxIndex ? 0 : currentIndexHome + 1;
+    scrollToIndexHome(nextIndex);
   };
 
-  const prevSlide = () => {
+  const prevSlideHome = () => {
     const maxIndex = Math.ceil(categorias.length / 1.5) - 1;
-    const prevIndex = currentIndex <= 0 ? maxIndex : currentIndex - 1;
-    scrollToIndex(prevIndex);
+    const prevIndex = currentIndexHome <= 0 ? maxIndex : currentIndexHome - 1;
+    scrollToIndexHome(prevIndex);
   };
-
-  // Efecto para detectar scroll en móviles
-  useEffect(() => {
-    const carrusel = carruselRef.current;
-    if (!carrusel) return;
-
-    const handleScroll = () => {
-      if (window.innerWidth >= 768) return;
-      
-      const scrollLeft = carrusel.scrollLeft;
-      const gap = window.innerWidth < 480 ? 8 : 16;
-      const newIndex = Math.round(scrollLeft / (cardWidth + gap));
-      
-      setCurrentIndex(Math.max(0, Math.min(newIndex, Math.ceil(categorias.length / 1.5) - 1)));
-    };
-
-    carrusel.addEventListener('scroll', handleScroll);
-    return () => carrusel.removeEventListener('scroll', handleScroll);
-  }, [cardWidth, categorias.length]);
 
   if (!categorias || categorias.length === 0) {
     return (
-      <div className="no-categories">
+      <div className="no-categories-home">
         <p>No hay categorías disponibles en este momento.</p>
       </div>
     );
   }
 
   return (
-    <div className="carrusel-container">
-      <div className="carrusel-wrapper">
+    <div className="carrusel-container-home">
+      <div className="carrusel-wrapper-home">
         <button 
-          className="carrusel-btn carrusel-btn-prev" 
-          onClick={prevSlide}
+          className="carrusel-btn-home carrusel-btn-prev-home" 
+          onClick={prevSlideHome}
           aria-label="Categoría anterior"
         >
           ‹
         </button>
         
-        <div className="carrusel-categorias" ref={carruselRef}>
-          <div className="carrusel-track">
+        <div className="carrusel-categorias-home" ref={carruselRefHome}>
+          <div className="carrusel-track-home">
             {categorias.map((categoria, index) => (
-              <div key={categoria.id || index} className="categoria-card-small">
-                <div className="categoria-icon-small">
+              <div key={categoria.id || index} className="categoria-card-small-home">
+                <div className="categoria-icon-small-home">
                   {categoria.icon}
                 </div>
                 <h3>{categoria.nombre}</h3>
                 <p>{categoria.descripcion}</p>
-                <div className="categoria-count-small">
+                <div className="categoria-count-small-home">
                   {categoria.count} productos
                 </div>
-                {/* ✅ CORRECCIÓN: Usar ID compatible con Products */}
                 <Link 
-                  to={`/products?category=${obtenerIdCategoriaParaURL(categoria.nombre)}`} 
-                  className="btn-categoria-small"
+                  to={`/products?category=${obtenerIdCategoriaParaURLHome(categoria.nombre)}`} 
+                  className="btn-categoria-small-home"
                 >
                   Explorar
                 </Link>
@@ -216,22 +167,21 @@ const CarruselCategorias = ({ categorias }) => {
         </div>
 
         <button 
-          className="carrusel-btn carrusel-btn-next" 
-          onClick={nextSlide}
+          className="carrusel-btn-home carrusel-btn-next-home" 
+          onClick={nextSlideHome}
           aria-label="Siguiente categoría"
         >
           ›
         </button>
       </div>
 
-      {/* Indicadores - solo mostrar si hay más de una página */}
       {categorias.length > 3 && (
-        <div className="carrusel-indicators">
+        <div className="carrusel-indicators-home">
           {Array.from({ length: Math.ceil(categorias.length / 1.5) }).map((_, index) => (
             <button
               key={index}
-              className={`carrusel-indicator ${index === currentIndex ? 'active' : ''}`}
-              onClick={() => scrollToIndex(index)}
+              className={`carrusel-indicator-home ${index === currentIndexHome ? 'active-home' : ''}`}
+              onClick={() => scrollToIndexHome(index)}
               aria-label={`Ir a página ${index + 1}`}
             />
           ))}
@@ -242,40 +192,27 @@ const CarruselCategorias = ({ categorias }) => {
 };
 
 const Home = () => {
-    const [quickViewProduct, setQuickViewProduct] = useState(null);
-    const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+    const [quickViewProductHome, setQuickViewProductHome] = useState(null);
+    const [isQuickViewOpenHome, setIsQuickViewOpenHome] = useState(false);
 
-    // Usar datos reales de la API con hooks
     const { data: productosDestacadosData, loading: destacadosLoading, error: destacadosError } = useProductosDestacados();
     const { data: todosProductosData, loading: productosLoading } = useProductos({ limit: 200 });
     const { data: categoriasRealesResponse, loading: categoriasLoading } = useCategoriasReales();
     const { data: marcasData, loading: marcasLoading } = useMarcas();
 
-    // Extraer los arrays de datos de la respuesta
     const productosDestacados = productosDestacadosData?.data || [];
     const todosProductos = todosProductosData?.data || [];
     const categoriasReales = categoriasRealesResponse?.data || [];
     const marcasReales = marcasData?.data || [];
 
-    console.log('📦 Productos destacados:', productosDestacados);
-    console.log('📦 Todos los productos:', todosProductos?.length);
-    console.log('🏷️ Categorías reales:', categoriasReales?.length);
-    console.log('🏷️ Marcas reales:', marcasReales?.length);
-
-    // **FUNCIÓN: Obtener las categorías con más productos (misma lógica que Categories.jsx)**
-    const topCategorias = useMemo(() => {
+    const topCategoriasHome = useMemo(() => {
         if (!todosProductos || !Array.isArray(todosProductos) || todosProductos.length === 0) {
-            console.log('📊 No hay productos para analizar categorías');
             return [];
         }
 
-        console.log(`🔍 Analizando ${todosProductos.length} productos para categorías...`);
-
-        // MISMA LÓGICA QUE Categories.jsx
         const categoriasMap = new Map();
 
         todosProductos.forEach(producto => {
-            // PRIORIDAD 1: Usar categoría principal si existe y es válida
             if (producto.categoria && 
                 typeof producto.categoria === 'string' && 
                 producto.categoria.trim() !== '' &&
@@ -286,7 +223,6 @@ const Home = () => {
                 const categoria = producto.categoria.trim();
                 categoriasMap.set(categoria, (categoriasMap.get(categoria) || 0) + 1);
             }
-            // PRIORIDAD 2: Si no tiene categoría principal, usar subcategoría
             else if (producto.subcategoria && 
                      typeof producto.subcategoria === 'string' && 
                      producto.subcategoria.trim() !== '' &&
@@ -299,89 +235,66 @@ const Home = () => {
             }
         });
 
-        // Convertir a array y ordenar por cantidad de productos (descendente)
         const categoriasConConteo = Array.from(categoriasMap.entries())
             .map(([nombre, count]) => ({
                 nombre,
                 count,
-                id: generarIdDesdeNombre(nombre),
-                idParaURL: obtenerIdCategoriaParaURL(nombre),
-                descripcion: obtenerDescripcionCategoria(nombre),
-                icon: obtenerIconoCategoria(nombre)
+                id: generarIdDesdeNombreHome(nombre),
+                idParaURL: obtenerIdCategoriaParaURLHome(nombre),
+                descripcion: obtenerDescripcionCategoriaHome(nombre),
+                icon: obtenerIconoCategoriaHome(nombre)
             }))
-            .filter(cat => cat.count > 0) // Solo categorías con productos
-            .sort((a, b) => b.count - a.count) // Ordenar por cantidad descendente
-            .slice(0, 8); // Tomar las 8 categorías con más productos
+            .filter(cat => cat.count > 0)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 8);
 
-        console.log('🎯 Top 8 categorías con más productos:', categoriasConConteo);
         return categoriasConConteo;
 
     }, [todosProductos]);
 
-    // Obtener productos destacados REALES de la API
-    const getProductosDestacados = () => {
-        // Si hay productos destacados de la API, usarlos
+    const getProductosDestacadosHome = () => {
         if (Array.isArray(productosDestacados) && productosDestacados.length > 0) {
-            console.log('🎯 Usando productos destacados de API:', productosDestacados.slice(0, 3));
             return productosDestacados.slice(0, 3);
         }
         
-        // Si no, usar productos aleatorios con existencia de todos los productos
         if (Array.isArray(todosProductos) && todosProductos.length > 0) {
-            console.log('🎯 Usando productos aleatorios de todos los productos');
-            
-            // Filtrar productos que tienen imágenes y existencia
             const productosConImagen = todosProductos.filter(p => 
                 p.imagen && (p.existencia || p.existenciaTotal || 0) > 0
             );
             
             if (productosConImagen.length >= 3) {
                 const shuffled = [...productosConImagen].sort(() => 0.5 - Math.random());
-                console.log('🎯 Productos con imagen encontrados:', shuffled.slice(0, 3));
                 return shuffled.slice(0, 3);
             }
             
-            // Si no hay suficientes con imagen, usar cualquier producto con existencia
             const productosConExistencia = todosProductos.filter(p => 
                 (p.existencia || p.existenciaTotal || 0) > 0
             );
             
             if (productosConExistencia.length >= 3) {
                 const shuffled = [...productosConExistencia].sort(() => 0.5 - Math.random());
-                console.log('🎯 Productos con existencia encontrados:', shuffled.slice(0, 3));
                 return shuffled.slice(0, 3);
             }
             
-            // Último recurso: primeros 3 productos
-            console.log('🎯 Usando primeros 3 productos:', todosProductos.slice(0, 3));
             return todosProductos.slice(0, 3);
         }
         
-        console.log('❌ No hay productos disponibles');
         return [];
     };
 
-    // Obtener más productos REALES
-    const getMasProductos = () => {
+    const getMasProductosHome = () => {
         if (!Array.isArray(todosProductos) || todosProductos.length === 0) {
             return [];
         }
         
-        // Tomar productos del 3 al 6 para evitar duplicados con los destacados
-        const masProductos = todosProductos.slice(3, 6);
-        console.log('📦 Más productos:', masProductos);
-        return masProductos;
+        return todosProductos.slice(3, 6);
     };
 
-    // Obtener marcas populares REALES de la API
-    const getMarcasPopulares = () => {
-        // Si hay marcas de la API, usarlas
+    const getMarcasPopularesHome = () => {
         if (Array.isArray(marcasReales) && marcasReales.length > 0) {
-            console.log('🏷️ Usando marcas reales de API:', marcasReales.slice(0, 20));
             return marcasReales.slice(0, 20);
         }
         
-        // Si no hay marcas de la API, usar las marcas específicas proporcionadas
         const marcasEspecificas = [
             '4Gamers', 'ACER', 'ACTECK', 'ADATA', 'ADESSO',
             'ALTER', 'AMD', 'AOC', 'APC', 'APPLE',
@@ -389,12 +302,10 @@ const Home = () => {
             'AZOR', 'Allied Telesis', 'Amazfit', 'Amazon', 'Anviz'
         ];
         
-        console.log('🏷️ Usando marcas específicas:', marcasEspecificas);
         return marcasEspecificas;
     };
 
-    // Función para obtener la URL del logo de la marca
-    const getLogoUrl = (marcaNombre) => {
+    const getLogoUrlHome = (marcaNombre) => {
         const logos = {
             '4GAMERS': '/logos/4gamers.jpeg',
             'ACER': '/logos/acer.jpg',
@@ -420,24 +331,23 @@ const Home = () => {
         return logos[marcaNombre.toUpperCase()];
     };
 
-    const displayProductosDestacados = getProductosDestacados();
-    const displayMasProductos = getMasProductos();
-    const displayMarcasPopulares = getMarcasPopulares();
+    const displayProductosDestacadosHome = getProductosDestacadosHome();
+    const displayMasProductosHome = getMasProductosHome();
+    const displayMarcasPopularesHome = getMarcasPopularesHome();
 
-    const handleQuickView = (product) => {
-        setQuickViewProduct(product);
-        setIsQuickViewOpen(true);
+    const handleQuickViewHome = (product) => {
+        setQuickViewProductHome(product);
+        setIsQuickViewOpenHome(true);
     };
 
-    const handleCloseQuickView = () => {
-        setIsQuickViewOpen(false);
-        setQuickViewProduct(null);
+    const handleCloseQuickViewHome = () => {
+        setIsQuickViewOpenHome(false);
+        setQuickViewProductHome(null);
     };
 
-    const handleAddToCart = (product, quantity) => {
+    const handleAddToCartHome = (product, quantity) => {
         console.log('Agregado al carrito:', product, 'Cantidad:', quantity);
         
-        // Guardar en localStorage
         const cartItem = {
             ...product,
             quantity,
@@ -458,167 +368,159 @@ const Home = () => {
         alert(`¡${quantity} x ${product.nombre} agregado al carrito!`);
     };
 
-    // Estados de carga combinados
-    const isLoading = destacadosLoading || productosLoading || categoriasLoading || marcasLoading;
+    const isLoadingHome = destacadosLoading || productosLoading || categoriasLoading || marcasLoading;
 
     return (
-        <main className="home">
-            {/* Loading general */}
-            {isLoading && (
-                <div className="loading-overlay">
-                    <div className="loading-spinner-large"></div>
+        <main className="home-main">
+            {isLoadingHome && (
+                <div className="loading-overlay-home">
+                    <div className="loading-spinner-large-home"></div>
                     <p>Cargando contenido...</p>
                 </div>
             )}
 
-            {/* Sección de Categorías con Carrusel */}
-            <section className="categorias">
-                <div className="container">
-                    <div className="section-header">
-                        <h2 className="section-title">Categorías Populares</h2>
-                        <p className="section-subtitle">Descubre nuestras categorías con mayor variedad de productos</p>
+            <section className="categorias-home">
+                <div className="container-home">
+                    <div className="section-header-home">
+                        <h2 className="section-title-home">Categorías Populares</h2>
+                        <p className="section-subtitle-home">Descubre nuestras categorías con mayor variedad de productos</p>
                     </div>
                     
-                    {topCategorias.length > 0 ? (
-                        <CarruselCategorias categorias={topCategorias} />
+                    {topCategoriasHome.length > 0 ? (
+                        <CarruselCategoriasHome categorias={topCategoriasHome} />
                     ) : (
-                        <div className="no-categories">
+                        <div className="no-categories-home">
                             <p>{categoriasLoading ? 'Cargando categorías...' : 'No hay categorías disponibles en este momento.'}</p>
                         </div>
                     )}
                     
-                    <div className="view-all-container">
-                        <Link to="/categories" className="btn-view-all">
+                    <div className="view-all-container-home">
+                        <Link to="/categories" className="btn-view-all-home">
                             Ver Todas las Categorías
                         </Link>
                     </div>
                 </div>
             </section>
 
-            {/* Resto del código se mantiene igual... */}
-            {/* Sección de Productos Destacados */}
-            <section className="productos-destacados">
-                <div className="container">
-                    <div className="section-header">
-                        <h2 className="section-title">Productos Destacados</h2>
-                        <p className="section-subtitle">Los productos más populares y mejor valorados por nuestros clientes</p>
+            <section className="productos-destacados-home">
+                <div className="container-home">
+                    <div className="section-header-home">
+                        <h2 className="section-title-home">Productos Destacados</h2>
+                        <p className="section-subtitle-home">Los productos más populares y mejor valorados por nuestros clientes</p>
                     </div>
                     
                     {destacadosError && (
-                        <div className="error-section">
-                            <div className="error-icon">⚠️</div>
+                        <div className="error-section-home">
+                            <div className="error-icon-home">⚠️</div>
                             <h3>Error al cargar productos</h3>
                             <p>{destacadosError}</p>
-                            <button onClick={() => window.location.reload()} className="btn-retry">
+                            <button onClick={() => window.location.reload()} className="btn-retry-home">
                                 Reintentar
                             </button>
                         </div>
                     )}
 
-                    {displayProductosDestacados.length > 0 ? (
+                    {displayProductosDestacadosHome.length > 0 ? (
                         <>
-                            <div className="productos-grid">
-                                {displayProductosDestacados.map((producto) => (
+                            <div className="productos-grid-home">
+                                {displayProductosDestacadosHome.map((producto) => (
                                     <ProductCard 
                                         key={producto.idProducto || producto.codigo} 
                                         product={producto}
-                                        onQuickView={handleQuickView}
+                                        onQuickView={handleQuickViewHome}
                                     />
                                 ))}
                             </div>
                             
-                            <div className="view-all-container">
-                                <Link to="/products" className="btn-view-all">
+                            <div className="view-all-container-home">
+                                <Link to="/products" className="btn-view-all-home">
                                     Ver Todos los Productos
                                 </Link>
                             </div>
                         </>
                     ) : (
-                        <div className="no-products">
+                        <div className="no-products-home">
                             <p>No hay productos destacados disponibles en este momento.</p>
                         </div>
                     )}
                 </div>
             </section>
 
-            {/* Sección de Ofertas Especiales - COMPACTA */}
-            <section className="ofertas-compactas">
-                <div className="container">
-                    <div className="ofertas-compactas-content">
-                        <div className="ofertas-compactas-text">
+            <section className="ofertas-compactas-home">
+                <div className="container-home">
+                    <div className="ofertas-compactas-content-home">
+                        <div className="ofertas-compactas-text-home">
                             <h2>Ofertas Especiales</h2>
                             <p>Descuentos exclusivos en productos seleccionados</p>
-                            <Link to="/products?promociones=true" className="btn-ofertas-compactas">
+                            <Link to="/products?promociones=true" className="btn-ofertas-compactas-home">
                                 Ver Ofertas
                             </Link>
                         </div>
-                        <div className="ofertas-compactas-badge">
-                            <span className="badge-compacta-text">Hasta</span>
-                            <span className="badge-compacta-percent">50% OFF</span>
+                        <div className="ofertas-compactas-badge-home">
+                            <span className="badge-compacta-text-home">Hasta</span>
+                            <span className="badge-compacta-percent-home">50% OFF</span>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Sección de Más Productos */}
-            <section className="mas-productos">
-                <div className="container">
-                    <div className="section-header">
-                        <h2 className="section-title">Descubre Más Productos</h2>
-                        <p className="section-subtitle">Una selección cuidadosamente curada para tus necesidades tecnológicas</p>
+            <section className="mas-productos-home">
+                <div className="container-home">
+                    <div className="section-header-home">
+                        <h2 className="section-title-home">Descubre Más Productos</h2>
+                        <p className="section-subtitle-home">Una selección cuidadosamente curada para tus necesidades tecnológicas</p>
                     </div>
                     
-                    {displayMasProductos.length > 0 ? (
+                    {displayMasProductosHome.length > 0 ? (
                         <>
-                            <div className="productos-grid">
-                                {displayMasProductos.map((producto) => (
+                            <div className="productos-grid-home">
+                                {displayMasProductosHome.map((producto) => (
                                     <ProductCard 
                                         key={producto.idProducto || producto.codigo} 
                                         product={producto}
-                                        onQuickView={handleQuickView}
+                                        onQuickView={handleQuickViewHome}
                                     />
                                 ))}
                             </div>
                             
-                            <div className="view-all-container">
-                                <Link to="/products" className="btn-view-all">
+                            <div className="view-all-container-home">
+                                <Link to="/products" className="btn-view-all-home">
                                     Explorar Catálogo Completo
                                 </Link>
                             </div>
                         </>
                     ) : (
-                        <div className="no-products">
+                        <div className="no-products-home">
                             <p>No hay productos disponibles en este momento.</p>
                         </div>
                     )}
                 </div>
             </section>
 
-            {/* Sección de Beneficios - COMPACTA */}
-            <section className="beneficios-compactos">
-                <div className="container">
-                    <div className="section-header">
-                        <h2 className="section-title">¿Por qué elegirnos?</h2>
-                        <p className="section-subtitle">Ofrecemos la mejor experiencia de compra en tecnología</p>
+            <section className="beneficios-compactos-home">
+                <div className="container-home">
+                    <div className="section-header-home">
+                        <h2 className="section-title-home">¿Por qué elegirnos?</h2>
+                        <p className="section-subtitle-home">Ofrecemos la mejor experiencia de compra en tecnología</p>
                     </div>
-                    <div className="beneficios-compactos-content">
-                        <div className="beneficio-compacto">
-                            <div className="beneficio-compacto-icon">🚚</div>
+                    <div className="beneficios-compactos-content-home">
+                        <div className="beneficio-compacto-home">
+                            <div className="beneficio-compacto-icon-home">🚚</div>
                             <h3>Envío Gratis</h3>
                             <p>En compras mayores a $500 MXN</p>
                         </div>
-                        <div className="beneficio-compacto">
-                            <div className="beneficio-compacto-icon">🛡️</div>
+                        <div className="beneficio-compacto-home">
+                            <div className="beneficio-compacto-icon-home">🛡️</div>
                             <h3>Garantía</h3>
                             <p>Hasta 2 años en productos seleccionados</p>
                         </div>
-                        <div className="beneficio-compacto">
-                            <div className="beneficio-compacto-icon">⏰</div>
+                        <div className="beneficio-compacto-home">
+                            <div className="beneficio-compacto-icon-home">⏰</div>
                             <h3>Soporte 24/7</h3>
                             <p>Asistencia técnica especializada</p>
                         </div>
-                        <div className="beneficio-compacto">
-                            <div className="beneficio-compacto-icon">💳</div>
+                        <div className="beneficio-compacto-home">
+                            <div className="beneficio-compacto-icon-home">💳</div>
                             <h3>Pagos Seguros</h3>
                             <p>Transacciones protegidas SSL</p>
                         </div>
@@ -626,28 +528,26 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* Sección de Marcas REALES */}
-            <section className="marcas">
-                <div className="container">
-                    <div className="section-header">
-                        <h2 className="section-title">Marcas Confiables</h2>
-                        <p className="section-subtitle">Trabajamos con las mejores marcas del mercado tecnológico</p>
+            <section className="marcas-home">
+                <div className="container-home">
+                    <div className="section-header-home">
+                        <h2 className="section-title-home">Marcas Confiables</h2>
+                        <p className="section-subtitle-home">Trabajamos con las mejores marcas del mercado tecnológico</p>
                     </div>
-                    {displayMarcasPopulares.length > 0 ? (
-                        <div className="marcas-grid">
-                            {displayMarcasPopulares.map((marca, index) => {
-                                const logoUrl = getLogoUrl(marca);
+                    {displayMarcasPopularesHome.length > 0 ? (
+                        <div className="marcas-grid-home">
+                            {displayMarcasPopularesHome.map((marca, index) => {
+                                const logoUrl = getLogoUrlHome(marca);
                                 
                                 return (
-                                    <div key={index} className="marca-item">
+                                    <div key={index} className="marca-item-home">
                                         {logoUrl ? (
                                             <>
                                                 <img 
                                                     src={logoUrl} 
                                                     alt={`Logo ${marca}`}
-                                                    className="marca-logo"
+                                                    className="marca-logo-home"
                                                     onError={(e) => {
-                                                        // Si el logo no carga, mostrar texto
                                                         e.target.style.display = 'none';
                                                         const textElement = e.target.nextSibling;
                                                         if (textElement) {
@@ -655,35 +555,33 @@ const Home = () => {
                                                         }
                                                     }}
                                                 />
-                                                <span className="marca-texto" style={{display: 'none'}}>
+                                                <span className="marca-texto-home" style={{display: 'none'}}>
                                                     {marca}
                                                 </span>
                                             </>
                                         ) : (
-                                            <span className="marca-texto">{marca}</span>
+                                            <span className="marca-texto-home">{marca}</span>
                                         )}
                                     </div>
                                 );
                             })}
                         </div>
                     ) : (
-                        <div className="no-marcas">
+                        <div className="no-marcas-home">
                             <p>{marcasLoading ? 'Cargando marcas...' : 'No hay marcas disponibles en este momento.'}</p>
                         </div>
                     )}
                 </div>
             </section>
 
-            {/* Modal de Vista Rápida */}
             <QuickViewModal
-                product={quickViewProduct}
-                isOpen={isQuickViewOpen}
-                onClose={handleCloseQuickView}
-                onAddToCart={handleAddToCart}
+                product={quickViewProductHome}
+                isOpen={isQuickViewOpenHome}
+                onClose={handleCloseQuickViewHome}
+                onAddToCart={handleAddToCartHome}
             />
 
-            {/* Debug solo en desarrollo */}
-            {process.env.NODE_ENV === 'development' &&  <ImageDebug /> }
+            {/* {process.env.NODE_ENV === 'development' &&  <ImageDebug /> } */}
         </main>
     );
 };

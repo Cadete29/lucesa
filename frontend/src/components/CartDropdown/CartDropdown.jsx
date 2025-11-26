@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import './CartDropdown.css';
 
+// ✅ Configuración de URLs por entorno
+const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://testpaginaweb.shop/api/images/code'
+  : 'http://localhost:4004/api/images/code';
+
 const CartDropdown = () => {
   const { 
     cartItems, 
@@ -21,8 +26,9 @@ const CartDropdown = () => {
     }
   };
 
+  // ✅ Función para obtener URL de imagen usando la configuración por entorno
   const getImageUrl = (codigo) => {
-    return `http://localhost:4004/api/images/code/${codigo}?size=small`;
+    return `${IMAGE_BASE_URL}/${codigo}?size=small`;
   };
 
   if (cartItems.length === 0) {

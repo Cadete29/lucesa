@@ -258,10 +258,14 @@ const Categories = () => {
     // Loading state
     if (loading) {
         return (
-            <div className="categories-loading">
-                <div className="loading-spinner"></div>
-                <p>Organizando productos por categorías...</p>
-                <p>Filtrando categorías con productos...</p>
+            <div className="categories-page">
+                <div className="categories-container">
+                    <div className="categories-loading">
+                        <div className="categories-loading-spinner"></div>
+                        <p>Organizando productos por categorías...</p>
+                        <p>Filtrando categorías con productos...</p>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -269,11 +273,15 @@ const Categories = () => {
     // Error state
     if (error) {
         return (
-            <div className="categories-error">
-                <div className="error-icon">⚠️</div>
-                <h3>Error al cargar categorías</h3>
-                <p>{error}</p>
-                <button onClick={refetch} className="btn-retry">Reintentar</button>
+            <div className="categories-page">
+                <div className="categories-container">
+                    <div className="categories-error">
+                        <div className="categories-error-icon">⚠️</div>
+                        <h3>Error al cargar categorías</h3>
+                        <p>{error}</p>
+                        <button onClick={refetch} className="categories-btn-retry">Reintentar</button>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -281,54 +289,52 @@ const Categories = () => {
     // No categories state
     if (!categoriasRealesResponse || !categoriasRealesResponse.success || displayCategories.length === 0) {
         return (
-            <div className="no-categories">
-                <div className="no-categories-icon">📁</div>
-                <h3>No se encontraron categorías con productos</h3>
-                <p>Se analizaron {productosResponse?.data?.length || 0} productos</p>
-                <button onClick={refetch} className="btn-retry">Buscar Nuevamente</button>
+            <div className="categories-page">
+                <div className="categories-container">
+                    <div className="categories-no-categories">
+                        <div className="categories-no-categories-icon">📁</div>
+                        <h3>No se encontraron categorías con productos</h3>
+                        <p>Se analizaron {productosResponse?.data?.length || 0} productos</p>
+                        <button onClick={refetch} className="categories-btn-retry">Buscar Nuevamente</button>
+                    </div>
+                </div>
             </div>
         );
     }
 
     return (
         <div className="categories-page">
-            <div className="container">
+            <div className="categories-container">
                 <div className="categories-header">
                     <h1>Explora por Categoría</h1>
                     <p>
                         {displayCategories.length} categorías organizando {totalProductos.toLocaleString()} productos
                     </p>
                     
-                    <div className="categories-stats">
-                        <div className="stat-item">
-                            <span className="stat-number">{displayCategories.length}</span>
-                            <span className="stat-label">Categorías</span>
+                    {/* <div className="categories-stats">
+                        <div className="categories-stat-item">
+                            <span className="categories-stat-number">{displayCategories.length}</span>
+                            <span className="categories-stat-label">Categorías</span>
                         </div>
-                        <div className="stat-item">
-                            <span className="stat-number">
+                        <div className="categories-stat-item">
+                            <span className="categories-stat-number">
                                 {categoriasConProductosCount}
                             </span>
-                            <span className="stat-label">Con Productos</span>
+                            <span className="categories-stat-label">Con Productos</span>
                         </div>
-                        <div className="stat-item">
-                            <span className="stat-number">{totalProductos.toLocaleString()}</span>
-                            <span className="stat-label">Productos Totales</span>
+                        <div className="categories-stat-item">
+                            <span className="categories-stat-number">{totalProductos.toLocaleString()}</span>
+                            <span className="categories-stat-label">Productos Totales</span>
                         </div>
-                        <div className="stat-item">
-                            <span className="stat-number">{totalProductosEnCategorias.toLocaleString()}</span>
-                            <span className="stat-label">Productos Organizados</span>
+                        <div className="categories-stat-item">
+                            <span className="categories-stat-number">{totalProductosEnCategorias.toLocaleString()}</span>
+                            <span className="categories-stat-label">Productos Organizados</span>
                         </div>
                     </div>
-
+ */}
                     {/* Información de filtrado */}
-                    <div style={{ 
-                        marginTop: '1rem', 
-                        padding: '1rem',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(255, 255, 255, 0.2)'
-                    }}>
-                        <p style={{ margin: 0, color: 'white', fontSize: '0.9rem' }}>
+                    <div className="categories-filter-info">
+                        <p>
                             <strong>🎯 Filtrado automático:</strong> Mostrando solo categorías con productos
                             {productosSinCategoria > 0 && (
                                 <span> + categoría "Otros" con <strong>{productosSinCategoria} productos</strong></span>
@@ -342,45 +348,40 @@ const Categories = () => {
                     {displayCategories.map((category) => (
                         <div 
                             key={category.id} 
-                            className={`category-card ${category.esCategoriaOtros ? 'category-otros' : ''}`}
+                            className={`categories-card ${category.esCategoriaOtros ? 'categories-card-otros' : ''}`}
                         >
                             <div 
-                                className="category-icon"
+                                className="categories-card-icon"
                                 style={{ backgroundColor: category.color }}
                             >
-                                <span className="category-initial">
+                                <span className="categories-card-initial">
                                     {category.nombre.charAt(0).toUpperCase()}
                                 </span>
-                               {/*  {category.esReal && !category.esCategoriaOtros && (
-                                    <span className="real-badge">REAL</span>
-                                )} */}
                                 {category.esCategoriaOtros && (
-                                    <span className="otros-badge">OTROS</span>
+                                    <span className="categories-otros-badge">OTROS</span>
                                 )}
                             </div>
 
-                            <div className="category-info">
-                                <h3 className="category-name">
+                            <div className="categories-card-info">
+                                <h3 className="categories-card-name">
                                     {category.nombre}
                                     {category.esCategoriaOtros && (
-                                        <span style={{ fontSize: '0.7em', marginLeft: '0.5rem', opacity: 0.7 }}>
-                                            (Sin categoría)
-                                        </span>
+                                        <span className="categories-otros-label"> (Sin categoría)</span>
                                     )}
                                 </h3>
-                                <p className="category-description">{category.descripcion}</p>
+                                <p className="categories-card-description">{category.descripcion}</p>
                                 
-                                <div className="category-meta">
-                                    <span className={`category-count ${category.esCategoriaOtros ? 'count-otros' : ''}`}>
+                                <div className="categories-card-meta">
+                                    <span className={`categories-card-count ${category.esCategoriaOtros ? 'categories-count-otros' : ''}`}>
                                         {category.count.toLocaleString()} productos
                                         {category.esCategoriaOtros && ' sin categoría'}
                                     </span>
                                 </div>
                                 
-                                <div className="category-actions">
+                                <div className="categories-card-actions">
                                     <Link 
                                         to={`/products?category=${category.id}`} 
-                                        className={`btn-view-all ${category.esCategoriaOtros ? 'btn-otros' : ''}`}
+                                        className={`categories-btn-view-all ${category.esCategoriaOtros ? 'categories-btn-otros' : ''}`}
                                     >
                                         Ver Productos →
                                     </Link>
@@ -391,30 +392,26 @@ const Categories = () => {
                 </div>
 
                 {/* Información adicional */}
-                <div style={{ 
-                    textAlign: 'center', 
-                    marginTop: '3rem', 
-                    padding: '2rem',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '12px'
-                }}>
+                <div className="categories-additional-info">
                     <h3>Organización Optimizada de Productos</h3>
                     <p>
                         <strong>{totalProductosEnCategorias.toLocaleString()} productos</strong> organizados en 
                         {' '}<strong>{displayCategories.length} categorías activas</strong>
                     </p>
-                    {productosSinCategoria > 0 ? (
-                        <p style={{ fontSize: '0.9rem', color: '#718096', marginTop: '0.5rem' }}>
+
+                    {/* {productosSinCategoria > 0 ? (
+                        <p className="categories-coverage-info">
                             Incluyendo <strong>{productosSinCategoria} productos</strong> en la categoría "Otros" para máxima cobertura
                         </p>
                     ) : (
-                        <p style={{ fontSize: '0.9rem', color: '#718096', marginTop: '0.5rem' }}>
+                        <p className="categories-coverage-info">
                             ✅ 100% de productos categorizados correctamente
                         </p>
-                    )}
-                    <p style={{ fontSize: '0.8rem', color: '#A0AEC0', marginTop: '0.5rem', fontStyle: 'italic' }}>
+                    )} */}
+                    
+                    {/* <p className="categories-filter-note">
                         Las categorías sin productos se ocultan automáticamente
-                    </p>
+                    </p> */}
                 </div>
             </div>
         </div>

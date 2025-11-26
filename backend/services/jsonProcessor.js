@@ -142,7 +142,7 @@ class JSONProcessor {
   }
 
   /**
-   * Transforma un producto individual
+   * Transforma un producto individual - VERSIÓN CORREGIDA PARA ALMACENES
    */
   transformProduct(producto, index) {
     // Log del primer producto para debugging
@@ -155,7 +155,11 @@ class JSONProcessor {
       const importantFields = ['codigo', 'clave', 'sku', 'nombre', 'existencia', 'stock', 'precio', 'cantidad'];
       importantFields.forEach(field => {
         if (producto[field] !== undefined) {
-          logger.info(`   ${field}: ${producto[field]}`);
+          if ((field === 'existencia' || field === 'stock') && typeof producto[field] === 'object') {
+            logger.info(`   ${field}: ${JSON.stringify(producto[field])}`);
+          } else {
+            logger.info(`   ${field}: ${producto[field]}`);
+          }
         }
       });
     }
@@ -166,16 +170,51 @@ class JSONProcessor {
     // Determinar nombre
     const nombre = producto.nombre || producto.descripcion || producto.name || producto.description || 'Producto sin nombre';
     
-    // Determinar existencia
+    // DETERMINAR EXISTENCIA - CORREGIDO PARA ALMACENES
     let existencia = 0;
+    let existenciaTotal = 0;
+    let almacenes = {};
+
     if (producto.existencia !== undefined && producto.existencia !== null) {
-      existencia = parseInt(producto.existencia);
+      if (typeof producto.existencia === 'object') {
+        // El campo existencia es un objeto con almacenes: {"QRO": 1, "MTY": 5, etc}
+        almacenes = producto.existencia;
+        
+        // Calcular existencia total sumando todos los almacenes
+        existenciaTotal = Object.values(almacenes).reduce((total, cantidad) => {
+          return total + (parseInt(cantidad) || 0);
+        }, 0);
+        
+        // Para compatibilidad, usar la existencia total
+        existencia = existenciaTotal;
+        
+        // Debug del primer producto
+        if (index === 0) {
+          logger.info(`   🔍 Existencia por almacenes: ${JSON.stringify(almacenes)}`);
+          logger.info(`   📊 Existencia total calculada: ${existenciaTotal}`);
+        }
+      } else if (typeof producto.existencia === 'string') {
+        existencia = parseInt(producto.existencia) || 0;
+        existenciaTotal = existencia;
+      } else if (typeof producto.existencia === 'number') {
+        existencia = producto.existencia;
+        existenciaTotal = existencia;
+      }
     } else if (producto.stock !== undefined && producto.stock !== null) {
-      existencia = parseInt(producto.stock);
+      if (typeof producto.stock === 'object') {
+        // También manejar stock como objeto de almacenes
+        almacenes = producto.stock;
+        existenciaTotal = Object.values(almacenes).reduce((total, cantidad) => {
+          return total + (parseInt(cantidad) || 0);
+        }, 0);
+        existencia = existenciaTotal;
+      } else {
+        existencia = parseInt(producto.stock) || 0;
+        existenciaTotal = existencia;
+      }
     } else if (producto.cantidad !== undefined && producto.cantidad !== null) {
-      existencia = parseInt(producto.cantidad);
-    } else if (producto.inventory !== undefined && producto.inventory !== null) {
-      existencia = parseInt(producto.inventory);
+      existencia = parseInt(producto.cantidad) || 0;
+      existenciaTotal = existencia;
     }
 
     // Determinar precio
@@ -188,6 +227,10 @@ class JSONProcessor {
       precio = parseFloat(producto.precio_venta);
     }
 
+    // Determinar categoría y subcategoría
+    const categoria = producto.categoria || producto.category || producto.idCategoria || 'Sin categoría';
+    const subcategoria = producto.subcategoria || producto.subcategory || producto.idSubCategoria || '';
+
     // Producto transformado
     const productoTransformado = {
       id: `json_${index + 1}`,
@@ -196,13 +239,24 @@ class JSONProcessor {
       descripcion: producto.descripcion || producto.descripcion_corta || producto.description || '',
       precio: precio,
       existencia: existencia,
-      categoria: producto.categoria || producto.category || 'Sin categoría',
-      marca: producto.marca || producto.brand || 'Sin marca',
+      existenciaTotal: existenciaTotal,
+      almacenes: almacenes, // Guardar el desglose por almacenes
+      categoria: categoria,
+      subcategoria: subcategoria,
+      marca: producto.marca || producto.brand || producto.idMarca || 'Sin marca',
+      modelo: producto.modelo || producto.model || '',
       imagen: producto.imagen || producto.image || producto.imagen_url || producto.image_url || '',
-      almacen: producto.almacen || producto.warehouse || producto.sucursal || producto.store || '001',
+      almacen: producto.almacen || 'QRO', // Usar QRO como almacen principal por defecto
       precioPromocion: parseFloat(producto.promo || producto.precio_promocion || producto.special_price || producto.promotion_price || 0),
       ultimaActualizacion: new Date().toISOString(),
-      fuente: 'JSON'
+      fuente: 'JSON',
+      disponible: existencia > 0,
+      tieneExistencia: existencia > 0,
+      stock: existencia, // Alias para compatibilidad
+      // Campos adicionales para compatibilidad
+      ean: producto.ean || producto.upc || '',
+      activo: producto.activo !== undefined ? producto.activo : true,
+      especificaciones: producto.especificaciones || producto.specifications || {}
     };
 
     return productoTransformado;
@@ -220,7 +274,8 @@ class JSONProcessor {
         timestamp: new Date().toISOString(),
         source: 'JSON',
         estrategia: estrategia,
-        procesadoCon: 'JSONProcessor'
+        procesadoCon: 'JSONProcessor',
+        totalConExistencia: productos.filter(p => p.existencia > 0).length
       }
     };
 
@@ -228,12 +283,14 @@ class JSONProcessor {
     
     logger.info(`✅ Procesamiento completado: ${productos.length} productos`);
     logger.info(`📊 Estrategia utilizada: ${estrategia}`);
+    logger.info(`📦 Productos con existencia: ${outputData.metadata.totalConExistencia}`);
     
     // Mostrar ejemplos
     if (productos.length > 0) {
       logger.info('📋 Ejemplos de productos procesados:');
       productos.slice(0, 3).forEach((prod, i) => {
-        logger.info(`   ${i + 1}. ${prod.codigo} - ${prod.nombre} - Existencia: ${prod.existencia} - Precio: $${prod.precio}`);
+        const almacenesInfo = prod.almacenes ? ` (${Object.keys(prod.almacenes).join(', ')})` : '';
+        logger.info(`   ${i + 1}. ${prod.codigo} - ${prod.nombre} - Existencia: ${prod.existencia}${almacenesInfo} - Precio: $${prod.precio}`);
       });
     }
 
@@ -332,6 +389,66 @@ class JSONProcessor {
       return data;
     }
     return data;
+  }
+
+  /**
+   * Procesa el archivo JSON y devuelve estadísticas
+   */
+  async processAndGetStats(filePath) {
+    try {
+      const productos = await this.processJSONFile(filePath);
+      
+      const stats = {
+        total: productos.length,
+        conExistencia: productos.filter(p => p.existencia > 0).length,
+        sinExistencia: productos.filter(p => p.existencia === 0).length,
+        almacenes: {},
+        categorias: {},
+        marcas: {}
+      };
+
+      // Estadísticas de almacenes
+      productos.forEach(producto => {
+        if (producto.almacenes && typeof producto.almacenes === 'object') {
+          Object.keys(producto.almacenes).forEach(almacen => {
+            if (!stats.almacenes[almacen]) {
+              stats.almacenes[almacen] = 0;
+            }
+            stats.almacenes[almacen] += parseInt(producto.almacenes[almacen]) || 0;
+          });
+        }
+
+        // Estadísticas de categorías
+        if (producto.categoria) {
+          if (!stats.categorias[producto.categoria]) {
+            stats.categorias[producto.categoria] = 0;
+          }
+          stats.categorias[producto.categoria]++;
+        }
+
+        // Estadísticas de marcas
+        if (producto.marca) {
+          if (!stats.marcas[producto.marca]) {
+            stats.marcas[producto.marca] = 0;
+          }
+          stats.marcas[producto.marca]++;
+        }
+      });
+
+      return {
+        success: true,
+        data: stats,
+        timestamp: new Date().toISOString()
+      };
+
+    } catch (error) {
+      logger.error('❌ Error obteniendo estadísticas:', error);
+      return {
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      };
+    }
   }
 }
 

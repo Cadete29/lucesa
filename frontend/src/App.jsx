@@ -15,9 +15,11 @@ import Favorites from './pages/Favorites'
 import Login from './components/Auth/Login'
 import Register from './components/Auth/Register'
 import ForgotPassword from './components/Auth/ForgotPassword'
+import ResetPassword from './components/Auth/ResetPassword'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import OrderConfirmation from './pages/OrderConfirmation'
+import UserProfile from './components/Profile/UserProfile';
 import './App.css'
 
 function App() {
@@ -43,9 +45,11 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password/:token" element={<ResetPassword />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/order-confirmation" element={<OrderConfirmation />} />
+                  <Route path="/my-account" element={<UserProfile />} />
                 </Routes>
               </main>
               <Footer />

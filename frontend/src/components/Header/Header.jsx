@@ -85,6 +85,13 @@ const Header = () => {
         closeCart();
     };
 
+    const handleMyAccountClick = () => {
+        navigate('/my-account');
+        setUserMenuOpen(false);
+        closeMobileMenu();
+        closeCart();
+    };
+
     const handleLogout = () => {
         logout();
         setUserMenuOpen(false);
@@ -96,7 +103,7 @@ const Header = () => {
     // Cerrar menús al hacer clic fuera
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (userMenuOpen && !event.target.closest('.user-menu')) {
+            if (userMenuOpen && !event.target.closest('.user-menu-hdr')) {
                 setUserMenuOpen(false);
             }
         };
@@ -121,111 +128,115 @@ const Header = () => {
     }, [isMenuOpen]);
 
     return (
-        <header className={`header-lucesa ${isScrolled ? 'scrolled' : ''}`}>
-            <div className="container-lucesa">
-                <div className="header-content-lucesa">
+        <header className={`header-hdr ${isScrolled ? 'scrolled-hdr' : ''}`}>
+            <div className="container-hdr">
+                <div className="header-content-hdr">
                     {/* Logo */}
-                    <div className="logo">
+                    <div className="logo-hdr">
                         <Link to="/" onClick={handleNavClick}>
                             <img 
                                 src="/LOGO_LUCESA.png" 
                                 alt="Lucesa Ecommerce" 
-                                className="logo-image"
+                                className="logo-image-hdr"
                             />
                         </Link>
                     </div>
 
                     {/* Navegación Desktop */}
-                    <nav className="desktop-nav">
-                        <ul className="nav-list-lucesa">
+                    <nav className="desktop-nav-hdr">
+                        <ul className="nav-list-hdr">
                             <li>
-                                <Link to="/" className="nav-link">Inicio</Link>
+                                <Link to="/" className="nav-link-hdr">Inicio</Link>
                             </li>
                             <li>
-                                <Link to="/products" className="nav-link">Productos</Link>
+                                <Link to="/products" className="nav-link-hdr">Productos</Link>
                             </li>
                             <li>
-                                <Link to="/categories" className="nav-link">Categorías</Link>
+                                <Link to="/categories" className="nav-link-hdr">Categorías</Link>
                             </li>
                             <li>
-                                <Link to="/favorites" className="nav-link">Favoritos</Link>
+                                <Link to="/favorites" className="nav-link-hdr">Favoritos</Link>
                             </li>
                         </ul>
                     </nav>
 
                     {/* Acciones */}
-                    <div className="header-actions">
-                        <form className="search-bar" onSubmit={handleSearchSubmit}>
+                    <div className="header-actions-hdr">
+                        <form className="search-bar-hdr" onSubmit={handleSearchSubmit}>
                             <input 
                                 type="text" 
                                 placeholder="Buscar productos..." 
-                                className="search-input"
+                                className="search-input-hdr"
                                 value={localSearchTerm}
                                 onChange={handleSearchInputChange}
                                 onKeyPress={handleKeyPress}
                             />
-                            <button type="submit" className="search-btn">
-                                <span className="search-icon">🔍</span>
+                            <button type="submit" className="search-btn-hdr">
+                                <span className="search-icon-hdr">🔍</span>
                             </button>
                         </form>
                         
-                        <div className="header-icons">
-                            <button onClick={handleFavoritesClick} className="icon-btn favorites-btn" title="Favoritos">
-                                <span className="icon">❤️</span>
+                        <div className="header-icons-hdr">
+                            <button onClick={handleFavoritesClick} className="icon-btn-hdr favorites-btn-hdr" title="Favoritos">
+                                <span className="icon-hdr">❤️</span>
                                 {favoritesCount > 0 && (
-                                    <span className="favorites-count">{favoritesCount}</span>
+                                    <span className="favorites-count-hdr">{favoritesCount}</span>
                                 )}
                             </button>
 
-                            <button onClick={handleCartClick} className="icon-btn cart-btn" title="Carrito">
-                                <span className="icon">🛒</span>
+                            <button onClick={handleCartClick} className="icon-btn-hdr cart-btn-hdr" title="Carrito">
+                                <span className="icon-hdr">🛒</span>
                                 {getCartItemsCount() > 0 && (
-                                    <span className="cart-count">{getCartItemsCount()}</span>
+                                    <span className="cart-count-hdr">{getCartItemsCount()}</span>
                                 )}
                             </button>
 
                             {user ? (
-                                <div className="user-menu">
+                                <div className="user-menu-hdr">
                                     <button 
-                                        className="icon-btn user-btn"
+                                        className="icon-btn-hdr user-btn-hdr"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setUserMenuOpen(!userMenuOpen);
                                         }}
                                         title="Mi Cuenta"
                                     >
-                                        <span className="icon">👤</span>
+                                        <span className="icon-hdr">👤</span>
                                     </button>
                                     
                                     {userMenuOpen && (
-                                        <div className="user-dropdown">
-                                            <div className="user-info">
-                                                <strong>{user.name}</strong>
+                                        <div className="user-dropdown-hdr">
+                                            <div className="user-info-hdr">
+                                                <strong>{user.nombre || user.username}</strong>
                                                 <span>{user.email}</span>
                                             </div>
-                                            <Link to="/profile" className="dropdown-item" onClick={() => setUserMenuOpen(false)}>
-                                                <span className="dropdown-icon">👤</span>
-                                                Mi Perfil
-                                            </Link>
-                                            <Link to="/orders" className="dropdown-item" onClick={() => setUserMenuOpen(false)}>
-                                                <span className="dropdown-icon">📦</span>
-                                                Mis Pedidos
-                                            </Link>
-                                            <Link to="/favorites" className="dropdown-item" onClick={() => setUserMenuOpen(false)}>
-                                                <span className="dropdown-icon">❤️</span>
+                                            <button 
+                                                onClick={handleMyAccountClick} 
+                                                className="dropdown-item-hdr"
+                                            >
+                                                <span className="dropdown-icon-hdr">👤</span>
+                                                Mi Cuenta
+                                            </button>
+                                            <Link to="/favorites" className="dropdown-item-hdr" onClick={() => setUserMenuOpen(false)}>
+                                                <span className="dropdown-icon-hdr">❤️</span>
                                                 Mis Favoritos
                                             </Link>
-                                            <div className="dropdown-divider"></div>
-                                            <button onClick={handleLogout} className="dropdown-item logout-btn">
-                                                <span className="dropdown-icon">🚪</span>
+                                            <div className="dropdown-divider-hdr"></div>
+                                            <button onClick={handleLogout} className="dropdown-item-hdr logout-btn-hdr">
+                                                <span className="dropdown-icon-hdr">🚪</span>
                                                 Cerrar Sesión
                                             </button>
                                         </div>
                                     )}
                                 </div>
                             ) : (
-                                <button onClick={handleLoginClick} className="icon-btn login-btn" title="Iniciar Sesión">
-                                    <span className="icon">👤</span>
+                                <button 
+                                    onClick={handleLoginClick} 
+                                    className="login-button-hdr"
+                                    title="Iniciar Sesión"
+                                >
+                                    <span className="login-icon-hdr">👤</span>
+                                    Iniciar Sesión
                                 </button>
                             )}
                         </div>
@@ -233,7 +244,7 @@ const Header = () => {
 
                     {/* Menú Hamburguesa */}
                     <button
-                        className={`menu-toggle ${isMenuOpen ? 'active' : ''}`}
+                        className={`menu-toggle-hdr ${isMenuOpen ? 'active-hdr' : ''}`}
                         onClick={toggleMenu}
                         aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"}
                     >
@@ -245,62 +256,65 @@ const Header = () => {
             </div>
 
             {/* Menú Móvil */}
-            <div className={`mobile-menu ${isMenuOpen ? 'active' : ''}`}>
-                <div className="mobile-menu-content">
-                    <div className="mobile-menu-header">
-                        <div className="mobile-logo">
-                            <img src="/LOGO_LUCESA.png" alt="Lucesa" className="mobile-logo-image" />
+            <div className={`mobile-menu-hdr ${isMenuOpen ? 'active-hdr' : ''}`}>
+                <div className="mobile-menu-content-hdr">
+                    <div className="mobile-menu-header-hdr">
+                        <div className="mobile-logo-hdr">
+                            <img src="/LOGO_LUCESA.png" alt="Lucesa" className="mobile-logo-image-hdr" />
                         </div>
                     </div>
 
-                    <nav className="mobile-nav">
-                        <ul className="mobile-nav-list">
+                    <nav className="mobile-nav-hdr">
+                        <ul className="mobile-nav-list-hdr">
                             <li>
-                                <Link to="/" className="mobile-nav-link" onClick={handleNavClick}>
-                                    <span className="nav-icon">🏠</span>
+                                <Link to="/" className="mobile-nav-link-hdr" onClick={handleNavClick}>
+                                    <span className="nav-icon-hdr">🏠</span>
                                     Inicio
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/products" className="mobile-nav-link" onClick={handleNavClick}>
-                                    <span className="nav-icon">📦</span>
+                                <Link to="/products" className="mobile-nav-link-hdr" onClick={handleNavClick}>
+                                    <span className="nav-icon-hdr">📦</span>
                                     Productos
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/categories" className="mobile-nav-link" onClick={handleNavClick}>
-                                    <span className="nav-icon">📑</span>
+                                <Link to="/categories" className="mobile-nav-link-hdr" onClick={handleNavClick}>
+                                    <span className="nav-icon-hdr">📑</span>
                                     Categorías
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/favorites" className="mobile-nav-link" onClick={handleNavClick}>
-                                    <span className="nav-icon">❤️</span>
+                                <Link to="/favorites" className="mobile-nav-link-hdr" onClick={handleNavClick}>
+                                    <span className="nav-icon-hdr">❤️</span>
                                     Favoritos
                                     {favoritesCount > 0 && (
-                                        <span className="mobile-badge">{favoritesCount}</span>
+                                        <span className="mobile-badge-hdr">{favoritesCount}</span>
                                     )}
                                 </Link>
                             </li>
                         </ul>
 
                         {user && (
-                            <div className="mobile-user-section">
-                                <div className="user-info-mobile">
-                                    <span className="user-greeting">Hola, {user.name}</span>
-                                    <span className="user-email">{user.email}</span>
+                            <div className="mobile-user-section-hdr">
+                                <div className="user-info-mobile-hdr">
+                                    <span className="user-greeting-hdr">Hola, {user.nombre || user.username}</span>
+                                    <span className="user-email-hdr">{user.email}</span>
                                 </div>
-                                <div className="mobile-user-links">
-                                    <Link to="/profile" className="mobile-user-link" onClick={handleNavClick}>
-                                        <span className="link-icon">👤</span>
-                                        Mi Perfil
+                                <div className="mobile-user-links-hdr">
+                                    <button 
+                                        onClick={handleMyAccountClick} 
+                                        className="mobile-user-link-hdr"
+                                    >
+                                        <span className="link-icon-hdr">👤</span>
+                                        Mi Cuenta
+                                    </button>
+                                    <Link to="/favorites" className="mobile-user-link-hdr" onClick={handleNavClick}>
+                                        <span className="link-icon-hdr">❤️</span>
+                                        Mis Favoritos
                                     </Link>
-                                    <Link to="/orders" className="mobile-user-link" onClick={handleNavClick}>
-                                        <span className="link-icon">📦</span>
-                                        Mis Pedidos
-                                    </Link>
-                                    <button onClick={handleLogout} className="mobile-logout-btn">
-                                        <span className="link-icon">🚪</span>
+                                    <button onClick={handleLogout} className="mobile-logout-btn-hdr">
+                                        <span className="link-icon-hdr">🚪</span>
                                         Cerrar Sesión
                                     </button>
                                 </div>
@@ -308,9 +322,9 @@ const Header = () => {
                         )}
 
                         {!user && (
-                            <div className="mobile-login-section">
-                                <button onClick={handleLoginClick} className="mobile-login-btn">
-                                    <span className="login-icon">👤</span>
+                            <div className="mobile-login-section-hdr">
+                                <button onClick={handleLoginClick} className="mobile-login-btn-hdr">
+                                    <span className="login-icon-hdr">👤</span>
                                     Iniciar Sesión
                                 </button>
                             </div>

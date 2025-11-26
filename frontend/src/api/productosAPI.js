@@ -6,7 +6,7 @@ class ProductosAPI {
   constructor() {
     this.baseURL = import.meta.env.VITE_API_BASE_URL || 
       (import.meta.env.PROD 
-        ? 'https://tu-dominio.com/api'
+        ? 'https://testpaginaweb.shop/api'
         : 'http://localhost:4004/api');
   }
 

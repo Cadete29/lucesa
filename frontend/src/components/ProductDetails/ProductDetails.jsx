@@ -4,6 +4,11 @@ import ProductCard from '../Product Card/ProductCard';
 import { useProductoPorId, useProductos } from '../../api/productosHooks';
 import './ProductDetails.css';
 
+// ✅ Configuración de URLs por entorno
+const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://testpaginaweb.shop/api/images/code'
+  : 'http://localhost:4004/api/images/code';
+
 const ProductDetails = () => {
     const { productId } = useParams();
     const navigate = useNavigate();
@@ -16,6 +21,11 @@ const ProductDetails = () => {
     // Usar datos reales de la API con los nuevos hooks
     const { data: productResponse, loading, error } = useProductoPorId(productId);
     const { data: allProductsResponse } = useProductos();
+
+    // ✅ FUNCIÓN: Obtener URL de imagen usando la configuración por entorno
+    const getImageUrl = (codigo, size = 'full') => {
+        return `${IMAGE_BASE_URL}/${codigo}?size=${size}`;
+    };
 
     // **FUNCIÓN: Procesar producto para normalizar estructura**
     const procesarProducto = (producto) => {
@@ -86,11 +96,6 @@ const ProductDetails = () => {
         
         setRelatedProducts(related);
     }, [productoProcesado, allProducts]);
-
-    // ✅ MISMO SISTEMA DE IMÁGENES QUE PRODUCTCARD
-    const getImageUrl = (codigo, size = 'full') => {
-        return `http://localhost:4004/api/images/code/${codigo}?size=${size}`;
-    };
 
     const handleImageError = (e, imageIndex) => {
         console.log('❌ Error cargando imagen via proxy:', e.target.src);
@@ -330,12 +335,14 @@ const ProductDetails = () => {
     console.log('📦 Stock total:', totalStock);
     console.log('🔢 Cantidad actual:', quantity);
     console.log('🛒 Producto procesado:', productoProcesado);
+    console.log('🌐 Entorno actual:', process.env.NODE_ENV);
+    console.log('🖼️ URL base de imágenes:', IMAGE_BASE_URL);
 
     // ✅ RENDERIZADO CONDICIONAL - DEBE IR DESPUÉS DE TODOS LOS HOOKS
     if (loading) {
         return (
-            <div className="product-details-loading">
-                <div className="loading-spinner"></div>
+            <div className="productdetails-loading">
+                <div className="productdetails-loading-spinner"></div>
                 <p>Cargando producto...</p>
             </div>
         );
@@ -343,15 +350,15 @@ const ProductDetails = () => {
 
     if (error || !productoProcesado) {
         return (
-            <div className="product-not-found">
-                <div className="error-icon">❌</div>
+            <div className="productdetails-not-found">
+                <div className="productdetails-error-icon">❌</div>
                 <h2>Producto no encontrado</h2>
                 <p>{error || 'El producto que buscas no está disponible.'}</p>
-                <div className="not-found-actions">
-                    <Link to="/products" className="btn-primary">
+                <div className="productdetails-not-found-actions">
+                    <Link to="/products" className="productdetails-btn-primary">
                         Volver a Productos
                     </Link>
-                    <button onClick={() => window.location.reload()} className="btn-secondary">
+                    <button onClick={() => window.location.reload()} className="productdetails-btn-secondary">
                         Reintentar
                     </button>
                 </div>
@@ -360,10 +367,10 @@ const ProductDetails = () => {
     }
 
     return (
-        <div className="product-details">
-            <div className="container">
+        <div className="productdetails-page">
+            <div className="productdetails-container">
                 {/* Migas de pan */}
-                <nav className="breadcrumb">
+                <nav className="productdetails-breadcrumb">
                     <Link to="/">Inicio</Link>
                     <span> / </span>
                     <Link to="/products">Productos</Link>
@@ -372,13 +379,13 @@ const ProductDetails = () => {
                         {productoProcesado.categoria || 'Categoría'}
                     </Link>
                     <span> / </span>
-                    <span className="current">{productoProcesado.nombre}</span>
+                    <span className="productdetails-current">{productoProcesado.nombre}</span>
                 </nav>
 
-                <div className="product-details-content">
+                <div className="productdetails-content">
                     {/* Galería de imágenes */}
-                    <div className="product-gallery">
-                        <div className="main-image">
+                    <div className="productdetails-gallery">
+                        <div className="productdetails-main-image">
                             <img 
                                 src={images[selectedImage]} 
                                 alt={productoProcesado.nombre}
@@ -386,23 +393,23 @@ const ProductDetails = () => {
                                 crossOrigin="anonymous"
                             />
                             {tienePromocionActiva && (
-                                <div className="promotion-badge-large">
+                                <div className="productdetails-promotion-badge-large">
                                     -{discountPercentage}% OFF
                                 </div>
                             )}
                             {totalStock <= 0 ? (
-                                <div className="out-of-stock-badge">
+                                <div className="productdetails-out-of-stock-badge">
                                     AGOTADO
                                 </div>
                             ) : null}
                         </div>
                         
                         {images.length > 1 && (
-                            <div className="image-thumbnails">
+                            <div className="productdetails-image-thumbnails">
                                 {images.map((img, index) => (
                                     <button
                                         key={index}
-                                        className={`thumbnail ${selectedImage === index ? 'active' : ''} ${imageErrors.has(index) ? 'error' : ''}`}
+                                        className={`productdetails-thumbnail ${selectedImage === index ? 'productdetails-thumbnail-active' : ''} ${imageErrors.has(index) ? 'productdetails-thumbnail-error' : ''}`}
                                         onClick={() => setSelectedImage(index)}
                                         disabled={imageErrors.has(index)}
                                     >
@@ -413,7 +420,7 @@ const ProductDetails = () => {
                                             crossOrigin="anonymous"
                                         />
                                         {imageErrors.has(index) && (
-                                            <div className="thumbnail-error">❌</div>
+                                            <div className="productdetails-thumbnail-error-icon">❌</div>
                                         )}
                                     </button>
                                 ))}
@@ -422,11 +429,11 @@ const ProductDetails = () => {
                     </div>
 
                     {/* Información principal del producto */}
-                    <div className="product-info-main">
-                        <div className="product-header">
-                            <span className="product-brand">{productoProcesado.marca}</span>
-                            <h1 className="product-title">{productoProcesado.nombre}</h1>
-                            <div className="product-codes">
+                    <div className="productdetails-info-main">
+                        <div className="productdetails-header">
+                            <span className="productdetails-brand">{productoProcesado.marca}</span>
+                            <h1 className="productdetails-title">{productoProcesado.nombre}</h1>
+                            <div className="productdetails-codes">
                                 <span><strong>Clave:</strong> {productoProcesado.codigo}</span>
                                 {productoProcesado.numParte && (
                                     <span><strong>Número de parte:</strong> {productoProcesado.numParte}</span>
@@ -434,61 +441,61 @@ const ProductDetails = () => {
                             </div>
                         </div>
 
-                        <div className="product-pricing">
+                        <div className="productdetails-pricing">
                             {tienePromocionActiva ? (
-                                <div className="pricing-with-promo">
-                                    <div className="current-price">
-                                        <span className="currency">MXN </span>
-                                        <span className="price">${precioPromoMXN}</span>
+                                <div className="productdetails-pricing-with-promo">
+                                    <div className="productdetails-current-price">
+                                        <span className="productdetails-currency">MXN </span>
+                                        <span className="productdetails-price">${precioPromoMXN}</span>
                                     </div>
-                                    <div className="original-price">
-                                        <span className="price">${precioBaseMXN}</span>
-                                        <span className="discount">-{discountPercentage}%</span>
+                                    <div className="productdetails-original-price">
+                                        <span className="productdetails-price">${precioBaseMXN}</span>
+                                        <span className="productdetails-discount">-{discountPercentage}%</span>
                                     </div>
                                     {activePromotion && activePromotion.vigencia && (
-                                        <div className="promotion-timer">
+                                        <div className="productdetails-promotion-timer">
                                             <span>🔥 Oferta termina {formatDate(activePromotion.vigencia.fin)}</span>
                                         </div>
                                     )}
                                 </div>
                             ) : (
-                                <div className="pricing-normal">
-                                    <span className="currency">MXN </span>
-                                    <span className="price">${precioFinalMXN}</span>
+                                <div className="productdetails-pricing-normal">
+                                    <span className="productdetails-currency">MXN </span>
+                                    <span className="productdetails-price">${precioFinalMXN}</span>
                                 </div>
                             )}
                             
                             {productoProcesado.moneda === 'USD' && (
-                                <div className="exchange-info">
+                                <div className="productdetails-exchange-info">
                                     <span>Tipo de cambio: ${tipoCambioUsado} MXN/USD</span>
                                 </div>
                             )}
                         </div>
 
-                        <div className="product-description-short">
+                        <div className="productdetails-description-short">
                             <p>{productoProcesado.descripcion}</p>
                         </div>
 
                         {/* Stock y ubicaciones */}
-                        <div className="product-stock-info">
-                            <div className="stock-status">
+                        <div className="productdetails-stock-info">
+                            <div className="productdetails-stock-status">
                                 {totalStock > 0 ? (
-                                    <span className="in-stock">✓ En stock ({totalStock} disponibles)</span>
+                                    <span className="productdetails-in-stock">✓ En stock ({totalStock} disponibles)</span>
                                 ) : (
-                                    <span className="out-of-stock">✗ Agotado</span>
+                                    <span className="productdetails-out-of-stock">✗ Agotado</span>
                                 )}
                             </div>
                             
                             {totalStock > 0 && productoProcesado.existencia && typeof productoProcesado.existencia === 'object' && (
-                                <div className="stock-locations">
+                                <div className="productdetails-stock-locations">
                                     <strong>Disponible en:</strong>
-                                    <div className="locations-list">
+                                    <div className="productdetails-locations-list">
                                         {Object.entries(productoProcesado.existencia).map(([location, stock]) => {
                                             const stockNum = Number(stock) || 0;
                                             return stockNum > 0 ? (
-                                                <div key={location} className="location-item">
-                                                    <span className="location-name">{location}:</span>
-                                                    <span className="location-stock">{stockNum} unidades</span>
+                                                <div key={location} className="productdetails-location-item">
+                                                    <span className="productdetails-location-name">{location}:</span>
+                                                    <span className="productdetails-location-stock">{stockNum} unidades</span>
                                                 </div>
                                             ) : null;
                                         })}
@@ -498,14 +505,14 @@ const ProductDetails = () => {
                         </div>
 
                         {/* Cantidad y acciones */}
-                        <div className="product-actions">
-                            <div className="quantity-selector">
+                        <div className="productdetails-actions">
+                            <div className="productdetails-quantity-selector">
                                 <label>Cantidad:</label>
-                                <div className="quantity-controls">
+                                <div className="productdetails-quantity-controls">
                                     <button 
                                         onClick={handleDecrement}
                                         disabled={quantity <= 1 || totalStock === 0}
-                                        className="quantity-btn"
+                                        className="productdetails-quantity-btn"
                                         type="button"
                                     >
                                         -
@@ -522,12 +529,12 @@ const ProductDetails = () => {
                                             handleQuantityChange(value);
                                         }}
                                         disabled={totalStock === 0}
-                                        className="quantity-input"
+                                        className="productdetails-quantity-input"
                                     />
                                     <button 
                                         onClick={handleIncrement}
                                         disabled={quantity >= totalStock || totalStock === 0}
-                                        className="quantity-btn"
+                                        className="productdetails-quantity-btn"
                                         type="button"
                                     >
                                         +
@@ -535,36 +542,36 @@ const ProductDetails = () => {
                                 </div>
                             </div>
 
-                            <div className="action-buttons">
+                            <div className="productdetails-action-buttons">
                                 <button 
-                                    className="btn-add-cart"
+                                    className="productdetails-btn-add-cart"
                                     onClick={handleAddToCart}
                                     disabled={totalStock === 0}
                                 >
-                                    <span className="btn-icon">🛒</span>
+                                    <span className="productdetails-btn-icon">🛒</span>
                                     Agregar al Carrito
                                 </button>
                                 <button 
-                                    className="btn-buy-now"
+                                    className="productdetails-btn-buy-now"
                                     onClick={handleBuyNow}
                                     disabled={totalStock === 0}
                                 >
-                                    <span className="btn-icon">⚡</span>
+                                    <span className="productdetails-btn-icon">⚡</span>
                                     Comprar Ahora
                                 </button>
                             </div>
                         </div>
 
                         {/* Información adicional */}
-                        <div className="product-meta-info">
+                        <div className="productdetails-meta-info">
                             {productoProcesado.sustituto && productoProcesado.sustituto !== productoProcesado.codigo && (
-                                <div className="substitute-info">
+                                <div className="productdetails-substitute-info">
                                     <strong>Sustituto:</strong> {productoProcesado.sustituto}
                                 </div>
                             )}
                             
                             {activePromotion && activePromotion.vigencia && (
-                                <div className="promotion-info">
+                                <div className="productdetails-promotion-info">
                                     <strong>Oferta válida hasta:</strong>{' '}
                                     {formatDate(activePromotion.vigencia.fin)}
                                 </div>
@@ -572,21 +579,21 @@ const ProductDetails = () => {
                         </div>
 
                         {/* Envío y devoluciones */}
-                        <div className="shipping-preview">
-                            <div className="shipping-item">
-                                <span className="shipping-icon">🚚</span>
+                        <div className="productdetails-shipping-preview">
+                            <div className="productdetails-shipping-item">
+                                <span className="productdetails-shipping-icon">🚚</span>
                                 <div>
                                     <strong>Envío gratis</strong> en pedidos mayores a $500 MXN
                                 </div>
                             </div>
-                            <div className="shipping-item">
-                                <span className="shipping-icon">↩️</span>
+                            <div className="productdetails-shipping-item">
+                                <span className="productdetails-shipping-icon">↩️</span>
                                 <div>
                                     <strong>30 días</strong> para devoluciones
                                 </div>
                             </div>
-                            <div className="shipping-item">
-                                <span className="shipping-icon">🛡️</span>
+                            <div className="productdetails-shipping-item">
+                                <span className="productdetails-shipping-icon">🛡️</span>
                                 <div>
                                     <strong>Garantía</strong> incluida
                                 </div>
@@ -596,35 +603,35 @@ const ProductDetails = () => {
                 </div>
 
                 {/* Tabs de información detallada */}
-                <div className="product-tabs">
-                    <div className="tab-headers">
+                <div className="productdetails-tabs">
+                    <div className="productdetails-tab-headers">
                         <button 
-                            className={`tab-header ${activeTab === 'description' ? 'active' : ''}`}
+                            className={`productdetails-tab-header ${activeTab === 'description' ? 'productdetails-tab-header-active' : ''}`}
                             onClick={() => setActiveTab('description')}
                         >
                             Descripción
                         </button>
                         <button 
-                            className={`tab-header ${activeTab === 'specifications' ? 'active' : ''}`}
+                            className={`productdetails-tab-header ${activeTab === 'specifications' ? 'productdetails-tab-header-active' : ''}`}
                             onClick={() => setActiveTab('specifications')}
                         >
                             Especificaciones
                         </button>
                         <button 
-                            className={`tab-header ${activeTab === 'shipping' ? 'active' : ''}`}
+                            className={`productdetails-tab-header ${activeTab === 'shipping' ? 'productdetails-tab-header-active' : ''}`}
                             onClick={() => setActiveTab('shipping')}
                         >
                             Envío y Garantía
                         </button>
                     </div>
 
-                    <div className="tab-content">
+                    <div className="productdetails-tab-content">
                         {activeTab === 'description' && (
-                            <div className="tab-panel">
+                            <div className="productdetails-tab-panel">
                                 <h3>Descripción del Producto</h3>
                                 <p>{productoProcesado.descripcion_larga || productoProcesado.descripcion}</p>
                                 
-                                <div className="features-list">
+                                <div className="productdetails-features-list">
                                     <h4>Características principales:</h4>
                                     <ul>
                                         {productoProcesado.descripcion_larga ? (
@@ -648,31 +655,31 @@ const ProductDetails = () => {
                         )}
 
                         {activeTab === 'specifications' && (
-                            <div className="tab-panel">
+                            <div className="productdetails-tab-panel">
                                 <h3>Especificaciones Técnicas</h3>
-                                <div className="specifications-grid">
+                                <div className="productdetails-specifications-grid">
                                     {productoProcesado.especificaciones ? (
                                         Object.entries(productoProcesado.especificaciones).map(([key, value]) => (
-                                            <div key={key} className="spec-item">
-                                                <span className="spec-label">{key}:</span>
-                                                <span className="spec-value">{value}</span>
+                                            <div key={key} className="productdetails-spec-item">
+                                                <span className="productdetails-spec-label">{key}:</span>
+                                                <span className="productdetails-spec-value">{value}</span>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="no-specifications">
+                                        <div className="productdetails-no-specifications">
                                             <p>No hay especificaciones técnicas disponibles para este producto.</p>
-                                            <div className="default-specs">
-                                                <div className="spec-item">
-                                                    <span className="spec-label">Marca:</span>
-                                                    <span className="spec-value">{productoProcesado.marca}</span>
+                                            <div className="productdetails-default-specs">
+                                                <div className="productdetails-spec-item">
+                                                    <span className="productdetails-spec-label">Marca:</span>
+                                                    <span className="productdetails-spec-value">{productoProcesado.marca}</span>
                                                 </div>
-                                                <div className="spec-item">
-                                                    <span className="spec-label">Categoría:</span>
-                                                    <span className="spec-value">{productoProcesado.categoria}</span>
+                                                <div className="productdetails-spec-item">
+                                                    <span className="productdetails-spec-label">Categoría:</span>
+                                                    <span className="productdetails-spec-value">{productoProcesado.categoria}</span>
                                                 </div>
-                                                <div className="spec-item">
-                                                    <span className="spec-label">Subcategoría:</span>
-                                                    <span className="spec-value">{productoProcesado.subcategoria}</span>
+                                                <div className="productdetails-spec-item">
+                                                    <span className="productdetails-spec-label">Subcategoría:</span>
+                                                    <span className="productdetails-spec-value">{productoProcesado.subcategoria}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -682,10 +689,10 @@ const ProductDetails = () => {
                         )}
 
                         {activeTab === 'shipping' && (
-                            <div className="tab-panel">
+                            <div className="productdetails-tab-panel">
                                 <h3>Envío y Garantía</h3>
-                                <div className="shipping-info">
-                                    <div className="info-section">
+                                <div className="productdetails-shipping-info">
+                                    <div className="productdetails-info-section">
                                         <h4>🚚 Opciones de Envío</h4>
                                         <ul>
                                             <li><strong>Envío estándar:</strong> 3-5 días hábiles - $99 MXN</li>
@@ -695,7 +702,7 @@ const ProductDetails = () => {
                                         </ul>
                                     </div>
                                     
-                                    <div className="info-section">
+                                    <div className="productdetails-info-section">
                                         <h4>🛡️ Garantía</h4>
                                         <p>Este producto incluye garantía del fabricante de 1 año contra defectos de fabricación.</p>
                                         <ul>
@@ -713,9 +720,9 @@ const ProductDetails = () => {
 
                 {/* Productos relacionados */}
                 {relatedProducts.length > 0 && (
-                    <div className="related-products">
+                    <div className="productdetails-related-products">
                         <h2>Productos Relacionados</h2>
-                        <div className="related-products-grid">
+                        <div className="productdetails-related-products-grid">
                             {relatedProducts.map(relatedProduct => (
                                 <ProductCard 
                                     key={relatedProduct.idProducto || relatedProduct.id} 
