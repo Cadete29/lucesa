@@ -1,6 +1,8 @@
 const userModel = require('../models/userModelG');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const pool = require('../config/db');
+const { sendPasswordResetEmailG } = require('../utils/emailServiceG');
 require('dotenv').config();
 
 const register = async (req, res) => {
@@ -114,31 +116,40 @@ const forgotPassword = async (req, res) => {
 
     try {
         const user = await userModel.findUserByEmail(email);
+
+        // Siempre respondemos lo mismo por seguridad
         if (!user) {
-            // Por seguridad, no revelamos si el email existe o no
             return res.json({
                 success: true,
                 message: 'Si el email existe, se ha enviado un enlace de recuperación'
             });
         }
 
-        // Generar token de recuperación
+        // Generamos token JWT (más limpio que crypto + DB)
         const resetToken = jwt.sign(
             { id: user.id, type: 'password_reset' },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
 
-        // En un entorno real, aquí enviarías el email con el enlace
-        // await sendResetEmail(user.email, resetToken);
-
-        console.log(`🔐 Reset token for ${email}: ${resetToken}`); // Solo para desarrollo
+        // EN PRODUCCIÓN: enviamos el correo con la plantilla bonita
+        if (process.env.NODE_ENV === 'production') {
+            await sendPasswordResetEmailG(email, user.username || user.nombre || 'Usuario', resetToken);
+        } 
+        // EN DESARROLLO: solo lo mostramos en consola y respuesta
+        else {
+            console.log(`Reset token para ${email}: ${resetToken}`);
+            console.log(`Enlace directo: ${process.env.FRONTEND_URL}/reset-password/${resetToken}`);
+        }
 
         return res.json({
             success: true,
             message: 'Si el email existe, se ha enviado un enlace de recuperación',
-            // En desarrollo, devolvemos el token para testing
-            ...(process.env.NODE_ENV === 'development' && { resetToken })
+            // Solo en desarrollo devolvemos el token para que lo pruebes fácil
+            ...(process.env.NODE_ENV !== 'production' && { 
+                resetToken,
+                resetLink: `${process.env.FRONTEND_URL}/reset-password/${resetToken}`
+            })
         });
 
     } catch (error) {
@@ -151,18 +162,20 @@ const forgotPassword = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
-    const { token, newPassword } = req.body;
+    const { token } = req.params;
+    const { password } = req.body;
 
-    if (!token || !newPassword) {
+    if (!password || password.length < 6) {
         return res.status(400).json({
             success: false,
-            message: 'Token y nueva contraseña son requeridos'
+            message: 'La contraseña debe tener al menos 6 caracteres'
         });
     }
 
     try {
+        // Verificamos el token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
+
         if (decoded.type !== 'password_reset') {
             return res.status(400).json({
                 success: false,
@@ -170,25 +183,44 @@ const resetPassword = async (req, res) => {
             });
         }
 
-        // Actualizar contraseña del usuario
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        
-        // Necesitarías implementar esta función en userModel
-        // Por ahora, simulamos la actualización
-        console.log(`🔄 Actualizando contraseña para usuario ID: ${decoded.id}`);
-        
-        // Aquí iría: await userModel.updateUserPassword(decoded.id, hashedPassword);
+        const user = await userModel.findUserById(decoded.id);
+        if (!user) {
+            return res.status(400).json({
+                success: false,
+                message: 'Usuario no encontrado'
+            });
+        }
 
-        return res.json({
+        // Actualizamos contraseña
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await pool.query(
+            `UPDATE users SET password = $1 WHERE id = $2`,
+            [hashedPassword, user.id]
+        );
+
+        res.json({
             success: true,
-            message: 'Contraseña restablecida correctamente'
+            message: '¡Contraseña actualizada correctamente! Ya puedes iniciar sesión.'
         });
 
     } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return res.status(400).json({
+                success: false,
+                message: 'El enlace ha expirado. Solicita uno nuevo.'
+            });
+        }
+        if (error.name === 'JsonWebTokenError') {
+            return res.status(400).json({
+                success: false,
+                message: 'Token inválido'
+            });
+        }
+
         console.error('Error en resetPassword:', error);
-        return res.status(400).json({
+        res.status(500).json({
             success: false,
-            message: 'Token inválido o expirado'
+            message: 'Error del servidor'
         });
     }
 };
