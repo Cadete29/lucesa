@@ -1,4 +1,4 @@
-/* Checkout.css - COMPLETO Y CORREGIDO */
+/* Checkout.css - COMPLETO CON AUTENTICACIÓN REQUERIDA */
 .co-page {
   min-height: 100vh;
   background: #f8fafc;
@@ -258,28 +258,24 @@
   text-align: center;
 }
 
-/* Payment Methods */
-.co-payment-methods {
-  text-align: center;
-  padding: 1.5rem;
-  background: #f7fafc;
+/* Shipping Cost Styles */
+.co-shipping-cost {
+  background: #fffaf0;
+  border: 1px solid #fbd38d;
   border-radius: 8px;
-  margin: 1.5rem 0;
+  padding: 1.5rem;
 }
 
-.co-payment-icons {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
+.co-shipping-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
-.co-payment-icons span {
-  margin: 0 0.5rem;
-}
-
-.co-payment-security {
-  color: #48bb78;
-  font-weight: 500;
-  margin: 0;
+.co-shipping-cost-text {
+  color: #dd6b20;
+  font-weight: 700;
+  font-size: 1.1rem;
 }
 
 /* Order Summary Review */
@@ -476,15 +472,10 @@
   font-size: 0.85rem;
 }
 
-/* Shipping Details - CORREGIDO */
+/* Shipping Details */
 .co-shipping-details {
   color: #4a5568;
   line-height: 1.6;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  border: none;
-  font-family: inherit;
   font-size: 0.95rem;
 }
 
@@ -578,6 +569,286 @@
 
 .co-btn-confirm {
   flex: 1;
+}
+
+/* ==================== */
+/* MERCADO PAGO SECTION - CON AUTENTICACIÓN */
+/* ==================== */
+.co-mercadopago-section {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 1.5rem 0;
+  border: 1px solid #e2e8f0;
+}
+
+.co-mercadopago-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.co-mercadopago-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Logo oficial de Mercado Pago - TAMAÑO AUMENTADO */
+.co-mp-icon {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 8px 25px rgba(0, 158, 227, 0.4);
+  border: 3px solid #009ee3;
+  transition: all 0.3s ease;
+}
+
+.co-mp-icon:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 30px rgba(0, 158, 227, 0.6);
+}
+
+.co-mp-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.co-mp-title {
+  color: #009ee3;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #009ee3, #007bb8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.co-mp-description {
+  color: #4a5568;
+  font-size: 1.2rem;
+  margin: 0;
+  line-height: 1.5;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Mensaje de autenticación requerida */
+.co-auth-required-message {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.co-auth-message-text {
+  color: #856404;
+  margin: 0;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Payment Security */
+.co-payment-security {
+  margin-bottom: 2rem;
+}
+
+.co-security-badge {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.co-security-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.co-security-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.co-security-text strong {
+  color: #2d3748;
+  font-size: 1.1rem;
+}
+
+.co-security-text span {
+  color: #718096;
+  font-size: 0.9rem;
+}
+
+/* Payment Methods Preview */
+.co-payment-methods-preview {
+  margin-bottom: 2rem;
+}
+
+.co-payment-methods-title {
+  color: #2d3748;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.co-payment-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.co-payment-method {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.co-payment-method:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #4299e1;
+}
+
+.co-method-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.co-method-name {
+  color: #2d3748;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* Order Total Payment */
+.co-order-total-payment {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid #48bb78;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.co-total-payment-title {
+  color: #2d3748;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.co-total-payment-amount {
+  color: #48bb78;
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Mercado Pago Button */
+.co-btn-mercadopago {
+  background: linear-gradient(135deg, #009ee3, #007bb8);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.co-btn-mercadopago:hover:not(:disabled) {
+  background: linear-gradient(135deg, #007bb8, #005a87);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 158, 227, 0.4);
+}
+
+.co-btn-mercadopago:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.co-btn-mercadopago:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Botón de login requerido */
+.co-btn-login-required {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.co-btn-login-required:hover {
+  background: linear-gradient(135deg, #5a6fd8, #6a42a0);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Payment Note */
+.co-payment-note {
+  background: #fffaf0;
+  border: 1px solid #fbd38d;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.co-note-text {
+  color: #dd6b20;
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.co-note-text::before {
+  content: "💡";
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
 }
 
 /* Checkout Summary */
@@ -884,9 +1155,21 @@
   font-size: 1.1rem;
 }
 
+/* Animations */
 @keyframes co-spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+@keyframes co-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ==================== */
@@ -954,6 +1237,45 @@
   .co-order-item-total {
     align-items: center;
   }
+  
+  .co-mercadopago-section {
+    padding: 1.5rem;
+  }
+  
+  .co-mercadopago-logo {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .co-mp-icon {
+    width: 90px;
+    height: 90px;
+    padding: 18px;
+  }
+  
+  .co-mp-title {
+    font-size: 2rem;
+  }
+  
+  .co-payment-methods-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .co-security-badge {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+  
+  .co-total-payment-amount {
+    font-size: 2rem;
+  }
+  
+  .co-btn-mercadopago,
+  .co-btn-login-required {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
 }
 
 @media (max-width: 640px) {
@@ -981,6 +1303,12 @@
   .co-step {
     flex-direction: row;
     gap: 1rem;
+  }
+  
+  .co-mp-icon {
+    width: 85px;
+    height: 85px;
+    padding: 16px;
   }
 }
 
@@ -1013,6 +1341,30 @@
     flex-direction: column;
     text-align: center;
   }
+  
+  .co-mercadopago-section {
+    padding: 1.25rem;
+  }
+  
+  .co-mp-icon {
+    width: 80px;
+    height: 80px;
+    padding: 15px;
+  }
+  
+  .co-mp-title {
+    font-size: 1.8rem;
+  }
+  
+  .co-total-payment-amount {
+    font-size: 1.75rem;
+  }
+  
+  .co-note-text {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
+  }
 }
 
 @media (max-width: 360px) {
@@ -1032,6 +1384,16 @@
     padding: 0.875rem 1.5rem;
     font-size: 0.95rem;
   }
+  
+  .co-mp-icon {
+    width: 75px;
+    height: 75px;
+    padding: 14px;
+  }
+  
+  .co-mp-title {
+    font-size: 1.6rem;
+  }
 }
 
 /* Touch Device Optimizations */
@@ -1039,6 +1401,16 @@
   .co-btn {
     min-height: 44px;
     min-width: 44px;
+  }
+  
+  .co-btn-mercadopago,
+  .co-btn-login-required {
+    min-height: 60px;
+    padding: 1.25rem 2rem;
+  }
+  
+  .co-payment-method {
+    min-height: 70px;
   }
   
   .co-input {
@@ -1051,7 +1423,9 @@
   .co-step,
   .co-btn,
   .co-input,
-  .co-shipping-option {
+  .co-payment-method,
+  .co-order-item,
+  .co-preview-item {
     transition: none;
     animation: none;
   }
@@ -1060,6 +1434,10 @@
   .co-loading-spinner-small {
     animation: none;
     border-top-color: #e2e8f0;
+  }
+  
+  .co-mp-icon:hover {
+    transform: none;
   }
 }
 
@@ -1129,13 +1507,16 @@
   .co-shipping-info-minimum,
   .co-order-summary,
   .co-shipping-info,
-  .co-payment-methods {
+  .co-payment-methods,
+  .co-mercadopago-section {
     background: #4a5568;
     border-color: #718096;
   }
   
   .co-minimum-required,
-  .co-minimum-notice {
+  .co-minimum-notice,
+  .co-shipping-cost,
+  .co-payment-note {
     background: #744210;
     border-color: #dd6b20;
   }
@@ -1146,7 +1527,10 @@
   }
   
   .co-order-item,
-  .co-preview-item {
+  .co-preview-item,
+  .co-security-badge,
+  .co-payment-method,
+  .co-order-total-payment {
     background: #4a5568;
     border-color: #718096;
   }
@@ -1169,6 +1553,83 @@
   .co-btn-secondary:hover {
     background: #5a6575;
   }
+  
+  /* Mercado Pago en Dark Mode */
+  .co-mp-icon {
+    background: #4a5568;
+    border-color: #009ee3;
+  }
+  
+  .co-mp-title {
+    background: linear-gradient(135deg, #00b2ff, #009ee3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .co-mp-description {
+    color: #e2e8f0;
+  }
+  
+  /* Mensaje de autenticación en dark mode */
+  .co-auth-required-message {
+    background: #744210;
+    border-color: #dd6b20;
+  }
+  
+  .co-auth-message-text {
+    color: #fbd38d;
+  }
+  
+  .co-security-text strong,
+  .co-method-name,
+  .co-total-payment-title {
+    color: #ffffff;
+  }
+  
+  .co-security-text span {
+    color: #a0aec0;
+  }
+  
+  .co-btn-mercadopago {
+    background: linear-gradient(135deg, #00b2ff, #009ee3);
+  }
+  
+  .co-btn-mercadopago:hover:not(:disabled) {
+    background: linear-gradient(135deg, #009ee3, #007bb8);
+  }
+  
+  .co-btn-login-required {
+    background: linear-gradient(135deg, #5a6fd8, #6a42a0);
+  }
+  
+  .co-btn-login-required:hover {
+    background: linear-gradient(135deg, #4a5fc7, #5a3890);
+  }
+  
+  .co-note-text {
+    color: #fbd38d;
+  }
+  
+  .co-shipping-cost-text {
+    color: #fbd38d;
+  }
+}
+
+/* Focus States para Accesibilidad */
+.co-input:focus-visible {
+  outline: 2px solid #4299e1;
+  outline-offset: 2px;
+}
+
+.co-btn:focus-visible {
+  outline: 2px solid #4299e1;
+  outline-offset: 2px;
+}
+
+.co-terms input[type="checkbox"]:focus-visible {
+  outline: 2px solid #4299e1;
+  outline-offset: 2px;
 }
 
 /* Loading State para botones deshabilitados */
@@ -1202,18 +1663,44 @@
   }
 }
 
-/* Focus States para Accesibilidad */
-.co-input:focus-visible {
-  outline: 2px solid #4299e1;
-  outline-offset: 2px;
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .co-input {
+    border-width: 3px;
+  }
+  
+  .co-btn {
+    border-width: 3px;
+  }
+  
+  .co-step.co-active .co-step-number {
+    border-width: 3px;
+  }
 }
 
-.co-btn:focus-visible {
-  outline: 2px solid #4299e1;
-  outline-offset: 2px;
-}
-
-.co-terms input[type="checkbox"]:focus-visible {
-  outline: 2px solid #4299e1;
-  outline-offset: 2px;
+/* Large Screen Optimizations */
+@media (min-width: 1440px) {
+  .co-container {
+    max-width: 1400px;
+  }
+  
+  .co-content {
+    grid-template-columns: 1fr 450px;
+    gap: 3rem;
+  }
+  
+  .co-mercadopago-section {
+    padding: 2.5rem;
+  }
+  
+  /* Icono aún más grande en pantallas grandes */
+  .co-mp-icon {
+    width: 120px;
+    height: 120px;
+    padding: 25px;
+  }
+  
+  .co-mp-title {
+    font-size: 2.8rem;
+  }
 }

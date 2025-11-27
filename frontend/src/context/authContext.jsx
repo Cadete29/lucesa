@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import authService from '../api/authService'; // Importación corregida
+import authService from '../api/authService';
 
 const AuthContext = createContext();
 
@@ -145,6 +145,39 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Función para login social (demo)
+  const socialLogin = async (provider) => {
+    try {
+      setLoading(true);
+      // Simulación de login social
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const socialUser = {
+            id: Date.now(),
+            username: `user_${provider}`,
+            email: `user_${provider}@example.com`,
+            nombre: `Usuario ${provider}`,
+            foto_perfil: null,
+            created_at: new Date().toISOString()
+          };
+          
+          const socialToken = `social-token-${provider}-${Date.now()}`;
+          
+          setUser(socialUser);
+          setToken(socialToken);
+          localStorage.setItem('lucesa-user', JSON.stringify(socialUser));
+          localStorage.setItem('lucesa-token', socialToken);
+          
+          resolve({ success: true });
+        }, 1500);
+      });
+    } catch (error) {
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     user,
     token,
@@ -155,8 +188,9 @@ export const AuthProvider = ({ children }) => {
     resetPassword,
     verifyResetToken,
     updateProfile,
+    socialLogin,
     loading,
-    isAuthenticated: !!user && !!token
+    isAuthenticated: !!user && !!token // Esta propiedad es crucial
   };
 
   return (

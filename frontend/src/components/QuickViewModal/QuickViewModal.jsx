@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useCart } from '../../context/CartContext'; // ✅ Importar el contexto del carrito
 import './QuickViewModal.css';
 
 // ✅ Configuración de URLs por entorno
@@ -7,9 +8,21 @@ const IMAGE_BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://testpaginaweb.shop/api/images/code'
   : 'http://localhost:4004/api/images/code';
 
-const QuickViewModal = ({ product, isOpen, onClose, onAddToCart }) => {
+// ✅ Función helper para obtener valores de especificaciones
+const getSpecValue = (spec) => {
+    if (typeof spec === 'object' && spec !== null && 'valor' in spec) {
+        return spec.valor;
+    }
+    return spec;
+};
+
+const QuickViewModal = ({ product, isOpen, onClose }) => {
     const [quantityQvm, setQuantityQvm] = useState(1);
     const [selectedImageQvm, setSelectedImageQvm] = useState(0);
+    const [addingToCart, setAddingToCart] = useState(false); // ✅ Estado para feedback visual
+
+    // ✅ Usar el contexto del carrito
+    const { addToCart, openCart } = useCart();
 
     if (!isOpen || !product) return null;
 
@@ -96,14 +109,67 @@ const QuickViewModal = ({ product, isOpen, onClose, onAddToCart }) => {
         setQuantityQvm(value);
     };
 
-    const handleAddToCartQvm = () => {
-        onAddToCart(product, quantityQvm);
-        onClose();
+    // ✅ FUNCIÓN MEJORADA: Agregar al carrito con feedback visual
+    const handleAddToCartQvm = async () => {
+        if (totalStockQvm === 0) return;
+        
+        setAddingToCart(true);
+        
+        try {
+            // ✅ Preparar el producto con todos los datos necesarios
+            const productToAdd = {
+                ...product,
+                // Asegurar que tenemos un ID único
+                id: product.id || product.idProducto || product.codigo,
+                idProducto: product.idProducto || product.id || product.codigo,
+                // Precio final calculado
+                precioFinal: tienePromocionActivaQvm ? precioPromoMXNQvm : precioBaseMXNQvm,
+                // Información de stock
+                existencia: totalStockQvm,
+                // Información de promoción
+                tienePromocion: tienePromocionActivaQvm,
+                discountPercentage: discountPercentageQvm
+            };
+
+            // ✅ Llamar a la función del contexto del carrito
+            addToCart(productToAdd, quantityQvm);
+            
+            // ✅ Feedback visual breve antes de cerrar
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // ✅ Opcional: Abrir el carrito después de agregar
+            openCart();
+            
+            // ✅ Cerrar el modal
+            onClose();
+            
+        } catch (error) {
+            console.error('Error al agregar al carrito:', error);
+        } finally {
+            setAddingToCart(false);
+        }
     };
 
+    // ✅ FUNCIÓN: Comprar ahora (redirige al carrito)
     const handleQuickBuyQvm = () => {
-        onAddToCart(product, quantityQvm);
+        if (totalStockQvm === 0) return;
+        
+        const productToAdd = {
+            ...product,
+            id: product.id || product.idProducto || product.codigo,
+            idProducto: product.idProducto || product.id || product.codigo,
+            precioFinal: tienePromocionActivaQvm ? precioPromoMXNQvm : precioBaseMXNQvm,
+            existencia: totalStockQvm,
+            tienePromocion: tienePromocionActivaQvm,
+            discountPercentage: discountPercentageQvm
+        };
+
+        addToCart(productToAdd, quantityQvm);
+        openCart();
         onClose();
+        
+        // Opcional: Redirigir al carrito
+        // window.location.href = '/cart';
     };
 
     const imagesQvm = product.imagenes_adicionales && product.imagenes_adicionales.length > 0
@@ -261,19 +327,27 @@ const QuickViewModal = ({ product, isOpen, onClose, onAddToCart }) => {
 
                             <div className="action-buttons-qvm">
                                 <button 
-                                    className="btn-add-cart-qvm"
+                                    className={`btn-add-cart-qvm ${addingToCart ? 'adding-to-cart' : ''}`}
                                     onClick={handleAddToCartQvm}
-                                    disabled={totalStockQvm === 0}
+                                    disabled={totalStockQvm === 0 || addingToCart}
                                 >
-                                    🛒 Agregar al Carrito
+                                    {addingToCart ? (
+                                        <>
+                                            <div className="loading-spinner-qvm"></div>
+                                            Agregando...
+                                        </>
+                                    ) : (
+                                        '🛒 Agregar al Carrito'
+                                    )}
                                 </button>
-                                <button 
+                                
+                                {/* <button 
                                     className="btn-buy-now-qvm"
                                     onClick={handleQuickBuyQvm}
                                     disabled={totalStockQvm === 0}
                                 >
                                     ⚡ Comprar Ahora
-                                </button>
+                                </button> */}
                             </div>
                         </div>
 
@@ -288,17 +362,24 @@ const QuickViewModal = ({ product, isOpen, onClose, onAddToCart }) => {
                             </Link>
                         </div>
 
-                        {/* Especificaciones rápidas */}
-                        {product.especificaciones && (
+                        {/* ✅ CORREGIDO: Especificaciones principales - Accediendo correctamente a value.valor */}
+                        {product.especificaciones && Object.keys(product.especificaciones).length > 0 && (
                             <div className="quick-specs-qvm">
                                 <h4>Especificaciones principales:</h4>
                                 <div className="specs-grid-qvm">
-                                    {Object.entries(product.especificaciones).slice(0, 4).map(([key, value]) => (
-                                        <div key={key} className="spec-item-qvm">
-                                            <span className="spec-label-qvm">{key}:</span>
-                                            <span className="spec-value-qvm">{value}</span>
-                                        </div>
-                                    ))}
+                                    {Object.entries(product.especificaciones)
+                                        .slice(0, 4)
+                                        .map(([key, value]) => {
+                                            const displayValue = getSpecValue(value);
+                                            return (
+                                                <div key={key} className="spec-item-qvm">
+                                                    <span className="spec-label-qvm">{key}:</span>
+                                                    <span className="spec-value-qvm">
+                                                        {displayValue || 'N/A'}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
                                 </div>
                             </div>
                         )}

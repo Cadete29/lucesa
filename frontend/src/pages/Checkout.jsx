@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import './Checkout.css';
@@ -10,8 +10,9 @@ const IMAGE_BASE_URL = process.env.NODE_ENV === 'production'
 
 const Checkout = () => {
   const { cartItems, getCartTotal, clearCart, getCartItemsCount } = useCart();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [formData, setFormData] = useState({
     firstName: user?.name?.split(' ')[0] || '',
@@ -23,27 +24,22 @@ const Checkout = () => {
     state: '',
     zipCode: '',
     country: 'México',
-    cardNumber: '',
-    cardName: '',
-    expiryDate: '',
-    cvv: '',
     acceptTerms: false
   });
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [orderData, setOrderData] = useState(null);
 
   const subtotal = getCartTotal();
-  const shipping = subtotal >= 1000 ? 0 : null;
+  const shipping = subtotal >= 1000 ? 0 : 150;
   const tax = subtotal * 0.16;
-  const total = subtotal + tax + (shipping === 0 ? 0 : 0);
+  const total = subtotal + tax + shipping;
 
-  const canContinueToPayment = () => {
+  const canContinueToConfirmation = () => {
     if (currentStep === 1) {
       const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'state', 'zipCode'];
-      const fieldsValid = requiredFields.every(field => formData[field] && formData[field].trim() !== '');
-      const minimumAmountValid = subtotal >= 1000;
-      return fieldsValid && minimumAmountValid;
+      return requiredFields.every(field => formData[field] && formData[field].trim() !== '');
     }
     return true;
   };
@@ -56,40 +52,91 @@ const Checkout = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const prepareOrderForPayment = () => {
+    const orderId = `ORD-${Date.now()}`;
     
-    if (subtotal < 1000) {
-      alert('La compra mínima para continuar con el pago es de $1000 MXN.');
-      return;
-    }
-    
-    setIsProcessing(true);
+    const order = {
+      orderId,
+      customer: {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone
+      },
+      shipping: {
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        country: formData.country
+      },
+      items: cartItems,
+      totals: {
+        subtotal,
+        tax,
+        shipping,
+        total
+      },
+      timestamp: new Date().toISOString()
+    };
 
-    setTimeout(() => {
-      setIsProcessing(false);
-      clearCart();
-      navigate('/order-confirmation', { 
+    setOrderData(order);
+    return order;
+  };
+
+  const handleMercadoPagoPayment = async () => {
+    if (!isAuthenticated) {
+      alert('Debes iniciar sesión para proceder con el pago.');
+      navigate('/login', { 
         state: { 
-          orderId: `ORD-${Date.now()}`,
-          total: total,
-          cartItems: cartItems,
-          subtotal: subtotal,
-          tax: tax,
-          shipping: shipping
+          from: location.pathname,
+          message: 'Por favor inicia sesión para completar tu compra'
         }
       });
-    }, 3000);
+      return;
+    }
+
+    if (!formData.acceptTerms) {
+      alert('Debes aceptar los términos y condiciones para continuar.');
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const order = prepareOrderForPayment();
+      
+      // Simulación de creación de preferencia de Mercado Pago
+      const paymentResponse = await createMercadoPagoPreference(order);
+      
+      if (paymentResponse && paymentResponse.init_point) {
+        window.location.href = paymentResponse.init_point;
+      } else {
+        throw new Error('No se pudo inicializar el pago con Mercado Pago');
+      }
+      
+    } catch (error) {
+      console.error('Error al procesar pago con Mercado Pago:', error);
+      alert('Error al procesar el pago. Por favor intenta nuevamente.');
+      setIsProcessing(false);
+    }
+  };
+
+  const createMercadoPagoPreference = async (order) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          id: `mp-${Date.now()}`,
+          init_point: `https://www.mercadopago.com.mx/checkout/v1/redirect?pref_id=MP-${Date.now()}`,
+        });
+      }, 1000);
+    });
   };
 
   const nextStep = () => {
     if (currentStep === 1) {
-      if (!canContinueToPayment()) {
-        if (subtotal < 1000) {
-          alert(`La compra mínima para continuar con el pago es de $1000 MXN. Tu compra actual es de $${subtotal.toFixed(2)} MXN.`);
-        } else {
-          alert('Por favor completa todos los campos obligatorios antes de continuar.');
-        }
+      if (!canContinueToConfirmation()) {
+        alert('Por favor completa todos los campos obligatorios antes de continuar.');
         return;
       }
     }
@@ -133,18 +180,18 @@ const Checkout = () => {
             </div>
             <div className={`co-step ${currentStep >= 2 ? 'co-active' : ''}`}>
               <span className="co-step-number">2</span>
-              <span className="co-step-label">Pago</span>
+              <span className="co-step-label">Confirmación</span>
             </div>
             <div className={`co-step ${currentStep >= 3 ? 'co-active' : ''}`}>
               <span className="co-step-number">3</span>
-              <span className="co-step-label">Confirmación</span>
+              <span className="co-step-label">Pago</span>
             </div>
           </div>
         </div>
 
         <div className="co-content">
           <div className="co-form-section">
-            <form onSubmit={handleSubmit} className="co-form">
+            <div className="co-form">
               {currentStep === 1 && (
                 <div className="co-form-step">
                   <h2 className="co-step-title">Información de Envío</h2>
@@ -270,22 +317,19 @@ const Checkout = () => {
                         </p>
                       </div>
                     ) : (
-                      <div className="co-minimum-required">
-                        <div className="co-minimum-warning">
-                          <span className="co-warning-icon">⚠️</span>
+                      <div className="co-shipping-cost">
+                        <div className="co-shipping-warning">
+                          <span className="co-warning-icon">📦</span>
                           <div className="co-warning-content">
-                            <h4 className="co-warning-title">Compra mínima requerida</h4>
+                            <h4 className="co-warning-title">Costo de envío: $150 MXN</h4>
                             <p className="co-warning-text">
-                              Para continuar con el pago, tu compra debe ser de al menos <strong>$1,000 MXN</strong>
+                              El envío gratis está disponible en compras mayores a <strong>$1,000 MXN</strong>
                             </p>
                             <div className="co-amount-needed">
-                              <span className="co-amount-label">Faltan: </span>
+                              <span className="co-amount-label">Faltan para envío gratis: </span>
                               <span className="co-amount-value">${(1000 - subtotal).toFixed(2)} MXN</span>
                             </div>
                           </div>
-                        </div>
-                        <div className="co-shipping-note">
-                          <p>Una vez que tu compra alcance los $1,000 MXN, el envío estándar será gratuito.</p>
                         </div>
                       </div>
                     )}
@@ -296,9 +340,9 @@ const Checkout = () => {
                       type="button" 
                       onClick={nextStep} 
                       className="co-btn co-btn-primary"
-                      disabled={!canContinueToPayment()}
+                      disabled={!canContinueToConfirmation()}
                     >
-                      {subtotal >= 1000 ? 'Continuar a Pago' : 'Compra Mínima No Alcanzada'}
+                      Continuar a Confirmación
                     </button>
                   </div>
                 </div>
@@ -306,89 +350,7 @@ const Checkout = () => {
 
               {currentStep === 2 && (
                 <div className="co-form-step">
-                  <h2 className="co-step-title">Información de Pago</h2>
-                  
-                  <div className="co-form-group">
-                    <label htmlFor="cardNumber" className="co-label">Número de Tarjeta *</label>
-                    <input
-                      type="text"
-                      id="cardNumber"
-                      name="cardNumber"
-                      value={formData.cardNumber}
-                      onChange={handleInputChange}
-                      className="co-input"
-                      placeholder="1234 5678 9012 3456"
-                      required
-                    />
-                  </div>
-
-                  <div className="co-form-group">
-                    <label htmlFor="cardName" className="co-label">Nombre en la Tarjeta *</label>
-                    <input
-                      type="text"
-                      id="cardName"
-                      name="cardName"
-                      value={formData.cardName}
-                      onChange={handleInputChange}
-                      className="co-input"
-                      required
-                    />
-                  </div>
-
-                  <div className="co-form-row">
-                    <div className="co-form-group">
-                      <label htmlFor="expiryDate" className="co-label">Fecha de Expiración *</label>
-                      <input
-                        type="text"
-                        id="expiryDate"
-                        name="expiryDate"
-                        value={formData.expiryDate}
-                        onChange={handleInputChange}
-                        className="co-input"
-                        placeholder="MM/AA"
-                        required
-                      />
-                    </div>
-                    <div className="co-form-group">
-                      <label htmlFor="cvv" className="co-label">CVV *</label>
-                      <input
-                        type="text"
-                        id="cvv"
-                        name="cvv"
-                        value={formData.cvv}
-                        onChange={handleInputChange}
-                        className="co-input"
-                        placeholder="123"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="co-payment-methods">
-                    <div className="co-payment-icons">
-                      <span>💳</span>
-                      <span>📱</span>
-                      <span>🏦</span>
-                    </div>
-                    <p className="co-payment-security">
-                      🔒 Tu información de pago está segura y encriptada
-                    </p>
-                  </div>
-
-                  <div className="co-form-actions">
-                    <button type="button" onClick={prevStep} className="co-btn co-btn-secondary">
-                      ← Volver
-                    </button>
-                    <button type="button" onClick={nextStep} className="co-btn co-btn-primary">
-                      Revisar Pedido
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {currentStep === 3 && (
-                <div className="co-form-step">
-                  <h2 className="co-step-title">Revisar y Confirmar</h2>
+                  <h2 className="co-step-title">Revisar y Confirmar Pedido</h2>
                   
                   <div className="co-order-summary">
                     <h3 className="co-section-title">Resumen del Pedido</h3>
@@ -405,10 +367,12 @@ const Checkout = () => {
                   <div className="co-shipping-info">
                     <h3 className="co-section-title">Dirección de Envío</h3>
                     <div className="co-shipping-details">
-                      {formData.firstName} {formData.lastName}<br />
+                      <strong>{formData.firstName} {formData.lastName}</strong><br />
                       {formData.address}<br />
                       {formData.city}, {formData.state} {formData.zipCode}<br />
-                      {formData.country}
+                      {formData.country}<br />
+                      📞 {formData.phone}<br />
+                      📧 {formData.email}
                     </div>
                   </div>
 
@@ -421,26 +385,139 @@ const Checkout = () => {
                         onChange={handleInputChange}
                         required
                       />
-                      Acepto los <a href="/terms">términos y condiciones</a> y la{' '}
-                      <a href="/privacy">política de privacidad</a>
+                      Acepto los <a href="/terms" target="_blank" rel="noopener noreferrer">términos y condiciones</a> y la{' '}
+                      <a href="/privacy" target="_blank" rel="noopener noreferrer">política de privacidad</a>
                     </label>
                   </div>
 
                   <div className="co-form-actions">
                     <button type="button" onClick={prevStep} className="co-btn co-btn-secondary">
-                      ← Volver
+                      ← Volver a Envío
                     </button>
                     <button 
-                      type="submit" 
-                      className="co-btn co-btn-primary co-btn-confirm"
-                      disabled={!formData.acceptTerms || isProcessing || subtotal < 1000}
+                      type="button" 
+                      onClick={nextStep} 
+                      className="co-btn co-btn-primary"
+                      disabled={!formData.acceptTerms}
                     >
-                      {isProcessing ? 'Procesando...' : 'Confirmar Pedido'}
+                      Continuar a Pago
                     </button>
                   </div>
                 </div>
               )}
-            </form>
+
+              {currentStep === 3 && (
+                <div className="co-form-step">
+                  <h2 className="co-step-title">Pago con Mercado Pago</h2>
+                  
+                  <div className="co-mercadopago-section">
+                    <div className="co-mercadopago-header">
+                      <div className="co-mercadopago-logo">
+                        <div className="co-mp-icon">
+                          <img 
+                            src="/mer.svg" 
+                            alt="Mercado Pago" 
+                            className="co-mp-logo-img"
+                          />
+                        </div>
+                        <h3 className="co-mp-title">Mercado Pago</h3>
+                      </div>
+                      <p className="co-mp-description">
+                        Serás redirigido a Mercado Pago para completar tu pago de manera segura
+                      </p>
+                    </div>
+
+                    {!isAuthenticated && (
+                      <div className="co-auth-required-message">
+                        <p className="co-auth-message-text">
+                          🔐 <strong>Autenticación requerida:</strong> Debes iniciar sesión para proceder con el pago.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="co-payment-security">
+                      <div className="co-security-badge">
+                        <span className="co-security-icon">🔒</span>
+                        <div className="co-security-text">
+                          <strong>Pago 100% seguro</strong>
+                          <span>Tus datos están protegidos con encriptación SSL</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="co-payment-methods-preview">
+                      <h4 className="co-payment-methods-title">Métodos de pago aceptados:</h4>
+                      <div className="co-payment-methods-grid">
+                        <div className="co-payment-method">
+                          <span className="co-method-icon">💳</span>
+                          <span className="co-method-name">Tarjetas de crédito</span>
+                        </div>
+                        <div className="co-payment-method">
+                          <span className="co-method-icon">🏦</span>
+                          <span className="co-method-name">Tarjetas de débito</span>
+                        </div>
+                        <div className="co-payment-method">
+                          <span className="co-method-icon">📱</span>
+                          <span className="co-method-name">Mercado Pago</span>
+                        </div>
+                        {/* <div className="co-payment-method">
+                          <span className="co-method-icon">💰</span>
+                          <span className="co-method-name">Efectivo</span>
+                        </div> */}
+                      </div>
+                    </div>
+
+                    <div className="co-order-total-payment">
+                      <h4 className="co-total-payment-title">Total a pagar:</h4>
+                      <div className="co-total-payment-amount">${total.toFixed(2)} MXN</div>
+                    </div>
+                  </div>
+
+                  <div className="co-form-actions">
+                    <button type="button" onClick={prevStep} className="co-btn co-btn-secondary">
+                      ← Volver a Confirmación
+                    </button>
+                    
+                    {isAuthenticated ? (
+                      <button 
+                        type="button" 
+                        onClick={handleMercadoPagoPayment}
+                        className="co-btn co-btn-primary co-btn-mercadopago"
+                        disabled={isProcessing}
+                      >
+                        {isProcessing ? (
+                          <>
+                            <div className="co-loading-spinner"></div>
+                            Conectando con Mercado Pago...
+                          </>
+                        ) : (
+                          'Pagar con Mercado Pago'
+                        )}
+                      </button>
+                    ) : (
+                      <button 
+                        type="button" 
+                        onClick={() => navigate('/login', { 
+                          state: { 
+                            from: '/checkout',
+                            message: 'Inicia sesión para completar tu compra'
+                          }
+                        })}
+                        className="co-btn co-btn-primary co-btn-login-required"
+                      >
+                        🔐 Iniciar Sesión para Pagar
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="co-payment-note">
+                    <p className="co-note-text">
+                      💡 <strong>Nota:</strong> Después del pago, serás redirigido automáticamente a nuestra página de confirmación.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="co-summary">
@@ -473,7 +550,7 @@ const Checkout = () => {
                     {subtotal >= 1000 ? (
                       <span className="co-free-shipping-text">GRATIS</span>
                     ) : (
-                      <span className="co-shipping-unavailable">No disponible</span>
+                      <span className="co-shipping-cost-text">$150.00 MXN</span>
                     )}
                   </span>
                 </div>
@@ -481,9 +558,9 @@ const Checkout = () => {
                 {subtotal < 1000 && (
                   <div className="co-minimum-notice">
                     <div className="co-minimum-notice-content">
-                      <span className="co-notice-icon">📦</span>
+                      <span className="co-notice-icon">🎁</span>
                       <div className="co-notice-text">
-                        <strong>Compra mínima: $1,000 MXN</strong>
+                        <strong>¡Envío gratis disponible!</strong>
                         <span>Faltan ${(1000 - subtotal).toFixed(2)} MXN</span>
                       </div>
                     </div>
@@ -507,9 +584,9 @@ const Checkout = () => {
                 </div>
               </div>
               <div className="co-benefit-item">
-                <span className="co-benefit-icon">💰</span>
+                <span className="co-benefit-icon">💳</span>
                 <div className="co-benefit-text">
-                  <strong>Precios competitivos</strong> con la mejor calidad
+                  <strong>Pago seguro</strong> con Mercado Pago
                 </div>
               </div>
               <div className="co-benefit-item">

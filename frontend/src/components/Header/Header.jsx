@@ -281,15 +281,15 @@ const Header = () => {
                                     Categorías
                                 </Link>
                             </li>
-                            <li>
-                                <Link to="/favorites" className="mobile-nav-link-hdr" onClick={handleNavClick}>
+                            {/* <li>
+                                {<Link to="/favorites" className="mobile-nav-link-hdr" onClick={handleNavClick}>
                                     <span className="nav-icon-hdr">❤️</span>
                                     Favoritos
                                     {favoritesCount > 0 && (
                                         <span className="mobile-badge-hdr">{favoritesCount}</span>
                                     )}
-                                </Link>
-                            </li>
+                                </Link>}
+                            </li> */}
                         </ul>
 
                         {user && (
