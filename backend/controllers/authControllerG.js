@@ -1,6 +1,7 @@
 const userModel = require('../models/userModelG');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const pool = require('../config/db');
 const { sendPasswordResetEmailG } = require('../utils/emailServiceG');
 require('dotenv').config();
 
