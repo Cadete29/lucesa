@@ -18,21 +18,32 @@ const QuickViewModal = ({ product, isOpen, onClose, onAddToCart }) => {
         return `${IMAGE_BASE_URL}/${codigo}?size=${size}`;
     };
 
-    // ✅ USAR LA MISMA LÓGICA QUE PRODUCTCARD PARA PRECIOS
-    const convertirAMXNQvm = (precio) => {
-        if (!precio) return 0;
-        return precio * (product.tipoCambio || 20);
+    // ✅ USAR LA MISMA LÓGICA QUE PRODUCTCARD PARA PRECIOS CON 10% ADICIONAL
+    const agregarDiezPorcientoQvm = (precio) => {
+        if (!precio || typeof precio !== 'number') return 0;
+        // Agregar 10% al precio original
+        return precio * 1.10;
     };
 
-    // Precio base en MXN (SIEMPRE convertir)
-    const precioBaseMXNQvm = convertirAMXNQvm(product.precio);
+    // Precio base en MXN CON 10% ADICIONAL
+    const precioBaseOriginalQvm = product.precio || 0;
+    const precioBaseMXNQvm = agregarDiezPorcientoQvm(precioBaseOriginalQvm);
 
-    // Precio promocional en MXN (si existe promoción o precioPromocion)
-    const precioPromoMXNQvm = product.promociones && product.promociones.length > 0 ? 
-        convertirAMXNQvm(product.promociones[0].promocion) : 
-        (product.precioPromocion ? convertirAMXNQvm(product.precioPromocion) : null);
+    // ✅ PRECIO PROMOCIONAL EN MXN CON 10% ADICIONAL
+    let precioPromoOriginalQvm = null;
+    let precioPromoMXNQvm = null;
 
-    // Determinar si tiene promoción activa
+    if (product.promociones && product.promociones.length > 0) {
+        // Si hay promoción activa, aplicar 10% al precio promocional
+        precioPromoOriginalQvm = product.promociones[0].promocion;
+        precioPromoMXNQvm = agregarDiezPorcientoQvm(precioPromoOriginalQvm);
+    } else if (product.precioPromocion) {
+        // Si hay precio promocional directo, aplicar 10%
+        precioPromoOriginalQvm = product.precioPromocion;
+        precioPromoMXNQvm = agregarDiezPorcientoQvm(precioPromoOriginalQvm);
+    }
+
+    // Determinar si tiene promoción activa (comparando precios con 10% incluido)
     const tienePromocionActivaQvm = precioPromoMXNQvm !== null && precioPromoMXNQvm < precioBaseMXNQvm;
 
     // Formatear a 2 decimales
@@ -44,14 +55,20 @@ const QuickViewModal = ({ product, isOpen, onClose, onAddToCart }) => {
         });
     };
 
+    // ✅ CÁLCULO DE DESCUENTO CONSIDERANDO EL 10% ADICIONAL
     const discountPercentageQvm = tienePromocionActivaQvm ? 
         Math.round(((precioBaseMXNQvm - precioPromoMXNQvm) / precioBaseMXNQvm) * 100) : 
         0;
+
+    // Calcular ahorro en MXN
+    const ahorroMXNQvm = tienePromocionActivaQvm ? 
+        (precioBaseMXNQvm - precioPromoMXNQvm) : 0;
 
     // Variables formateadas
     const precioBaseFormateadoQvm = formatearPrecioQvm(precioBaseMXNQvm);
     const precioPromoFormateadoQvm = tienePromocionActivaQvm ? formatearPrecioQvm(precioPromoMXNQvm) : null;
     const precioFinalFormateadoQvm = tienePromocionActivaQvm ? precioPromoFormateadoQvm : precioBaseFormateadoQvm;
+    const ahorroFormateadoQvm = formatearPrecioQvm(ahorroMXNQvm);
 
     // ✅ CORRECCIÓN: Usar la misma lógica de stock que ProductDetail
     const getTotalStockQvm = () => {
@@ -115,7 +132,7 @@ const QuickViewModal = ({ product, isOpen, onClose, onAddToCart }) => {
                                 src={imagesQvm[selectedImageQvm]} 
                                 alt={product.nombre}
                                 onError={(e) => {
-                                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDQwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMjAgMTIwSDE0MFYxNDBIMTIwVjEyMFpNMTYwIDEyMEgxODBWMTQwSDE2MFYxMjBaTTIwMCAxMjBIMjIwVjE0MEgyMDBWMTIwWk0xMjAgMTYwSDE0MFYxODBIMTIwVjE2MFpNMTYwIDE2MEgxODBWMTgwSDE2MFYxNjBaTTIwMCAxNjBIMjIwVjE4MEgyMDBWMTYwWk0xMjAgMjAwSDE0MFYyMjBIMTIwVjIwMFpNMTYwIDIwMEgxODBWMjIwSDE2MFYyMDBaTTIwMCAyMDBIMjIwVjIyMEgyMDBWMjAwWiIgZmlsbD0iI0RERURGMCIvPgo8dGV4dCB4PSIyMDAiIHk9IjI0MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTY5Njk2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5JbWFnZW4gTm8gRGlzcG9uaWJsZTwvdGV4dD4KPC9zdmc+';
+                                    e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDQwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMjAgMTIwSDE0MFYxNDBIMTIwVjEyMFpNMTYwIDEyMEgxODBWMTQwSDE2MFYxMjBaTTIwMCAxMjBIMjIwVjE0MEgyMDBWMTIwWk0xMjAgMTYwSDE0MFYxODBIMTIwVjE2MFpNMTYwIDE2MEgxODBWMTgwSDE2MFYxNjBaTTIwMCAxNjBIMjIwVjE4MEgyMDBWMTYwWk0xMjAgMjAwSDE0MFYyMjBIMTIwVjIwMFpNMTYwIDIwMEgxODBWMjIwSDE2MFYyMDBaTTIwMCAyMDBIMjIwVjIyMEgyMDBWMjAwWiIgZmlsbD0iI0RERURGMCIvPgo8dGV4dCB4PSIyMDAiIHk9IjI0MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTY5Njk2IiB0ZXh0LWFuY2hvcj9taWRkbGUiPkltYWdlbiBObyBEaXNwb25pYmxlPC90ZXh0Pgo8L3N2Zz4=';
                                 }}
                             />
                             {tienePromocionActivaQvm && (
@@ -162,6 +179,9 @@ const QuickViewModal = ({ product, isOpen, onClose, onAddToCart }) => {
                                         <span className="price-qvm">${precioBaseFormateadoQvm}</span>
                                         <span className="discount-qvm">-{discountPercentageQvm}%</span>
                                     </div>
+                                    <div className="savings-info-qvm">
+                                        <span className="savings-amount-qvm">Ahorras ${ahorroFormateadoQvm} MXN</span>
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="pricing-normal-qvm">
@@ -170,9 +190,13 @@ const QuickViewModal = ({ product, isOpen, onClose, onAddToCart }) => {
                                 </div>
                             )}
                             
-                            {product.moneda === 'USD' && (
-                                <div className="exchange-info-qvm">
-                                    <span>Tipo de cambio: ${product.tipoCambio || 20} MXN/USD</span>
+                            {/* Información de precios originales para debug */}
+                            {process.env.NODE_ENV === 'development' && (
+                                <div className="debug-pricing-qvm">
+                                    <small>
+                                        Precio original: ${precioBaseOriginalQvm} | 
+                                        {tienePromocionActivaQvm && ` Promo original: $${precioPromoOriginalQvm}`}
+                                    </small>
                                 </div>
                             )}
                         </div>

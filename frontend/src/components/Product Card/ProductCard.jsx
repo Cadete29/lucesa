@@ -27,9 +27,6 @@ const normalizarProductoPcard = (producto) => {
   };
 };
 
-// ✅ Tipo de cambio fijo
-const TIPO_CAMBIO_MXN_PCARD = 18.50;
-
 const ProductCard = ({ product, onQuickView }) => {
     const [imageStatusPcard, setImageStatusPcard] = useState('loading');
     const [currentImageUrlPcard, setCurrentImageUrlPcard] = useState('');
@@ -41,29 +38,37 @@ const ProductCard = ({ product, onQuickView }) => {
         return normalizarProductoPcard(product);
     }, [product]);
 
-    // ✅ CÁLCULO CORREGIDO DE PRECIOS EN MXN - CON PROMOCIONES
+    // ✅ CÁLCULO DE PRECIOS EN MXN CON 10% ADICIONAL (BASE Y PROMOCIONES)
     const productCalculationsPcard = useMemo(() => {
         const hasActivePromotionPcard = normalizedProductPcard.promociones && normalizedProductPcard.promociones.length > 0;
         const currentPromotionPcard = hasActivePromotionPcard ? normalizedProductPcard.promociones[0] : null;
         
-        // ✅ CORRECCIÓN: Siempre convertir a MXN ya que los precios vienen en USD
-        const convertirAMXNPcard = (precio) => {
-            // Si no hay precio, retornar 0
-            if (!precio) return 0;
-            
-            // SIEMPRE convertir a MXN (los precios vienen en USD)
-            return precio * (normalizedProductPcard.tipoCambio || TIPO_CAMBIO_MXN_PCARD);
+        // ✅ FUNCIÓN PARA AGREGAR 10% AL PRECIO (APLICA PARA BASE Y PROMOCIONES)
+        const agregarDiezPorcientoPcard = (precio) => {
+            if (!precio || typeof precio !== 'number') return 0;
+            // Agregar 10% al precio original
+            return precio * 1.10;
         };
 
-        // Precio base en MXN (SIEMPRE convertir)
-        const precioBaseMXNPcard = convertirAMXNPcard(normalizedProductPcard.precio);
+        // Precio base en MXN con 10% adicional
+        const precioBaseOriginalPcard = normalizedProductPcard.precio || 0;
+        const precioBaseMXNPcard = agregarDiezPorcientoPcard(precioBaseOriginalPcard);
         
-        // Precio promocional en MXN (si existe promoción o precioPromocion)
-        const precioPromoMXNPcard = currentPromotionPcard ? 
-            convertirAMXNPcard(currentPromotionPcard.promocion) : 
-            (normalizedProductPcard.precioPromocion ? convertirAMXNPcard(normalizedProductPcard.precioPromocion) : null);
+        // ✅ PRECIO PROMOCIONAL CON 10% ADICIONAL
+        let precioPromoOriginalPcard = null;
+        let precioPromoMXNPcard = null;
 
-        // Determinar si tiene promoción activa
+        if (currentPromotionPcard) {
+            // Si hay promoción activa, aplicar 10% al precio promocional
+            precioPromoOriginalPcard = currentPromotionPcard.promocion;
+            precioPromoMXNPcard = agregarDiezPorcientoPcard(precioPromoOriginalPcard);
+        } else if (normalizedProductPcard.precioPromocion) {
+            // Si hay precio promocional directo, aplicar 10%
+            precioPromoOriginalPcard = normalizedProductPcard.precioPromocion;
+            precioPromoMXNPcard = agregarDiezPorcientoPcard(precioPromoOriginalPcard);
+        }
+
+        // Determinar si tiene promoción activa (comparando precios con 10% incluido)
         const tienePromocionActivaPcard = precioPromoMXNPcard !== null && precioPromoMXNPcard < precioBaseMXNPcard;
 
         // Formatear a 2 decimales
@@ -75,9 +80,14 @@ const ProductCard = ({ product, onQuickView }) => {
             });
         };
 
+        // ✅ CÁLCULO DE DESCUENTO CONSIDERANDO EL 10% ADICIONAL
         const discountPercentagePcard = tienePromocionActivaPcard ? 
             Math.round(((precioBaseMXNPcard - precioPromoMXNPcard) / precioBaseMXNPcard) * 100) : 
             0;
+
+        // Calcular ahorro en MXN
+        const ahorroMXNPcard = tienePromocionActivaPcard ? 
+            (precioBaseMXNPcard - precioPromoMXNPcard) : 0;
 
         return {
             tienePromocionActivaPcard,
@@ -86,14 +96,18 @@ const ProductCard = ({ product, onQuickView }) => {
             precioPromoMXNPcard: tienePromocionActivaPcard ? formatearPrecioPcard(precioPromoMXNPcard) : null,
             discountPercentagePcard,
             precioFinalMXNPcard: tienePromocionActivaPcard ? formatearPrecioPcard(precioPromoMXNPcard) : formatearPrecioPcard(precioBaseMXNPcard),
-            precioOriginalUSDPcard: normalizedProductPcard.precio,
-            tipoCambioUsadoPcard: normalizedProductPcard.tipoCambio || TIPO_CAMBIO_MXN_PCARD
+            ahorroMXNPcard: formatearPrecioPcard(ahorroMXNPcard),
+            // Precios originales para referencia en debug
+            precioOriginalBasePcard: precioBaseOriginalPcard,
+            precioOriginalPromoPcard: precioPromoOriginalPcard,
+            // Precios con 10% para cálculos internos
+            precioBaseConIncremento: precioBaseMXNPcard,
+            precioPromoConIncremento: precioPromoMXNPcard
         };
     }, [
         normalizedProductPcard.promociones, 
         normalizedProductPcard.precio, 
-        normalizedProductPcard.precioPromocion,
-        normalizedProductPcard.tipoCambio
+        normalizedProductPcard.precioPromocion
     ]);
 
     // ✅ Configurar imagen con URL dinámica por entorno
@@ -151,7 +165,7 @@ const ProductCard = ({ product, onQuickView }) => {
         };
     }, [currentImageUrlPcard, normalizedProductPcard.codigo]);
 
-    // ✅ CORRECCIÓN: Añadir handleQuickView que faltaba
+    // ✅ Manejo de vista rápida
     const handleQuickViewPcard = useCallback((e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -160,11 +174,10 @@ const ProductCard = ({ product, onQuickView }) => {
         }
     }, [onQuickView, normalizedProductPcard]);
 
-    // ✅ CORRECCIÓN: Añadir handleViewDetails para el botón móvil
+    // ✅ Manejo de ver detalles
     const handleViewDetailsPcard = useCallback((e) => {
         e.preventDefault();
         e.stopPropagation();
-        // Navegar a la página de detalles
         window.location.href = `/product/${normalizedProductPcard.idProducto || normalizedProductPcard.id || normalizedProductPcard.codigo}`;
     }, [normalizedProductPcard]);
 
@@ -174,8 +187,9 @@ const ProductCard = ({ product, onQuickView }) => {
         precioPromoMXNPcard,
         discountPercentagePcard,
         precioFinalMXNPcard,
-        precioOriginalUSDPcard,
-        tipoCambioUsadoPcard
+        ahorroMXNPcard,
+        precioOriginalBasePcard,
+        precioOriginalPromoPcard
     } = productCalculationsPcard;
 
     // ✅ NO RENDERIZAR SI EL PRODUCTO NO TIENE EXISTENCIA
@@ -268,40 +282,32 @@ const ProductCard = ({ product, onQuickView }) => {
                         : 'Descripción no disponible')}
                 </p>
 
-                {/* ✅ PRECIOS EN MXN - MOSTRAR ORIGINAL Y PROMOCIÓN SI APPLICA */}
+                {/* ✅ PRECIOS EN MXN CON 10% ADICIONAL (BASE Y PROMOCIONES) */}
                 <div className="product-prices-pcard">
                     {tienePromocionActivaPcard ? (
                         <>
-                            {/* PRECIO PROMOCIONAL (ACTUAL) */}
+                            {/* PRECIO PROMOCIONAL (ACTUAL) CON 10% */}
                             <div className="price-promo-pcard">
                                 <span className="current-price-pcard">${precioFinalMXNPcard}</span>
                                 <span className="currency-pcard">MXN</span>
                             </div>
                             
-                            {/* PRECIO ORIGINAL (TACHADO) */}
+                            {/* PRECIO ORIGINAL (TACHADO) CON 10% */}
                             <div className="price-original-pcard">
                                 <span className="original-price-pcard">${precioBaseMXNPcard} MXN</span>
-                                {/* <span className="discount-amount-pcard">
-                                    Ahorras ${(parseFloat(precioBaseMXNPcard.replace(/,/g, '')) - parseFloat(precioPromoMXNPcard.replace(/,/g, ''))).toFixed(2)}
-                                </span> */}
+                                <span className="discount-amount-pcard">
+                                    Ahorras ${ahorroMXNPcard} MXN
+                                </span>
                             </div>
                         </>
                     ) : (
-                        /* PRECIO NORMAL (SIN PROMOCIÓN) */
+                        /* PRECIO NORMAL (SIN PROMOCIÓN) CON 10% */
                         <div className="price-normal-pcard">
                             <span className="current-price-pcard">${precioFinalMXNPcard}</span>
                             <span className="currency-pcard">MXN</span>
                         </div>
                     )}
                 </div>
-
-                {/* Información de conversión */}
-                {/* <div className="conversion-info-pcard">
-                    <small>
-                        Precio original: ${precioOriginalUSDPcard} USD • 
-                        Tipo de cambio: {tipoCambioUsadoPcard} MXN/USD
-                    </small>
-                </div> */}
 
                 {/* Existencia */}
                 <div className="product-stock-pcard">
@@ -318,12 +324,13 @@ const ProductCard = ({ product, onQuickView }) => {
                     <div className="debug-info-pcard">
                         <strong>DEBUG:</strong> 
                         Entorno: {process.env.NODE_ENV} | 
-                        URL Base: {IMAGE_BASE_URL} |
                         Stock: {normalizedProductPcard.existencia} | 
-                        Precio USD: ${precioOriginalUSDPcard} | 
-                        Precio MXN: ${precioFinalMXNPcard} |
-                        Tipo Cambio: {tipoCambioUsadoPcard} |
-                        {tienePromocionActivaPcard && ` Descuento: ${discountPercentagePcard}%`}
+                        Base Original: ${precioOriginalBasePcard} | 
+                        Base +10%: ${precioBaseMXNPcard} |
+                        {tienePromocionActivaPcard && 
+                            ` Promo Original: $${precioOriginalPromoPcard} | 
+                            Promo +10%: $${precioPromoMXNPcard} | 
+                            Descuento: ${discountPercentagePcard}%`}
                     </div>
                 )}
 

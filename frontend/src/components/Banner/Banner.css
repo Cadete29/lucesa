@@ -321,6 +321,76 @@
   }
 }
 
+/* Estilos para el banner de Precios Mayoristas - TEXTO CONTINUO */
+.wholesale-banner-bnr {
+  position: relative;
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(135deg, #FF6B35, #FF8E53);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.wholesale-text-container-bnr {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  animation: scrollTextBnr 10s linear infinite;
+  white-space: nowrap;
+  padding-right: 2rem; /* Espacio entre repeticiones */
+}
+
+.wholesale-text-bnr {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  padding: 0 1rem;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #ffffff, #ffe0d0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* Crear múltiples copias del texto para efecto continuo */
+.wholesale-text-bnr::before,
+.wholesale-text-bnr::after {
+  content: "💰 Precios Mayoristas 💰 ";
+  margin: 0 0.5rem;
+}
+
+/* Animación de desplazamiento continuo */
+@keyframes scrollTextBnr {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Efectos hover para el banner */
+.wholesale-banner-bnr:hover {
+  background: linear-gradient(135deg, #FF8E53, #FF6B35);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
+}
+
+.wholesale-banner-bnr:hover .wholesale-text-container-bnr {
+  animation-duration: 8s; /* Acelera un poco al hacer hover */
+}
+
 @media (max-width: 1024px) {
   .banner-bnr {
     height: 70vh;
@@ -363,6 +433,26 @@
     padding: 0.8rem 1.2rem;
     min-width: 140px;
   }
+  
+  /* Ajustes responsive para el banner mayorista */
+  .wholesale-banner-bnr {
+    height: 40px;
+    margin-bottom: 1rem;
+  }
+  
+  .wholesale-text-bnr {
+    font-size: 1.1rem;
+    padding: 0 0.8rem;
+  }
+  
+  @keyframes scrollTextBnr {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
 }
 
 @media (max-width: 480px) {
@@ -396,8 +486,19 @@
     max-width: 200px;
     justify-content: flex-start;
   }
+  
+  /* Ajustes responsive para el banner mayorista */
+  .wholesale-banner-bnr {
+    height: 35px;
+  }
+  
+  .wholesale-text-bnr {
+    font-size: 1rem;
+    padding: 0 0.5rem;
+  }
 }
 
+/* Para usuarios que prefieren reducir movimiento */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
@@ -423,5 +524,29 @@
   
   .cta-button-bnr::before {
     display: none;
+  }
+  
+  /* Reducción de movimiento para el banner mayorista */
+  .wholesale-text-container-bnr {
+    animation: none;
+    justify-content: center;
+    position: static;
+  }
+  
+  .wholesale-banner-bnr {
+    height: auto;
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .wholesale-text-bnr {
+    animation: none;
+    padding: 0.5rem 1rem;
+  }
+  
+  .wholesale-banner-bnr:hover {
+    transform: none;
   }
 }

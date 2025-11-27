@@ -37,6 +37,13 @@ const Banner = () => {
             <div className="banner-container-bnr">
                 <div className="banner-content-bnr">
                     <div className="banner-text-bnr">
+                        {/* Nuevo banner animado para Precios Mayoristas */}
+                        <div className="wholesale-banner-bnr">
+                            <div className="wholesale-text-container-bnr">
+                                <span className="wholesale-text-bnr">Precios Mayoristas</span>
+                            </div>
+                        </div>
+                        
                         <h1 id="banner-title-bnr" className="banner-title-bnr">
                             Descubre Nuestra <span className="highlight-bnr">Colección Exclusiva</span>
                         </h1>

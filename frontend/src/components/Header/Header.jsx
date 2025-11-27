@@ -154,9 +154,6 @@ const Header = () => {
                             <li>
                                 <Link to="/categories" className="nav-link-hdr">Categorías</Link>
                             </li>
-                            <li>
-                                <Link to="/favorites" className="nav-link-hdr">Favoritos</Link>
-                            </li>
                         </ul>
                     </nav>
 
@@ -177,12 +174,12 @@ const Header = () => {
                         </form>
                         
                         <div className="header-icons-hdr">
-                            <button onClick={handleFavoritesClick} className="icon-btn-hdr favorites-btn-hdr" title="Favoritos">
+                            {/* <button onClick={handleFavoritesClick} className="icon-btn-hdr favorites-btn-hdr" title="Favoritos">
                                 <span className="icon-hdr">❤️</span>
                                 {favoritesCount > 0 && (
                                     <span className="favorites-count-hdr">{favoritesCount}</span>
                                 )}
-                            </button>
+                            </button> */}
 
                             <button onClick={handleCartClick} className="icon-btn-hdr cart-btn-hdr" title="Carrito">
                                 <span className="icon-hdr">🛒</span>

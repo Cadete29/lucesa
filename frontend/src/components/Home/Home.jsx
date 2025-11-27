@@ -291,17 +291,15 @@ const Home = () => {
     };
 
     const getMarcasPopularesHome = () => {
-        if (Array.isArray(marcasReales) && marcasReales.length > 0) {
-            return marcasReales.slice(0, 20);
-        }
-        
+        // SOLO usar las marcas específicas, ignorar completamente la API
         const marcasEspecificas = [
-            '4Gamers', 'ACER', 'ACTECK', 'ADATA', 'ADESSO',
-            'ALTER', 'AMD', 'AOC', 'APC', 'APPLE',
-            'ARUBA', 'ASPEL', 'ASUS', 'AUTODESK', 'AVAST',
-            'AZOR', 'Allied Telesis', 'Amazfit', 'Amazon', 'Anviz'
+            '4GAMERS', 'ACER', 'ACTECK', 'ADATA', 'ADESSO', 'ALTER', 'AMD', 'AOC', 'APC', 'APPLE', 
+            'ARUBA', 'ASPEL', 'ASUS', 'AUTODESK', 'AVAST', 'AZOR', 'ALLIED TELESIS', 
+            'AMAZFIT', 'AMAZON', 'ANVIZ', 'LENOVO', 'DELL', 'HP', 'SAMSUNG', 'KYOCERA', 
+            'BROTHER', 'FORTINET', 'CISCO', 'SONY', 'SENTINEL', 'KASPERSKY', 'NORTON'
         ];
         
+        console.log('🎯 USANDO SOLO MARCAS ESPECÍFICAS:', marcasEspecificas);
         return marcasEspecificas;
     };
 
@@ -326,9 +324,24 @@ const Home = () => {
             'ALLIED TELESIS': '/logos/allied.webp',
             'AMAZFIT': '/logos/amazfit.jpeg',
             'AMAZON': '/logos/amazon.jpg',
-            'ANVIZ': '/logos/anviz.png'
+            'ANVIZ': '/logos/anviz.png',
+            // NUEVAS MARCAS AGREGADAS - TODAS EN MAYÚSCULAS
+            'LENOVO': '/logos/lenovo.png',
+            'DELL': '/logos/dell.png',
+            'HP': '/logos/hp.png',
+            'SAMSUNG': '/logos/samsung.png',
+            'KYOCERA': '/logos/kyocera.png',
+            'BROTHER': '/logos/brother.png',
+            'FORTINET': '/logos/fortinet.png',
+            'CISCO': '/logos/cisco.png',
+            'SONY': '/logos/sony.png',
+            'SENTINEL': '/logos/sentinel.svg',
+            'KASPERSKY': '/logos/kaspersky.png',
+            'NORTON': '/logos/norton.avif'
         };
-        return logos[marcaNombre.toUpperCase()];
+        
+        const marcaKey = marcaNombre.toUpperCase();
+        return logos[marcaKey];
     };
 
     const displayProductosDestacadosHome = getProductosDestacadosHome();
@@ -568,7 +581,7 @@ const Home = () => {
                         </div>
                     ) : (
                         <div className="no-marcas-home">
-                            <p>{marcasLoading ? 'Cargando marcas...' : 'No hay marcas disponibles en este momento.'}</p>
+                            <p>No hay marcas disponibles en este momento.</p>
                         </div>
                     )}
                 </div>

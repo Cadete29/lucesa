@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import ProductCard from '../Product Card/ProductCard';
 import { useProductoPorId, useProductos } from '../../api/productosHooks';
+import { useCart } from '../../context/CartContext';
 import './ProductDetails.css';
 
 // ✅ Configuración de URLs por entorno
@@ -17,6 +18,10 @@ const ProductDetails = () => {
     const [activeTab, setActiveTab] = useState('description');
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [imageErrors, setImageErrors] = useState(new Set());
+    const [showCartNotification, setShowCartNotification] = useState(false);
+
+    // Usar el contexto del carrito
+    const { addToCart, openCart } = useCart();
 
     // Usar datos reales de la API con los nuevos hooks
     const { data: productResponse, loading, error } = useProductoPorId(productId);
@@ -24,6 +29,9 @@ const ProductDetails = () => {
 
     // ✅ FUNCIÓN: Obtener URL de imagen usando la configuración por entorno
     const getImageUrl = (codigo, size = 'full') => {
+        if (!codigo) {
+            return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDQwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMjAgMTIwSDE0MFYxNDBIMTIwVjEyMFpNMTYwIDEyMEgxODBWMTQwSDE2MFYxMjBaTTIwMCAxMjBIMjIwVjE0MEgyMDBWMTIwWk0xMjAgMTYwSDE0MFYxODBIMTIwVjE2MFpNMTYwIDE2MEgxODBWMTgwSDE2MFYxNjBaTTIwMCAxNjBIMjIwVjE4MEgyMDBWMTYwWk0xMjAgMjAwSDE0MFYyMjBIMTIwVjIwMFpNMTYwIDIwMEgxODBWMjIwSDE2MFYyMDBaTTIwMCAyMDBIMjIwVjIyMEgyMDBWMjAwWiIgZmlsbD0iI0RERURGMCIvPgo8dGV4dCB4PSIyMDAiIHk9IjI0MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTY5Njk2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5JbWFnZW4gTm8gRGlzcG9uaWJsZTwvdGV4dD4KPC9zdmc+';
+        }
         return `${IMAGE_BASE_URL}/${codigo}?size=${size}`;
     };
 
@@ -110,7 +118,7 @@ const ProductDetails = () => {
         e.target.onerror = null;
     };
 
-    // ✅ USAR LA MISMA LÓGICA QUE PRODUCTCARD PARA PRECIOS
+    // ✅ USAR LA MISMA LÓGICA QUE PRODUCTCARD PARA PRECIOS CON 10% ADICIONAL
     const productCalculations = useMemo(() => {
         if (!productoProcesado) return {
             tienePromocionActiva: false,
@@ -119,28 +127,39 @@ const ProductDetails = () => {
             precioPromoMXN: null,
             discountPercentage: 0,
             precioFinalMXN: '0.00',
-            precioOriginalUSD: 0,
-            tipoCambioUsado: 20
+            precioOriginalBase: 0,
+            precioOriginalPromo: null
         };
 
         const hasActivePromotion = productoProcesado.promociones && productoProcesado.promociones.length > 0;
         const currentPromotion = hasActivePromotion ? productoProcesado.promociones[0] : null;
         
-        // ✅ MISMA CONVERSIÓN QUE PRODUCTCARD
-        const convertirAMXN = (precio) => {
-            if (!precio) return 0;
-            return precio * (productoProcesado.tipoCambio || 20);
+        // ✅ FUNCIÓN PARA AGREGAR 10% AL PRECIO (APLICA PARA BASE Y PROMOCIONES)
+        const agregarDiezPorciento = (precio) => {
+            if (!precio || typeof precio !== 'number') return 0;
+            // Agregar 10% al precio original
+            return precio * 1.10;
         };
 
-        // Precio base en MXN (SIEMPRE convertir)
-        const precioBaseMXN = convertirAMXN(productoProcesado.precio);
+        // Precio base en MXN CON 10% ADICIONAL
+        const precioBaseOriginal = productoProcesado.precio || 0;
+        const precioBaseMXN = agregarDiezPorciento(precioBaseOriginal);
         
-        // Precio promocional en MXN (si existe promoción o precioPromocion)
-        const precioPromoMXN = currentPromotion ? 
-            convertirAMXN(currentPromotion.promocion) : 
-            (productoProcesado.precioPromocion ? convertirAMXN(productoProcesado.precioPromocion) : null);
+        // ✅ PRECIO PROMOCIONAL EN MXN CON 10% ADICIONAL
+        let precioPromoOriginal = null;
+        let precioPromoMXN = null;
 
-        // Determinar si tiene promoción activa
+        if (currentPromotion) {
+            // Si hay promoción activa, aplicar 10% al precio promocional
+            precioPromoOriginal = currentPromotion.promocion;
+            precioPromoMXN = agregarDiezPorciento(precioPromoOriginal);
+        } else if (productoProcesado.precioPromocion) {
+            // Si hay precio promocional directo, aplicar 10%
+            precioPromoOriginal = productoProcesado.precioPromocion;
+            precioPromoMXN = agregarDiezPorciento(precioPromoOriginal);
+        }
+
+        // Determinar si tiene promoción activa (comparando precios con 10% incluido)
         const tienePromocionActiva = precioPromoMXN !== null && precioPromoMXN < precioBaseMXN;
 
         // Formatear a 2 decimales
@@ -152,9 +171,14 @@ const ProductDetails = () => {
             });
         };
 
+        // ✅ CÁLCULO DE DESCUENTO CONSIDERANDO EL 10% ADICIONAL
         const discountPercentage = tienePromocionActiva ? 
             Math.round(((precioBaseMXN - precioPromoMXN) / precioBaseMXN) * 100) : 
             0;
+
+        // Calcular ahorro en MXN
+        const ahorroMXN = tienePromocionActiva ? 
+            (precioBaseMXN - precioPromoMXN) : 0;
 
         return {
             tienePromocionActiva,
@@ -163,8 +187,13 @@ const ProductDetails = () => {
             precioPromoMXN: tienePromocionActiva ? formatearPrecio(precioPromoMXN) : null,
             discountPercentage,
             precioFinalMXN: tienePromocionActiva ? formatearPrecio(precioPromoMXN) : formatearPrecio(precioBaseMXN),
-            precioOriginalUSD: productoProcesado.precio,
-            tipoCambioUsado: productoProcesado.tipoCambio || 20
+            ahorroMXN: formatearPrecio(ahorroMXN),
+            // Precios originales para referencia
+            precioOriginalBase: precioBaseOriginal,
+            precioOriginalPromo: precioPromoOriginal,
+            // Precios con 10% para cálculos internos
+            precioBaseConIncremento: precioBaseMXN,
+            precioPromoConIncremento: precioPromoMXN
         };
     }, [productoProcesado]);
 
@@ -175,8 +204,9 @@ const ProductDetails = () => {
         precioPromoMXN,
         discountPercentage,
         precioFinalMXN,
-        precioOriginalUSD,
-        tipoCambioUsado
+        ahorroMXN,
+        precioOriginalBase,
+        precioOriginalPromo
     } = productCalculations;
 
     // ✅ STOCK TOTAL MEJORADO - MANEJA MEJOR LOS CASOS BORDES
@@ -277,31 +307,35 @@ const ProductDetails = () => {
         }
     };
 
+    // ✅ FUNCIÓN MEJORADA: Agregar al carrito
     const handleAddToCart = () => {
+        if (!productoProcesado) return;
+        
+        const precioFinalNumerico = tienePromocionActiva ? 
+            parseFloat(precioPromoMXN.replace(/,/g, '')) : 
+            parseFloat(precioFinalMXN.replace(/,/g, ''));
+        
         const cartItem = {
             ...productoProcesado,
             quantity,
-            precioFinal: tienePromocionActiva ? precioPromoMXN : precioFinalMXN
+            precioFinal: precioFinalNumerico
         };
         
-        console.log('🛒 Agregado al carrito:', cartItem);
+        console.log('🛒 Agregando al carrito:', cartItem);
         
-        const existingCart = JSON.parse(localStorage.getItem('ctonline_cart') || '[]');
-        const existingItemIndex = existingCart.findIndex(item => 
-            item.id === productoProcesado.id || item.idProducto === productoProcesado.idProducto
-        );
+        // Usar la función del contexto
+        addToCart(cartItem, quantity);
         
-        if (existingItemIndex >= 0) {
-            existingCart[existingItemIndex].quantity += quantity;
-        } else {
-            existingCart.push(cartItem);
-        }
+        // Mostrar notificación
+        setShowCartNotification(true);
         
-        localStorage.setItem('ctonline_cart', JSON.stringify(existingCart));
-        
-        alert(`¡${quantity} x ${productoProcesado.nombre} agregado al carrito!`);
+        // Ocultar notificación después de 3 segundos
+        setTimeout(() => {
+            setShowCartNotification(false);
+        }, 3000);
     };
 
+    // ✅ FUNCIÓN MEJORADA: Comprar ahora
     const handleBuyNow = () => {
         handleAddToCart();
         navigate('/cart');
@@ -337,6 +371,7 @@ const ProductDetails = () => {
     console.log('🛒 Producto procesado:', productoProcesado);
     console.log('🌐 Entorno actual:', process.env.NODE_ENV);
     console.log('🖼️ URL base de imágenes:', IMAGE_BASE_URL);
+    console.log('💰 Precios calculados:', productCalculations);
 
     // ✅ RENDERIZADO CONDICIONAL - DEBE IR DESPUÉS DE TODOS LOS HOOKS
     if (loading) {
@@ -368,6 +403,34 @@ const ProductDetails = () => {
 
     return (
         <div className="productdetails-page">
+            {/* Notificación de carrito */}
+            {showCartNotification && (
+                <div className="cart-notification">
+                    <div className="cart-notification-content">
+                        <span className="cart-notification-icon">✅</span>
+                        <div className="cart-notification-text">
+                            <strong>¡Producto agregado!</strong>
+                            <span>{quantity} x {productoProcesado.nombre} agregado al carrito</span>
+                        </div>
+                        <button 
+                            className="cart-notification-view"
+                            onClick={() => {
+                                openCart();
+                                setShowCartNotification(false);
+                            }}
+                        >
+                            Ver Carrito
+                        </button>
+                        <button 
+                            className="cart-notification-close"
+                            onClick={() => setShowCartNotification(false)}
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div className="productdetails-container">
                 {/* Migas de pan */}
                 <nav className="productdetails-breadcrumb">
@@ -452,6 +515,9 @@ const ProductDetails = () => {
                                         <span className="productdetails-price">${precioBaseMXN}</span>
                                         <span className="productdetails-discount">-{discountPercentage}%</span>
                                     </div>
+                                    <div className="productdetails-savings-info">
+                                        <span className="productdetails-savings-amount">Ahorras ${ahorroMXN} MXN</span>
+                                    </div>
                                     {activePromotion && activePromotion.vigencia && (
                                         <div className="productdetails-promotion-timer">
                                             <span>🔥 Oferta termina {formatDate(activePromotion.vigencia.fin)}</span>
@@ -465,9 +531,13 @@ const ProductDetails = () => {
                                 </div>
                             )}
                             
-                            {productoProcesado.moneda === 'USD' && (
-                                <div className="productdetails-exchange-info">
-                                    <span>Tipo de cambio: ${tipoCambioUsado} MXN/USD</span>
+                            {/* Información de debug */}
+                            {process.env.NODE_ENV === 'development' && (
+                                <div className="productdetails-debug-pricing">
+                                    <small>
+                                        Precio original: ${precioOriginalBase} | 
+                                        {tienePromocionActiva && ` Promo original: $${precioOriginalPromo}`}
+                                    </small>
                                 </div>
                             )}
                         </div>
@@ -524,7 +594,6 @@ const ProductDetails = () => {
                                         max={totalStock}
                                         onChange={handleInputChange}
                                         onBlur={(e) => {
-                                            // ✅ Corrección adicional para cuando el usuario escribe manualmente
                                             const value = parseInt(e.target.value) || 1;
                                             handleQuantityChange(value);
                                         }}
@@ -583,7 +652,7 @@ const ProductDetails = () => {
                             <div className="productdetails-shipping-item">
                                 <span className="productdetails-shipping-icon">🚚</span>
                                 <div>
-                                    <strong>Envío gratis</strong> en pedidos mayores a $500 MXN
+                                    <strong>Envío gratis</strong> en la compra minima de $1000 MXN
                                 </div>
                             </div>
                             <div className="productdetails-shipping-item">
@@ -695,10 +764,8 @@ const ProductDetails = () => {
                                     <div className="productdetails-info-section">
                                         <h4>🚚 Opciones de Envío</h4>
                                         <ul>
-                                            <li><strong>Envío estándar:</strong> 3-5 días hábiles - $99 MXN</li>
-                                            <li><strong>Envío express:</strong> 1-2 días hábiles - $199 MXN</li>
-                                            <li><strong>Recoge en tienda:</strong> Gratis (Disponible en CDMX, QRO, MTY)</li>
-                                            <li><strong>Envío gratis:</strong> En compras mayores a $500 MXN</li>
+                                            <li><strong>Compra minima de $1000:</strong> (Disponible en CDMX, QRO, MTY)</li>
+                                            <li><strong>Envío gratis:</strong> En compras mayores a $1000 MXN</li>
                                         </ul>
                                     </div>
                                     

@@ -16,7 +16,7 @@ export const CartProvider = ({ children }) => {
 
   // Cargar carrito desde localStorage
   useEffect(() => {
-    const savedCart = localStorage.getItem('lucesa_cart');
+    const savedCart = localStorage.getItem('ctonline_cart');
     if (savedCart) {
       try {
         setCartItems(JSON.parse(savedCart));
@@ -29,7 +29,7 @@ export const CartProvider = ({ children }) => {
 
   // Guardar carrito en localStorage
   useEffect(() => {
-    localStorage.setItem('lucesa_cart', JSON.stringify(cartItems));
+    localStorage.setItem('ctonline_cart', JSON.stringify(cartItems));
   }, [cartItems]);
 
   const addToCart = (product, quantity = 1) => {
@@ -77,7 +77,7 @@ export const CartProvider = ({ children }) => {
 
   const getCartTotal = () => {
     return cartItems.reduce((total, item) => {
-      const price = parseFloat(item.precioFinal || item.precio);
+      const price = parseFloat(item.precioFinal || item.precio) || 0;
       return total + (price * item.quantity);
     }, 0);
   };

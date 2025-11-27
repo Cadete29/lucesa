@@ -1,4 +1,4 @@
-/* Header.css - Con prefijos únicos */
+/* Header.css - Con correcciones de z-index y medidas */
 
 /* Reset y base */
 * {
@@ -20,7 +20,7 @@ body {
   flex-direction: column;
 }
 
-/* Header Principal */
+/* Header Principal - Z-INDEX CORREGIDO */
 .header-hdr {
   background: #fff;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -28,7 +28,7 @@ body {
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 1000;
+  z-index: 1100; /* Aumentado para estar por encima del cart */
   transition: all 0.3s ease;
 }
 
@@ -48,18 +48,20 @@ body {
   justify-content: space-between;
   padding: 1rem 0;
   position: relative;
+  min-height: 70px; /* Altura mínima consistente */
 }
 
 /* Logo */
 .logo-hdr {
   flex-shrink: 0;
-  z-index: 1001;
+  z-index: 1101;
 }
 
 .logo-image-hdr {
   height: 40px;
   width: auto;
   object-fit: contain;
+  max-height: 40px; /* Altura máxima fija */
 }
 
 /* Navegación Desktop */
@@ -85,6 +87,7 @@ body {
   transition: color 0.3s ease;
   padding: 0.5rem 0;
   position: relative;
+  font-size: 0.95rem;
 }
 
 .nav-link-hdr:hover {
@@ -107,6 +110,8 @@ body {
   border-radius: 25px;
   padding: 0.5rem;
   min-width: 300px;
+  max-width: 400px;
+  height: 44px; /* Altura fija */
 }
 
 .search-input-hdr {
@@ -116,6 +121,7 @@ body {
   flex: 1;
   outline: none;
   font-size: 0.9rem;
+  height: 100%;
 }
 
 .search-input-hdr::placeholder {
@@ -162,8 +168,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 44px; /* Tamaño consistente */
+  height: 44px; /* Tamaño consistente */
 }
 
 .icon-btn-hdr:hover {
@@ -178,8 +184,8 @@ body {
 .favorites-count-hdr,
 .cart-count-hdr {
   position: absolute;
-  top: -2px;
-  right: -2px;
+  top: 2px;
+  right: 2px;
   background: #dc3545;
   color: white;
   border-radius: 50%;
@@ -190,9 +196,10 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  border: 2px solid white; /* Borde para mejor visibilidad */
 }
 
-/* Menú de Usuario */
+/* Menú de Usuario - Z-INDEX CORREGIDO */
 .user-menu-hdr {
   position: relative;
 }
@@ -204,10 +211,10 @@ body {
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  min-width: 200px;
+  min-width: 220px;
   padding: 0.5rem 0;
   margin-top: 0.5rem;
-  z-index: 1002;
+  z-index: 1200; /* Más alto que el header */
 }
 
 .user-info-hdr {
@@ -218,6 +225,7 @@ body {
 .user-info-hdr strong {
   display: block;
   margin-bottom: 0.25rem;
+  font-size: 0.9rem;
 }
 
 .user-info-hdr span {
@@ -261,6 +269,31 @@ body {
   color: #dc3545;
 }
 
+/* Botón de Login */
+.login-button-hdr {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  height: 40px;
+}
+
+.login-button-hdr:hover {
+  background: #0056b3;
+}
+
+.login-icon-hdr {
+  font-size: 1rem;
+}
+
 /* Menú Hamburguesa */
 .menu-toggle-hdr {
   display: none;
@@ -270,7 +303,10 @@ body {
   cursor: pointer;
   padding: 0.5rem;
   gap: 4px;
-  z-index: 1001;
+  z-index: 1101;
+  width: 44px;
+  height: 44px;
+  justify-content: center;
 }
 
 .menu-toggle-hdr span {
@@ -293,7 +329,7 @@ body {
   transform: rotate(-45deg) translate(6px, -6px);
 }
 
-/* Menú Móvil */
+/* Menú Móvil - Z-INDEX CORREGIDO */
 .mobile-menu-hdr {
   position: fixed;
   top: 0;
@@ -301,7 +337,7 @@ body {
   width: 100%;
   height: 100vh;
   background: rgba(0,0,0,0.5);
-  z-index: 999;
+  z-index: 1099; /* Debajo del header pero encima del contenido */
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s ease;
@@ -325,6 +361,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  z-index: 1100;
 }
 
 .mobile-menu-hdr.active-hdr .mobile-menu-content-hdr {
@@ -337,11 +374,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 70px; /* Misma altura que el header */
 }
 
 .mobile-logo-image-hdr {
   height: 35px;
   width: auto;
+  max-height: 35px;
 }
 
 .mobile-nav-hdr {
@@ -363,6 +402,7 @@ body {
   color: #333;
   border-bottom: 1px solid #f8f9fa;
   font-weight: 500;
+  font-size: 1rem;
 }
 
 .nav-icon-hdr {
@@ -396,6 +436,7 @@ body {
   display: block;
   font-weight: bold;
   margin-bottom: 0.25rem;
+  font-size: 0.95rem;
 }
 
 .user-email-hdr {
@@ -423,6 +464,7 @@ body {
   cursor: pointer;
   border-radius: 4px;
   transition: background-color 0.3s ease;
+  font-size: 0.9rem;
 }
 
 .mobile-user-link-hdr:hover,
@@ -458,6 +500,8 @@ body {
   cursor: pointer;
   font-weight: 500;
   transition: background-color 0.3s ease;
+  font-size: 1rem;
+  justify-content: center;
 }
 
 .mobile-login-btn-hdr:hover {
@@ -482,6 +526,11 @@ body {
   
   .search-bar-hdr {
     min-width: 250px;
+    max-width: 300px;
+  }
+  
+  .header-content-hdr {
+    min-height: 65px;
   }
 }
 
@@ -489,6 +538,7 @@ body {
 @media (max-width: 768px) {
   .header-content-hdr {
     padding: 0.75rem 0;
+    min-height: 60px;
   }
   
   .desktop-nav-hdr {
@@ -509,6 +559,18 @@ body {
   
   .logo-image-hdr {
     height: 35px;
+    max-height: 35px;
+  }
+  
+  .icon-btn-hdr {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .login-button-hdr {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    height: 36px;
   }
 }
 
@@ -520,15 +582,18 @@ body {
   
   .header-content-hdr {
     padding: 0.5rem 0;
+    min-height: 55px;
   }
   
   .logo-image-hdr {
     height: 30px;
+    max-height: 30px;
   }
   
   .icon-btn-hdr {
     width: 36px;
     height: 36px;
+    padding: 0.4rem;
   }
   
   .icon-hdr {
@@ -541,6 +606,7 @@ body {
   
   .mobile-menu-header-hdr {
     padding: 0.75rem;
+    min-height: 55px;
   }
   
   .mobile-nav-hdr {
@@ -549,6 +615,11 @@ body {
   
   .mobile-nav-link-hdr {
     padding: 0.75rem 0;
+    font-size: 0.95rem;
+  }
+  
+  .login-button-hdr {
+    display: none; /* Ocultar en móviles muy pequeños, ya está en el menú */
   }
 }
 
@@ -573,6 +644,13 @@ body {
     width: 16px;
     height: 16px;
     font-size: 0.6rem;
+    top: 1px;
+    right: 1px;
+  }
+  
+  .mobile-menu-content-hdr {
+    width: 100%;
+    max-width: none;
   }
 }
 
@@ -605,5 +683,22 @@ body {
   
   .mobile-menu-content-hdr {
     height: -webkit-fill-available;
+  }
+}
+
+/* Asegurar que el contenido principal no quede detrás del header */
+.main-content {
+  margin-top: 70px; /* Altura del header */
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-top: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    margin-top: 55px;
   }
 }
