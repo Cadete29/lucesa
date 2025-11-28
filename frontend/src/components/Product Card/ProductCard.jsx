@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { useFavorites } from '../../context/FavoritesContext';
 import './ProductCard.css';
 
 // ✅ Configuración de URLs por entorno
@@ -30,13 +31,37 @@ const normalizarProductoPcard = (producto) => {
 const ProductCard = ({ product, onQuickView }) => {
     const [imageStatusPcard, setImageStatusPcard] = useState('loading');
     const [currentImageUrlPcard, setCurrentImageUrlPcard] = useState('');
+    const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
     const imgRefPcard = useRef(null);
     const retryCountRefPcard = useRef(0);
+
+    // ✅ Contexto de favoritos
+    const { isFavorite, toggleFavorite } = useFavorites();
 
     // ✅ Normalizar el producto
     const normalizedProductPcard = useMemo(() => {
         return normalizarProductoPcard(product);
     }, [product]);
+
+    // ✅ Verificar si el producto está en favoritos
+    const productIsFavorite = useMemo(() => {
+        return isFavorite(normalizedProductPcard.id);
+    }, [isFavorite, normalizedProductPcard.id]);
+
+    // ✅ Manejo de favoritos
+    const handleFavoriteClick = useCallback(async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        setIsFavoriteLoading(true);
+        try {
+            await toggleFavorite(normalizedProductPcard);
+        } catch (error) {
+            console.error('Error al toggle favorite:', error);
+        } finally {
+            setIsFavoriteLoading(false);
+        }
+    }, [toggleFavorite, normalizedProductPcard]);
 
     // ✅ CÁLCULO DE PRECIOS EN MXN CON 10% ADICIONAL (BASE Y PROMOCIONES)
     const productCalculationsPcard = useMemo(() => {
@@ -205,6 +230,27 @@ const ProductCard = ({ product, onQuickView }) => {
                     -{discountPercentagePcard}%
                 </div>
             )}
+
+            {/* Botón de favoritos - POSICIONADO SOBRE LA IMAGEN */}
+            <button 
+                className={`favorite-btn-pcard ${productIsFavorite ? 'favorite-active' : ''} ${isFavoriteLoading ? 'loading' : ''}`}
+                onClick={handleFavoriteClick}
+                disabled={isFavoriteLoading}
+                aria-label={productIsFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+            >
+                {isFavoriteLoading ? (
+                    <div className="favorite-spinner"></div>
+                ) : (
+                    <svg 
+                        className="favorite-icon" 
+                        viewBox="0 0 24 24" 
+                        fill={productIsFavorite ? 'currentColor' : 'none'} 
+                        stroke="currentColor"
+                    >
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                )}
+            </button>
 
             {/* Imagen del producto */}
             <div className="product-image-pcard">

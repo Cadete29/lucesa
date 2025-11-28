@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useFavorites } from '../context/FavoritesContext';
+import ProductCard from '../components/Product Card/ProductCard'; // Ajusta la ruta según tu estructura
 import './Favorites.css';
 
 const Favorites = () => {
-  const { favorites, removeFromFavorites, clearFavorites } = useFavorites();
+  const { favorites, clearFavorites } = useFavorites();
 
   if (favorites.length === 0) {
     return (
@@ -41,47 +42,12 @@ const Favorites = () => {
 
         <div className="favorites-grid">
           {favorites.map(product => (
-            <div key={product.id} className="favorite-card">
-              <Link to={`/product/${product.id}`} className="favorite-image">
-                <img 
-                  src={product.image || '/placeholder-product.jpg'} 
-                  alt={product.name}
-                  onError={(e) => {
-                    e.target.src = '/placeholder-product.jpg';
-                  }}
-                />
-              </Link>
-              
-              <div className="favorite-info">
-                <h3 className="favorite-title">
-                  <Link to={`/product/${product.id}`}>
-                    {product.name}
-                  </Link>
-                </h3>
-                <p className="favorite-price">${product.price}</p>
-                {product.description && (
-                  <p className="favorite-description">
-                    {product.description.length > 100 
-                      ? `${product.description.substring(0, 100)}...` 
-                      : product.description
-                    }
-                  </p>
-                )}
-              </div>
-
-              <div className="favorite-actions">
-                <button 
-                  onClick={() => removeFromFavorites(product.id)}
-                  className="btn-remove"
-                  aria-label="Eliminar de favoritos"
-                >
-                  ❌ Eliminar
-                </button>
-                <button className="btn-add-cart">
-                  🛒 Añadir al Carrito
-                </button>
-              </div>
-            </div>
+            <ProductCard 
+              key={product.id} 
+              product={product}
+              variant="favorites"
+              showActions={false}
+            />
           ))}
         </div>
       </div>

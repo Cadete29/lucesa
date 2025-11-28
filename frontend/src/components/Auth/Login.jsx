@@ -54,7 +54,6 @@ const Login = () => {
     setLoading(false);
   };
 
-  // Datos de demo para testing
   const fillDemoCredentials = () => {
     setFormData({
       email: 'demo@lucesa.com',
@@ -80,7 +79,6 @@ const Login = () => {
               </div>
             )}
 
-            {/* Botón de demo */}
             <div className="demo-credentials">
               <button 
                 type="button" 
@@ -140,7 +138,6 @@ const Login = () => {
               </button>
             </form>
 
-            {/* Separador corregido */}
             <div className="auth-separator-corrected">
               <div className="separator-line"></div>
               <div className="separator-text">o continúa con</div>

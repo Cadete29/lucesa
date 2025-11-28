@@ -1,26 +1,51 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 import './OrderConfirmation.css';
 
-// ✅ Configuración de URLs por entorno
 const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://testpaginaweb.shop/api/images/code'
   : 'http://localhost:4004/api/images/code';
 
 const OrderConfirmation = () => {
   const location = useLocation();
+  const { user, saveOrderToHistory } = useAuth();
   const { orderId, total, cartItems, subtotal, tax, shipping } = location.state || {};
+  
+  const [orderSaved, setOrderSaved] = useState(false);
 
-  console.log('Datos recibidos en OrderConfirmation:', {
-    orderId,
-    total,
-    cartItems,
-    subtotal,
-    tax,
-    shipping
-  });
+  useEffect(() => {
+    const saveOrder = async () => {
+      if (!orderId || orderSaved || !user) {
+        return;
+      }
 
-  // Manejo seguro de los valores numéricos
+      try {
+        const orderData = {
+          orderId,
+          total,
+          cartItems: cartItems || [],
+          subtotal,
+          tax,
+          shipping
+        };
+
+        const result = await saveOrderToHistory(orderData);
+        
+        if (result.success) {
+          console.log('Orden guardada en historial:', result.order);
+          setOrderSaved(true);
+        } else {
+          console.error('Error al guardar orden:', result.error);
+        }
+      } catch (error) {
+        console.error('Error al guardar orden:', error);
+      }
+    };
+
+    saveOrder();
+  }, [orderId, user, saveOrderToHistory, orderSaved, total, cartItems, subtotal, tax, shipping]);
+
   const safeSubtotal = subtotal ? parseFloat(subtotal) : 0;
   const safeTax = tax ? parseFloat(tax) : 0;
   const safeShipping = shipping ? parseFloat(shipping) : 0;
@@ -40,10 +65,30 @@ const OrderConfirmation = () => {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="oc-page">
+        <div className="oc-container">
+          <div className="oc-error">
+            <h2 className="oc-error-title">Usuario no autenticado</h2>
+            <p className="oc-error-text">Debes iniciar sesión para completar tu pedido.</p>
+            <Link to="/login" className="oc-btn oc-btn-primary">Iniciar Sesión</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="oc-page">
       <div className="oc-container">
         <div className="oc-card">
+          {orderSaved && (
+            <div className="oc-save-status oc-save-success">
+              ✅ Orden guardada en tu historial de compras
+            </div>
+          )}
+          
           <div className="oc-header">
             <div className="oc-success-icon">✅</div>
             <h1 className="oc-title">¡Pedido Confirmado!</h1>
@@ -51,14 +96,12 @@ const OrderConfirmation = () => {
           </div>
 
           <div className="oc-details">
-            {/* Sección de productos con imágenes */}
             <div className="oc-products-section">
               <h3 className="oc-section-title">Productos Comprados</h3>
               
               {cartItems && cartItems.length > 0 ? (
                 <div className="oc-products-list">
                   {cartItems.map((item, index) => {
-                    // Manejo seguro de los datos del producto
                     const productName = item.nombre || 'Producto sin nombre';
                     const productBrand = item.marca || 'Sin marca';
                     const productCode = item.codigo || 'N/A';
@@ -68,7 +111,6 @@ const OrderConfirmation = () => {
 
                     return (
                       <div key={index} className="oc-product-item">
-                        {/* ✅ Agregar componente de imagen */}
                         <div className="oc-product-image">
                           <ProductImage item={item} />
                         </div>
@@ -100,7 +142,6 @@ const OrderConfirmation = () => {
               )}
             </div>
 
-            {/* Resumen del pago */}
             <div className="oc-detail-section">
               <h3 className="oc-section-title">Resumen del Pago</h3>
               <div className="oc-pricing-breakdown">
@@ -140,7 +181,6 @@ const OrderConfirmation = () => {
               </div>
             </div>
 
-            {/* Información del pedido */}
             <div className="oc-detail-section">
               <h3 className="oc-section-title">Información del Pedido</h3>
               <div className="oc-detail-grid">
@@ -169,7 +209,6 @@ const OrderConfirmation = () => {
               </div>
             </div>
 
-            {/* Próximos pasos */}
             <div className="oc-next-steps">
               <h3 className="oc-section-title">¿Qué sigue?</h3>
               <div className="oc-steps-timeline">
@@ -213,7 +252,7 @@ const OrderConfirmation = () => {
             <Link to="/products" className="oc-btn oc-btn-primary">
               Seguir Comprando
             </Link>
-            <Link to="/orders" className="oc-btn oc-btn-secondary">
+            <Link to="/user-profile?tab=orders" className="oc-btn oc-btn-secondary">
               Ver Mis Pedidos
             </Link>
             <button 
@@ -244,7 +283,6 @@ const OrderConfirmation = () => {
   );
 };
 
-// ✅ COMPONENTE PARA MOSTRAR IMÁGENES DE PRODUCTOS
 const ProductImage = ({ item }) => {
   const [imageStatus, setImageStatus] = useState('loading');
   const [currentImageUrl, setCurrentImageUrl] = useState('');

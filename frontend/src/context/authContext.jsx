@@ -17,7 +17,6 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
 
   useEffect(() => {
-    // Verificar si hay usuario logueado al cargar la app
     const savedUser = localStorage.getItem('lucesa-user');
     const savedToken = localStorage.getItem('lucesa-token');
     
@@ -31,6 +30,30 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       setLoading(true);
+      
+      // Credenciales demo con rol admin
+      if (email === 'demo@lucesa.com' && password === 'password') {
+        const demoUser = {
+          id: 1,
+          username: 'demo_admin',
+          email: 'demo@lucesa.com',
+          nombre: 'Administrador Demo',
+          rol: 'admin',
+          foto_perfil: null,
+          created_at: new Date().toISOString(),
+          orders: []
+        };
+        
+        const demoToken = `demo-token-admin-${Date.now()}`;
+        
+        setUser(demoUser);
+        setToken(demoToken);
+        localStorage.setItem('lucesa-user', JSON.stringify(demoUser));
+        localStorage.setItem('lucesa-token', demoToken);
+        
+        return { success: true };
+      }
+      
       const response = await authService.login(email, password);
       
       if (response.success) {
@@ -145,11 +168,51 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Función para login social (demo)
+  const saveOrderToHistory = async (orderData) => {
+    try {
+      if (!user || !token) {
+        throw new Error('Usuario no autenticado');
+      }
+
+      const currentUser = JSON.parse(localStorage.getItem('lucesa-user') || '{}');
+      const currentOrders = currentUser.orders || [];
+
+      const newOrder = {
+        id: orderData.orderId,
+        date: new Date().toISOString(),
+        items: orderData.cartItems,
+        subtotal: orderData.subtotal,
+        tax: orderData.tax,
+        shipping: orderData.shipping,
+        total: orderData.total,
+        status: 'confirmed'
+      };
+
+      const updatedOrders = [newOrder, ...currentOrders];
+
+      const updatedUser = {
+        ...currentUser,
+        orders: updatedOrders
+      };
+
+      setUser(updatedUser);
+      localStorage.setItem('lucesa-user', JSON.stringify(updatedUser));
+
+      return { success: true, order: newOrder };
+    } catch (error) {
+      console.error('Error al guardar orden:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const getOrderHistory = () => {
+    if (!user) return [];
+    return user.orders || [];
+  };
+
   const socialLogin = async (provider) => {
     try {
       setLoading(true);
-      // Simulación de login social
       return new Promise((resolve) => {
         setTimeout(() => {
           const socialUser = {
@@ -158,7 +221,8 @@ export const AuthProvider = ({ children }) => {
             email: `user_${provider}@example.com`,
             nombre: `Usuario ${provider}`,
             foto_perfil: null,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            orders: []
           };
           
           const socialToken = `social-token-${provider}-${Date.now()}`;
@@ -189,8 +253,10 @@ export const AuthProvider = ({ children }) => {
     verifyResetToken,
     updateProfile,
     socialLogin,
+    saveOrderToHistory,
+    getOrderHistory,
     loading,
-    isAuthenticated: !!user && !!token // Esta propiedad es crucial
+    isAuthenticated: !!user && !!token
   };
 
   return (

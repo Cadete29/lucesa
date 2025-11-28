@@ -214,10 +214,10 @@ const Header = () => {
                                                 <span className="dropdown-icon-hdr">👤</span>
                                                 Mi Cuenta
                                             </button>
-                                            <Link to="/favorites" className="dropdown-item-hdr" onClick={() => setUserMenuOpen(false)}>
+                                            {/* <Link to="/favorites" className="dropdown-item-hdr" onClick={() => setUserMenuOpen(false)}>
                                                 <span className="dropdown-icon-hdr">❤️</span>
                                                 Mis Favoritos
-                                            </Link>
+                                            </Link> */}
                                             <div className="dropdown-divider-hdr"></div>
                                             <button onClick={handleLogout} className="dropdown-item-hdr logout-btn-hdr">
                                                 <span className="dropdown-icon-hdr">🚪</span>
