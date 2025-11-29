@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ProductManagement from '../../pages/ProductManagement';
@@ -9,12 +9,8 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://testpaginaweb.shop/api'
   : 'http://localhost:4004/api';
 
-const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://testpaginaweb.shop/api/images/code'
-  : 'http://localhost:4004/api/images/code';
-
 const UserProfile = () => {
-  const { user, logout, updateProfile } = useAuth();
+  const { user, logout, updateProfile, getOrderHistory, getOrderDetails } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [selectedAdminTab, setSelectedAdminTab] = useState(null);
@@ -23,12 +19,73 @@ const UserProfile = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Nuevos estados para órdenes
+  const [userOrders, setUserOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [orderDetailsLoading, setOrderDetailsLoading] = useState(false);
 
+  // Estado para los datos del perfil
   const [profileData, setProfileData] = useState({
-    nombre: user?.nombre || '',
-    email: user?.email || '',
-    username: user?.username || ''
+    nombre: '',
+    username: '',
+    email: ''
   });
+
+  // Estado para el formulario de edición
+  const [isEditing, setIsEditing] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+
+  // Inicializar datos del perfil cuando el usuario cambia
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        nombre: user?.nombre || '',
+        username: user?.username || '',
+        email: user?.email || ''
+      });
+    }
+  }, [user]);
+
+  // Cargar órdenes cuando se active la pestaña de historial
+  useEffect(() => {
+    if (activeTab === 'orders' && user) {
+      loadOrderHistory();
+    }
+  }, [activeTab, user]);
+
+  const loadOrderHistory = async () => {
+    try {
+      setOrdersLoading(true);
+      const orders = await getOrderHistory();
+      setUserOrders(orders);
+    } catch (error) {
+      console.error('Error cargando historial de órdenes:', error);
+      setError('Error al cargar el historial de compras');
+      // Fallback a órdenes locales si hay error
+      setUserOrders(user?.orders || []);
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  const handleViewOrderDetails = async (orderId) => {
+    try {
+      setOrderDetailsLoading(true);
+      const order = await getOrderDetails(orderId);
+      setSelectedOrder(order);
+    } catch (error) {
+      console.error('Error cargando detalles de orden:', error);
+      setError('Error al cargar los detalles de la orden');
+    } finally {
+      setOrderDetailsLoading(false);
+    }
+  };
+
+  const handleCloseOrderDetails = () => {
+    setSelectedOrder(null);
+  };
 
   const handleLogout = () => {
     logout();
@@ -44,7 +101,9 @@ const UserProfile = () => {
     setActiveTab(tabName);
     setSelectedAdminTab(null);
     setError('');
+    setMessage('');
     setMobileMenuOpen(false);
+    setSelectedOrder(null); // Cerrar detalles de orden al cambiar pestaña
   };
 
   const handleAdminTabChange = (tabName) => {
@@ -56,23 +115,76 @@ const UserProfile = () => {
     setSelectedAdminTab(null);
   };
 
+  // Función para manejar cambios en los campos del formulario
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setProfileData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Función para activar/desactivar edición
+  const toggleEdit = () => {
+    if (isEditing) {
+      // Si estaba editando y cancela, restaurar valores originales
+      setProfileData({
+        nombre: user?.nombre || '',
+        username: user?.username || '',
+        email: user?.email || ''
+      });
+    }
+    setIsEditing(!isEditing);
+    setError('');
+    setMessage('');
+  };
+
+  // Función para actualizar el perfil
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setEditLoading(true);
     setError('');
     setMessage('');
 
+    // Validaciones
+    if (!profileData.nombre.trim()) {
+      setError('El nombre completo es obligatorio');
+      setEditLoading(false);
+      return;
+    }
+
+    if (!profileData.username.trim()) {
+      setError('El nombre de usuario es obligatorio');
+      setEditLoading(false);
+      return;
+    }
+
+    if (profileData.username.length < 3) {
+      setError('El nombre de usuario debe tener al menos 3 caracteres');
+      setEditLoading(false);
+      return;
+    }
+
     try {
-      const result = await updateProfile(profileData);
+      console.log('📝 Enviando datos de actualización:', profileData);
+      
+      const result = await updateProfile({
+        nombre: profileData.nombre.trim(),
+        username: profileData.username.trim()
+      });
+
       if (result.success) {
         setMessage('Perfil actualizado correctamente');
+        setIsEditing(false);
+        // Los datos se actualizan automáticamente a través del contexto
       } else {
-        setError(result.error);
+        setError(result.error || 'Error al actualizar el perfil');
       }
     } catch (error) {
-      setError('Error al actualizar el perfil');
+      console.error('Error en actualización:', error);
+      setError('Error al actualizar el perfil. Por favor, intenta nuevamente.');
     } finally {
-      setLoading(false);
+      setEditLoading(false);
     }
   };
 
@@ -114,10 +226,13 @@ const UserProfile = () => {
 
       if (data.success) {
         setMessage('Foto de perfil actualizada correctamente');
-        // Recargar la página para ver los cambios inmediatamente
-        setTimeout(() => {
+        // Actualizar el usuario en el contexto y localStorage
+        if (data.data && data.data.user) {
+          const updatedUser = { ...user, ...data.data.user };
+          localStorage.setItem('lucesa-user', JSON.stringify(updatedUser));
+          // Forzar actualización del contexto
           window.location.reload();
-        }, 1000);
+        }
       } else {
         setError(data.message || 'Error al subir la imagen');
       }
@@ -152,10 +267,13 @@ const UserProfile = () => {
 
       if (data.success) {
         setMessage('Foto de perfil eliminada correctamente');
-        // Recargar la página para ver los cambios
-        setTimeout(() => {
+        // Actualizar el usuario en el contexto y localStorage
+        if (data.data && data.data.user) {
+          const updatedUser = { ...user, ...data.data.user };
+          localStorage.setItem('lucesa-user', JSON.stringify(updatedUser));
+          // Forzar actualización del contexto
           window.location.reload();
-        }, 1000);
+        }
       } else {
         setError(data.message || 'Error al eliminar la foto');
       }
@@ -176,6 +294,39 @@ const UserProfile = () => {
     });
   };
 
+  const formatDateTime = (dateString) => {
+    if (!dateString) return 'Fecha no disponible';
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getOrderStatusText = (status) => {
+    const statusMap = {
+      'confirmed': 'Confirmado',
+      'processing': 'En proceso',
+      'shipped': 'Enviado',
+      'delivered': 'Entregado',
+      'cancelled': 'Cancelado'
+    };
+    return statusMap[status] || status;
+  };
+
+  const getOrderStatusClass = (status) => {
+    const statusClassMap = {
+      'confirmed': 'confirmed',
+      'processing': 'processing',
+      'shipped': 'shipped',
+      'delivered': 'delivered',
+      'cancelled': 'cancelled'
+    };
+    return statusClassMap[status] || 'confirmed';
+  };
+
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
@@ -184,6 +335,9 @@ const UserProfile = () => {
   const getProfileImageUrl = (imagePath) => {
     if (!imagePath) return null;
     
+    console.log('🖼️ Ruta de imagen recibida:', imagePath);
+    
+    // Si ya es una URL completa, devolverla tal cual
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
@@ -195,33 +349,36 @@ const UserProfile = () => {
     
     // Asegurarse de que la ruta comience con /
     const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-    return `${baseUrl}${normalizedPath}`;
+    const fullUrl = `${baseUrl}${normalizedPath}`;
+    
+    console.log('🔗 URL completa de imagen:', fullUrl);
+    return fullUrl;
   };
 
-  // Datos de ejemplo para pedidos
-  const sampleOrders = [
-    {
-      id: 'ORD-001',
-      date: new Date('2024-01-15'),
-      status: 'delivered',
-      total: 156.75,
-      items: [
-        { codigo: 'PROD001', nombre: 'Laptop Gaming', precio: 1200, quantity: 1 },
-        { codigo: 'PROD002', nombre: 'Mouse Inalámbrico', precio: 45.99, quantity: 2 }
-      ]
-    },
-    {
-      id: 'ORD-002',
-      date: new Date('2024-01-10'),
-      status: 'shipped',
-      total: 89.99,
-      items: [
-        { codigo: 'PROD003', nombre: 'Teclado Mecánico', precio: 89.99, quantity: 1 }
-      ]
+  // Función para manejar errores de carga de imagen
+  const handleImageError = (e, imagePath) => {
+    console.error('❌ Error cargando imagen:', imagePath);
+    console.error('Elemento de imagen:', e.target);
+    e.target.style.display = 'none';
+    
+    // Mostrar el fallback
+    const fallback = e.target.nextSibling;
+    if (fallback) {
+      fallback.style.display = 'flex';
+      console.log('✅ Mostrando fallback');
     }
-  ];
+  };
 
-  const userOrders = user?.orders || sampleOrders;
+  // Función para obtener URL de imagen de producto
+  const getProductImageUrl = (productCode) => {
+    if (!productCode) return null;
+    
+    const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
+      ? 'https://testpaginaweb.shop/api/images/code'
+      : 'http://localhost:4004/api/images/code';
+    
+    return `${IMAGE_BASE_URL}/${productCode}?size=small`;
+  };
 
   return (
     <main className="user-profile-main">
@@ -254,12 +411,7 @@ const UserProfile = () => {
                       src={getProfileImageUrl(user.images_profile)} 
                       alt="Avatar del usuario" 
                       className="avatar-image" 
-                      onError={(e) => {
-                        console.error('❌ Error cargando imagen:', user.images_profile);
-                        e.target.style.display = 'none';
-                        const fallback = e.target.nextSibling;
-                        if (fallback) fallback.style.display = 'flex';
-                      }}
+                      onError={(e) => handleImageError(e, user.images_profile)}
                     />
                   ) : null}
                   <div className={`avatar-placeholder ${user?.images_profile ? 'avatar-fallback' : ''}`}>
@@ -340,12 +492,7 @@ const UserProfile = () => {
                       src={getProfileImageUrl(user.images_profile)} 
                       alt="Avatar del usuario" 
                       className="avatar-image" 
-                      onError={(e) => {
-                        console.error('❌ Error cargando imagen:', user.images_profile);
-                        e.target.style.display = 'none';
-                        const fallback = e.target.nextSibling;
-                        if (fallback) fallback.style.display = 'flex';
-                      }}
+                      onError={(e) => handleImageError(e, user.images_profile)}
                     />
                   ) : null}
                   <div className={`avatar-placeholder ${user?.images_profile ? 'avatar-fallback' : ''}`}>
@@ -427,32 +574,41 @@ const UserProfile = () => {
               {/* Pestaña: Mi Perfil */}
               {activeTab === 'profile' && (
                 <div className="tab-content">
-                  <h2>Mi Perfil</h2>
+                  <div className="profile-header">
+                    <h2>Mi Perfil</h2>
+                    <button 
+                      onClick={toggleEdit}
+                      className={`btn-edit ${isEditing ? 'editing' : ''}`}
+                    >
+                      {isEditing ? '✕ Cancelar' : '✏️ Editar'}
+                    </button>
+                  </div>
+                  
                   <div className="profile-section">
                     <div className="photo-section">
                       <h3>Foto de Perfil</h3>
                       <div className="photo-upload">
                         <div className="current-photo">
                           {user?.images_profile ? (
-                            <img 
-                              src={getProfileImageUrl(user.images_profile)} 
-                              alt="Foto de perfil" 
-                              className="profile-photo" 
-                              onError={(e) => {
-                                console.error('❌ Error cargando imagen de perfil:', user.images_profile);
-                                e.target.style.display = 'none';
-                                const fallback = e.target.nextSibling;
-                                if (fallback) fallback.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div className={`no-photo ${user?.images_profile ? 'photo-fallback' : ''}`}>
-                            <span>👤</span>
-                            <p>{user?.images_profile ? 'Error al cargar imagen' : 'Sin foto de perfil'}</p>
-                            {user?.images_profile && (
-                              <small>Ruta en BD: {user.images_profile}</small>
-                            )}
-                          </div>
+                            <>
+                              <img 
+                                src={getProfileImageUrl(user.images_profile)} 
+                                alt="Foto de perfil" 
+                                className="profile-photo" 
+                                onError={(e) => handleImageError(e, user.images_profile)}
+                              />
+                              <div className="photo-fallback" style={{display: 'none'}}>
+                                <span>👤</span>
+                                <p>Error al cargar imagen</p>
+                                <small>Ruta en BD: {user.images_profile}</small>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="no-photo">
+                              <span>👤</span>
+                              <p>Sin foto de perfil</p>
+                            </div>
+                          )}
                         </div>
                         <div className="photo-actions">
                           <label htmlFor="photo-upload" className={`btn-primary ${uploadLoading ? 'disabled' : ''}`}>
@@ -484,47 +640,98 @@ const UserProfile = () => {
                       </div>
                     </div>
 
-                    <form onSubmit={handleProfileUpdate} className="profile-form">
+                    <div className="profile-info-section">
                       <h3>Información Personal</h3>
-                      <div className="form-group">
-                        <label htmlFor="nombre">Nombre Completo</label>
-                        <input
-                          type="text"
-                          id="nombre"
-                          value={profileData.nombre}
-                          onChange={(e) => setProfileData({...profileData, nombre: e.target.value})}
-                          placeholder="Tu nombre completo"
-                        />
-                      </div>
+                      
+                      {isEditing ? (
+                        <form onSubmit={handleProfileUpdate} className="profile-form">
+                          <div className="form-group">
+                            <label htmlFor="nombre">Nombre Completo *</label>
+                            <input
+                              type="text"
+                              id="nombre"
+                              name="nombre"
+                              value={profileData.nombre}
+                              onChange={handleInputChange}
+                              placeholder="Tu nombre completo"
+                              required
+                            />
+                          </div>
 
-                      <div className="form-group">
-                        <label htmlFor="username">Username</label>
-                        <input
-                          type="text"
-                          id="username"
-                          value={profileData.username}
-                          onChange={(e) => setProfileData({...profileData, username: e.target.value})}
-                          placeholder="Tu nombre de usuario"
-                        />
-                      </div>
+                          <div className="form-group">
+                            <label htmlFor="username">Username *</label>
+                            <input
+                              type="text"
+                              id="username"
+                              name="username"
+                              value={profileData.username}
+                              onChange={handleInputChange}
+                              placeholder="Tu nombre de usuario"
+                              required
+                              minLength="3"
+                            />
+                            <small>Mínimo 3 caracteres</small>
+                          </div>
 
-                      <div className="form-group">
-                        <label htmlFor="email">Email</label>
-                        <input
-                          type="email"
-                          id="email"
-                          value={profileData.email}
-                          onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                          placeholder="tu@email.com"
-                          disabled
-                        />
-                        <small>El email no se puede modificar</small>
-                      </div>
+                          <div className="form-group">
+                            <label htmlFor="email">Email</label>
+                            <input
+                              type="email"
+                              id="email"
+                              name="email"
+                              value={profileData.email}
+                              onChange={handleInputChange}
+                              placeholder="tu@email.com"
+                              disabled
+                            />
+                            <small>El email no se puede modificar</small>
+                          </div>
 
-                      <button type="submit" className="btn-primary" disabled={loading}>
-                        {loading ? '💾 Guardando...' : '💾 Actualizar Perfil'}
-                      </button>
-                    </form>
+                          <div className="form-actions">
+                            <button 
+                              type="submit" 
+                              className="btn-primary" 
+                              disabled={editLoading}
+                            >
+                              {editLoading ? '💾 Guardando...' : '💾 Guardar Cambios'}
+                            </button>
+                            <button 
+                              type="button" 
+                              className="btn-secondary"
+                              onClick={toggleEdit}
+                              disabled={editLoading}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <div className="profile-info-display">
+                          <div className="info-item">
+                            <label>Nombre Completo:</label>
+                            <span>{user?.nombre || 'No especificado'}</span>
+                          </div>
+                          <div className="info-item">
+                            <label>Username:</label>
+                            <span>@{user?.username || 'No especificado'}</span>
+                          </div>
+                          <div className="info-item">
+                            <label>Email:</label>
+                            <span>{user?.email || 'No especificado'}</span>
+                          </div>
+                          <div className="info-item">
+                            <label>Rol:</label>
+                            <span className={`role-badge ${user?.rol}`}>
+                              {user?.rol === 'admin' ? 'Administrador' : 'Usuario'}
+                            </span>
+                          </div>
+                          <div className="info-item">
+                            <label>Miembro desde:</label>
+                            <span>{formatDate(user?.created_at)}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -532,34 +739,47 @@ const UserProfile = () => {
               {/* Pestaña: Historial de Compras */}
               {activeTab === 'orders' && (
                 <div className="tab-content">
-                  <h2>Historial de Compras</h2>
+                  <div className="orders-header">
+                    <h2>Historial de Compras</h2>
+                    <button 
+                      onClick={loadOrderHistory} 
+                      className="btn-refresh"
+                      disabled={ordersLoading}
+                    >
+                      {ordersLoading ? '🔄 Cargando...' : '🔄 Actualizar'}
+                    </button>
+                  </div>
+                  
                   <div className="orders-section">
-                    {userOrders && userOrders.length > 0 ? (
+                    {ordersLoading ? (
+                      <div className="orders-loading">
+                        <div className="loading-spinner"></div>
+                        <p>Cargando tu historial de compras...</p>
+                      </div>
+                    ) : userOrders && userOrders.length > 0 ? (
                       <div className="orders-list">
                         {userOrders.map((order, index) => (
                           <div key={order.id || index} className="order-card">
                             <div className="order-header">
-                              <span className="order-id">#{order.id}</span>
-                              <span className="order-date">
-                                {formatDate(order.date)}
-                              </span>
-                              <span className={`order-status ${order.status}`}>
-                                {order.status === 'confirmed' ? 'Confirmado' : 
-                                 order.status === 'shipped' ? 'Enviado' : 
-                                 order.status === 'delivered' ? 'Entregado' : 
-                                 order.status}
+                              <div className="order-basic-info">
+                                <span className="order-id">Orden #{order.order_number || order.id}</span>
+                                <span className="order-date">
+                                  {formatDateTime(order.order_date || order.date || order.created_at)}
+                                </span>
+                              </div>
+                              <span className={`order-status ${getOrderStatusClass(order.status)}`}>
+                                {getOrderStatusText(order.status)}
                               </span>
                             </div>
                             
                             <div className="order-items">
-                              {order.items && order.items.slice(0, 3).map((item, itemIndex) => (
+                              {(order.items || order.items_details || []).slice(0, 3).map((item, itemIndex) => (
                                 <div key={itemIndex} className="order-item">
                                   <div className="item-image">
-                                    {item.codigo ? (
+                                    {item.product_image_url ? (
                                       <img 
-                                        src={`${IMAGE_BASE_URL}/${item.codigo}?size=small`} 
-                                        alt={item.nombre} 
-                                        className="item-img"
+                                        src={item.product_image_url} 
+                                        alt={item.product_name}
                                         onError={(e) => {
                                           e.target.style.display = 'none';
                                           e.target.nextSibling.style.display = 'flex';
@@ -571,21 +791,33 @@ const UserProfile = () => {
                                     </div>
                                   </div>
                                   <div className="item-details">
-                                    <h4>{item.nombre || 'Producto'}</h4>
+                                    <h4>{item.product_name || item.nombre || 'Producto'}</h4>
                                     <p>Cantidad: {item.quantity || 1}</p>
-                                    <p>${(item.precioFinal || item.precio || 0).toFixed(2)}</p>
+                                    <p>${(item.unit_price || item.precioFinal || item.precio || 0).toFixed(2)} c/u</p>
+                                    <p className="item-total">
+                                      Total: ${(item.total_price || (item.quantity * (item.unit_price || item.precio || 0))).toFixed(2)}
+                                    </p>
                                   </div>
                                 </div>
                               ))}
-                              {order.items && order.items.length > 3 && (
+                              {(order.items || order.items_details || []).length > 3 && (
                                 <div className="more-items">
-                                  +{order.items.length - 3} más productos
+                                  +{(order.items || order.items_details || []).length - 3} más productos
                                 </div>
                               )}
                             </div>
                             
-                            <div className="order-total">
-                              <strong>Total: ${order.total?.toFixed(2) || '0.00'}</strong>
+                            <div className="order-footer">
+                              <div className="order-total">
+                                <strong>Total: ${order.total_amount?.toFixed(2) || order.total?.toFixed(2) || '0.00'}</strong>
+                              </div>
+                              <button 
+                                className="btn-view-details"
+                                onClick={() => handleViewOrderDetails(order.id)}
+                                disabled={orderDetailsLoading}
+                              >
+                                {orderDetailsLoading ? 'Cargando...' : 'Ver Detalles'}
+                              </button>
                             </div>
                           </div>
                         ))}
@@ -601,6 +833,87 @@ const UserProfile = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Modal de Detalles de Orden */}
+                  {selectedOrder && (
+                    <div className="order-details-modal">
+                      <div className="modal-overlay" onClick={handleCloseOrderDetails}></div>
+                      <div className="modal-content">
+                        <div className="modal-header">
+                          <h3>Detalles de Orden #{selectedOrder.order_number || selectedOrder.id}</h3>
+                          <button className="modal-close" onClick={handleCloseOrderDetails}>✕</button>
+                        </div>
+                        
+                        <div className="modal-body">
+                          <div className="order-info-grid">
+                            <div className="info-item">
+                              <label>Fecha:</label>
+                              <span>{formatDateTime(selectedOrder.order_date || selectedOrder.date || selectedOrder.created_at)}</span>
+                            </div>
+                            <div className="info-item">
+                              <label>Estado:</label>
+                              <span className={`status-badge ${getOrderStatusClass(selectedOrder.status)}`}>
+                                {getOrderStatusText(selectedOrder.status)}
+                              </span>
+                            </div>
+                            <div className="info-item">
+                              <label>Subtotal:</label>
+                              <span>${selectedOrder.subtotal?.toFixed(2) || selectedOrder.subtotal_amount?.toFixed(2) || '0.00'}</span>
+                            </div>
+                            <div className="info-item">
+                              <label>IVA:</label>
+                              <span>${selectedOrder.tax_amount?.toFixed(2) || selectedOrder.tax?.toFixed(2) || '0.00'}</span>
+                            </div>
+                            <div className="info-item">
+                              <label>Envío:</label>
+                              <span>${selectedOrder.shipping_amount?.toFixed(2) || selectedOrder.shipping?.toFixed(2) || '0.00'}</span>
+                            </div>
+                            <div className="info-item total">
+                              <label>Total:</label>
+                              <span>${selectedOrder.total_amount?.toFixed(2) || selectedOrder.total?.toFixed(2) || '0.00'}</span>
+                            </div>
+                          </div>
+
+                          <div className="order-products">
+                            <h4>Productos</h4>
+                            <div className="products-list">
+                              {(selectedOrder.items || selectedOrder.items_details || []).map((item, index) => (
+                                <div key={index} className="product-item">
+                                  <div className="product-image">
+                                    {item.product_image_url ? (
+                                      <img 
+                                        src={item.product_image_url} 
+                                        alt={item.product_name}
+                                        onError={(e) => {
+                                          e.target.style.display = 'none';
+                                          e.target.nextSibling.style.display = 'flex';
+                                        }}
+                                      />
+                                    ) : null}
+                                    <div className="image-placeholder">
+                                      📦
+                                    </div>
+                                  </div>
+                                  <div className="product-info">
+                                    <h5>{item.product_name || item.nombre}</h5>
+                                    <p>Código: {item.product_code || item.codigo || 'N/A'}</p>
+                                    <p>Marca: {item.product_brand || item.marca || 'No especificada'}</p>
+                                  </div>
+                                  <div className="product-pricing">
+                                    <p>${(item.unit_price || item.precio || 0).toFixed(2)} c/u</p>
+                                    <p>Cantidad: {item.quantity || 1}</p>
+                                    <p className="product-total">
+                                      ${(item.total_price || (item.quantity * (item.unit_price || item.precio || 0))).toFixed(2)}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -642,23 +955,23 @@ const UserProfile = () => {
                                 </button>
                               </div>
 
-                              <div className="admin-card">
+                              {/* <div className="admin-card">
                                 <div className="admin-card-icon">👥</div>
                                 <h3>Gestión de Usuarios</h3>
                                 <p>Administrar usuarios y permisos</p>
                                 <button className="btn-primary">
                                   Gestionar Usuarios
                                 </button>
-                              </div>
+                              </div> */}
 
-                              <div className="admin-card">
+                              {/* <div className="admin-card">
                                 <div className="admin-card-icon">📊</div>
                                 <h3>Reportes y Análisis</h3>
                                 <p>Ver reportes y estadísticas del sistema</p>
                                 <button className="btn-primary">
                                   Ver Reportes
                                 </button>
-                              </div>
+                              </div> */}
                             </div>
                           </div>
                         ) : (

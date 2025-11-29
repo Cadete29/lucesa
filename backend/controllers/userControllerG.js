@@ -32,7 +32,7 @@ const getMyProfile = async (req, res) => {
 };
 
 /**
- * Actualiza el perfil del usuario (nombre y images_profile)
+ * Actualiza el perfil del usuario (nombre y foto_perfil)
  */
 const updateMyProfile = async (req, res) => {
     const { nombre, images_profile } = req.body;

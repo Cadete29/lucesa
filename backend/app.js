@@ -12,6 +12,8 @@ const errorHandler = require('./middlewares/errorHandler');
 const logger = require('./utils/logger');
 const imageProxyRoutes = require('./routes/imageProxy');
 const categoriasRoutes = require('./routes/categorias');
+const orderRoutes = require('./routes/orders');
+const warrantyRoutes = require('./routes/warranties');
 
 // Importar las rutas principales que tenías en serverG.js
 const mainRoutesG = require('./routes/mainRoutesG');
@@ -51,6 +53,9 @@ app.use('/api/debug', diagnosticRoutes);
 app.use('/api/images', imageProxyRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/orders', orderRoutes);
+app.use('/api/warranties', warrantyRoutes);
+
 
 // Agregar las rutas principales de serverG.js bajo el prefijo /api
 app.use('/api', mainRoutesG);
