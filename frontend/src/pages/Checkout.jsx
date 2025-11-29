@@ -4,6 +4,8 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import './Checkout.css';
 
+import paymentService from '../api/paymentService';
+
 const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://testpaginaweb.shop/api/images/code'
   : 'http://localhost:4004/api/images/code';
@@ -84,44 +86,46 @@ const Checkout = () => {
     return order;
   };
 
-  const handleMercadoPagoPayment = async () => {
-    if (!isAuthenticated) {
-      alert('Debes iniciar sesión para proceder con el pago.');
-      navigate('/login', { 
-        state: { 
-          from: location.pathname,
-          message: 'Por favor inicia sesión para completar tu compra'
-        }
-      });
-      return;
-    }
+const handleMercadoPagoPayment = async () => {
+  if (!formData.acceptTerms) {
+    alert('Debes aceptar los términos y condiciones');
+    return;
+  }
 
-    if (!formData.acceptTerms) {
-      alert('Debes aceptar los términos y condiciones para continuar.');
-      return;
-    }
+  setIsProcessing(true);
 
-    setIsProcessing(true);
+  try {
+    const shippingAddress = {
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      zipCode: formData.zipCode,
+      country: 'México'
+    };
 
-    try {
-      const order = prepareOrderForPayment();
-      
-      // Simulación de creación de preferencia de Mercado Pago
-      const paymentResponse = await createMercadoPagoPreference(order);
-      
-      if (paymentResponse && paymentResponse.init_point) {
-        window.location.href = paymentResponse.init_point;
-      } else {
-        throw new Error('No se pudo inicializar el pago con Mercado Pago');
-      }
-      
-    } catch (error) {
-      console.error('Error al procesar pago con Mercado Pago:', error);
-      alert('Error al procesar el pago. Por favor intenta nuevamente.');
-      setIsProcessing(false);
-    }
-  };
+    const customerInfo = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone: formData.phone
+    };
 
+    // USA TU SERVICE → ENVÍA TOKEN AUTOMÁTICO
+    const result = await paymentService.createCheckout(
+      cartItems,
+      shippingAddress,
+      customerInfo
+    );
+
+    // REDIRIGE AL CHECKOUT REAL
+    window.location.href = result.payment_url;
+
+  } catch (error) {
+    console.error('Error al pagar:', error);
+    alert('Error: ' + error.message);
+    setIsProcessing(false);
+  }
+};
   const createMercadoPagoPreference = async (order) => {
     return new Promise((resolve) => {
       setTimeout(() => {
