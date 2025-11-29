@@ -1,6 +1,8 @@
+// src/components/auth/ForgotPassword.jsx
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/authContext';
+import { useAuth } from '../../context/AuthContext';
 import './Auth.css';
 
 const ForgotPassword = () => {
@@ -17,12 +19,16 @@ const ForgotPassword = () => {
     setError('');
     setMessage('');
 
+    console.log('🔄 Enviando solicitud de recuperación para:', email);
+
     const result = await forgotPassword(email);
     
+    console.log('📨 Respuesta recibida:', result);
+    
     if (result.success) {
-      setMessage(result.message || 'Se ha enviado un email con las instrucciones para resetear tu contraseña');
+      setMessage(result.message || 'Se ha enviado un enlace de recuperación a tu email. Revisa tu bandeja de entrada y la carpeta de spam.');
     } else {
-      setError(result.error);
+      setError(result.error || 'Error al enviar el correo de recuperación. Por favor, intenta nuevamente.');
     }
     setLoading(false);
   };
@@ -40,7 +46,7 @@ const ForgotPassword = () => {
             <div className="auth-header">
               <div className="auth-icon">🔑</div>
               <h2 className="auth-title">Recuperar Contraseña</h2>
-              <p className="auth-subtitle">Te enviaremos instrucciones a tu email</p>
+              <p className="auth-subtitle">Te enviaremos un enlace de recuperación a tu email</p>
             </div>
 
             {error && (
@@ -53,29 +59,35 @@ const ForgotPassword = () => {
             {message && (
               <div className="auth-success-compact">
                 <span className="success-icon">✅</span>
-                <span>{message}</span>
+                <div className="success-content">
+                  <p className="success-message">{message}</p>
+                  <div className="email-sent-info">
+                    <p><strong>📧 Correo enviado a:</strong> {email}</p>
+                    <div className="check-email-tips">
+                      <p><strong>💡 Si no encuentras el correo:</strong></p>
+                      <ul>
+                        <li>Revisa tu carpeta de <strong>spam</strong> o <strong>correo no deseado</strong></li>
+                        <li>Verifica que el email esté escrito correctamente</li>
+                        <li>Espera unos minutos, puede tardar en llegar</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Botón de demo */}
-            <div className="demo-credentials">
-              <button 
-                type="button" 
-                onClick={fillDemoEmail}
-                className="btn-demo"
-              >
-                Usar Email de Demo
-              </button>
-            </div>
-
             <form onSubmit={handleSubmit} className="auth-form">
               <div className="form-group">
+                <label htmlFor="email" className="form-label">
+                  Email *
+                </label>
                 <input
                   type="email"
+                  id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="Tu email"
+                  placeholder="tu.email@ejemplo.com"
                   className="auth-input"
                   disabled={loading}
                 />
@@ -84,23 +96,22 @@ const ForgotPassword = () => {
               <button 
                 type="submit" 
                 className="btn-auth-primary"
-                disabled={loading}
+                disabled={loading || !email}
               >
                 {loading ? (
                   <>
                     <div className="btn-spinner"></div>
-                    Enviando...
+                    Enviando Enlace...
                   </>
                 ) : (
-                  'Enviar Instrucciones'
+                  '📧 Enviar Enlace de Recuperación'
                 )}
               </button>
             </form>
 
             <div className="recovery-info">
               <p className="info-text">
-                ¿No recibiste el email? Revisa tu carpeta de spam o 
-                <Link to="/forgot-password" className="auth-link"> solicita otro enlace</Link>.
+                <strong>⚠️ Importante:</strong> El enlace de recuperación expirará en <strong>1 hora</strong> por seguridad.
               </p>
             </div>
 

@@ -6,8 +6,11 @@ const app = require('./app');
 const ftpService = require('./services/ftpService');
 const logger = require('./utils/logger');
 
+// Importar y ejecutar la conexión a la base de datos (de serverG.js)
+const db = require('./config/db');
+
 // Configuración
-const PORT = process.env.PORT || 4004;
+const PORT = process.env.PORT || 3000; // Cambiado a 3000 como en serverG.js
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Variables globales para manejo graceful shutdown
@@ -20,6 +23,8 @@ let isShuttingDown = false;
 async function initializeServices() {
   try {
     logger.info('🚀 Inicializando servicios...');
+    
+    // La conexión a la base de datos ya se ejecuta al importar db
     
     // Verificar y crear estructura de directorios
     logger.info('📁 Verificando estructura de directorios...');
@@ -128,6 +133,7 @@ function displaySystemInfo() {
   logger.info(`CPUs: ${os.cpus().length}`);
   logger.info(`Directorio: ${process.cwd()}`);
   logger.info(`Entorno: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`Puerto: ${PORT}`);
   logger.info(`${'='.repeat(50)}`);
 }
 
@@ -151,12 +157,13 @@ async function startServer() {
       logger.success(`🚀 Servidor ejecutándose en http://${HOST}:${PORT}`);
       logger.success(`📍 Health Check: http://${HOST}:${PORT}/`);
       logger.success(`📍 API Status: http://${HOST}:${PORT}/api/ctonline/status`);
-      logger.success(`📍 Files Info: http://${HOST}:${PORT}/api/files/info`);
+      logger.success(`📍 Test Route: http://${HOST}:${PORT}/api/test`);
       logger.success(`${'='.repeat(50)}`);
       
-      // Mostrar rutas disponibles
+      // Mostrar rutas disponibles (actualizado)
       logger.info('📋 ENDPOINTS DISPONIBLES:');
       logger.info(`   GET  /                              - Health check`);
+      logger.info(`   GET  /api/test                      - Ruta de prueba`);
       logger.info(`   GET  /api/usuarios                  - Lista usuarios`);
       logger.info(`   POST /api/usuarios                  - Crear usuario`);
       logger.info(`   GET  /api/ctonline/status           - Estado CTOnline`);
@@ -165,10 +172,7 @@ async function startServer() {
       logger.info(`   GET  /api/ctonline/almacenes        - Almacenes`);
       logger.info(`   GET  /api/ctonline/producto/:codigo/:almacen - Detalle producto`);
       logger.info(`   GET  /api/ctonline/promocion/:codigo - Promoción por código`);
-      logger.info(`   GET  /api/files/info                - Info archivos`);
-      logger.info(`   POST /api/files/download            - Forzar descarga`);
-      logger.info(`   POST /api/files/cleanup             - Limpiar archivos`);
-      logger.info(`   GET  /api/files/file/:filename      - Obtener archivo`);
+      // Agregar aquí las rutas de mainRoutesG si las conoces
       logger.info(`${'='.repeat(50)}`);
     });
 
@@ -199,7 +203,10 @@ function checkDependencies() {
     'express',
     'basic-ftp',
     'xml2js',
-    'axios'
+    'axios',
+    'cors',
+    'path',
+    'dotenv'
   ];
 
   const missing = [];
@@ -223,6 +230,9 @@ function checkDependencies() {
 
 // Iniciar aplicación
 if (require.main === module) {
+  // Cargar variables de entorno (como en serverG.js)
+  require('dotenv').config();
+  
   // Verificar dependencias primero
   checkDependencies();
   

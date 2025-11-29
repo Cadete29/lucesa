@@ -1,11 +1,15 @@
 // src/services/authService.js
 
-// ✅ Configuración de URLs por entorno
+/**
+ * Servicio para manejar todas las operaciones de autenticación
+ */
+
+// Configuración de URLs por entorno
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://testpaginaweb.shop/api'
   : 'http://localhost:4004/api';
 
-// Helper para hacer requests
+// Helper para hacer requests a la API
 const makeRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
   
@@ -17,6 +21,7 @@ const makeRequest = async (endpoint, options = {}) => {
     ...options,
   };
 
+  // Convertir body a JSON si es un objeto
   if (config.body && typeof config.body === 'object') {
     config.body = JSON.stringify(config.body);
   }
@@ -26,19 +31,29 @@ const makeRequest = async (endpoint, options = {}) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'Error en la petición');
+      // Mejor manejo de errores con mensajes específicos
+      const errorMessage = data.message || `Error ${response.status}: ${response.statusText}`;
+      throw new Error(errorMessage);
     }
 
     return data;
   } catch (error) {
-    console.error('Error en authService:', error);
+    console.error(`Error en authService (${endpoint}):`, error);
+    
+    // Mejorar mensajes de error para el usuario
+    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      throw new Error('Error de conexión. Verifica tu internet o intenta más tarde.');
+    }
+    
     throw error;
   }
 };
 
 // Servicio de Autenticación
 export const authService = {
-  // Login con credenciales
+  /**
+   * Inicia sesión con email y contraseña
+   */
   async login(email, password) {
     // Credenciales de demo para desarrollo
     if (email === 'demo@lucesa.com' && password === 'password') {
@@ -54,6 +69,7 @@ export const authService = {
                 username: 'demouser',
                 email: 'demo@lucesa.com',
                 nombre: 'Usuario Demo',
+                rol: 'admin',
                 foto_perfil: null,
                 created_at: new Date().toISOString()
               }
@@ -69,8 +85,12 @@ export const authService = {
     });
   },
 
-  // Registro de usuario
+  /**
+   * Registra un nuevo usuario
+   */
   async register(userData) {
+    console.log('Enviando datos de registro al backend:', userData);
+    
     // Demo automático para testing
     if (userData.email === 'demo@lucesa.com') {
       return new Promise((resolve) => {
@@ -84,9 +104,11 @@ export const authService = {
                 username: userData.username,
                 email: userData.email,
                 nombre: userData.nombre,
+                rol: 'user',
                 foto_perfil: null,
                 created_at: new Date().toISOString()
-              }
+              },
+              token: `demo-token-${Date.now()}`
             }
           });
         }, 1000);
@@ -99,7 +121,9 @@ export const authService = {
     });
   },
 
-  // Recuperación de contraseña
+  /**
+   * Solicita recuperación de contraseña
+   */
   async forgotPassword(email) {
     // Demo para desarrollo
     if (email === 'demo@lucesa.com') {
@@ -107,7 +131,9 @@ export const authService = {
         setTimeout(() => {
           resolve({
             success: true,
-            message: 'Se ha enviado un email con las instrucciones para resetear tu contraseña'
+            message: 'Si el email existe, se ha enviado un enlace de recuperación',
+            resetToken: 'demo-reset-token',
+            resetLink: `${window.location.origin}/reset-password/demo-reset-token`
           });
         }, 1000);
       });
@@ -119,22 +145,28 @@ export const authService = {
     });
   },
 
-  // Reset de contraseña con token
-  async resetPassword(token, newPassword) {
-    return await makeRequest('/auth/reset-password', {
+  /**
+   * Restablece la contraseña con token
+   */
+  async resetPassword(token, password) {
+    return await makeRequest(`/auth/reset-password/${token}`, {
       method: 'POST',
-      body: { token, newPassword }
+      body: { password }
     });
   },
 
-  // Verificar token de reset
+  /**
+   * Verifica si un token de reset es válido
+   */
   async verifyResetToken(token) {
     return await makeRequest(`/auth/verify-reset-token/${token}`, {
       method: 'GET'
     });
   },
 
-  // Obtener perfil del usuario (protegido)
+  /**
+   * Obtiene el perfil del usuario autenticado
+   */
   async getProfile(token) {
     return await makeRequest('/user/me', {
       method: 'GET',
@@ -144,7 +176,9 @@ export const authService = {
     });
   },
 
-  // Actualizar perfil (protegido)
+  /**
+   * Actualiza el perfil del usuario
+   */
   async updateProfile(token, profileData) {
     return await makeRequest('/user/me', {
       method: 'PUT',
@@ -155,7 +189,9 @@ export const authService = {
     });
   },
 
-  // Eliminar cuenta (protegido)
+  /**
+   * Elimina la cuenta del usuario
+   */
   async deleteAccount(token) {
     return await makeRequest('/user/me', {
       method: 'DELETE',

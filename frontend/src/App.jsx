@@ -45,7 +45,10 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
+                  {/* RUTA CORREGIDA PARA RESET PASSWORD */}
                   <Route path="/reset-password/:token" element={<ResetPassword />} />
+                  {/* RUTA ALTERNATIVA POR SI ACASO */}
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/cart" element={<Cart />} />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/order-confirmation" element={<OrderConfirmation />} />

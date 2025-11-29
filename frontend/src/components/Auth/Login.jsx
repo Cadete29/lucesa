@@ -1,8 +1,14 @@
+// src/components/auth/Login.jsx
+
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './Auth.css';
 
+/**
+ * Componente de inicio de sesión
+ * Maneja autenticación con credenciales y redes sociales
+ */
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
@@ -15,20 +21,34 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Obtener la ruta previa o redirigir al home
   const from = location.state?.from?.pathname || '/';
 
+  /**
+   * Maneja cambios en los campos del formulario
+   */
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
-    setError('');
+    setError(''); // Limpiar errores al escribir
   };
 
+  /**
+   * Maneja el envío del formulario de login
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Validaciones básicas
+    if (!formData.email || !formData.password) {
+      setError('Por favor completa todos los campos');
+      setLoading(false);
+      return;
+    }
 
     const result = await login(formData.email, formData.password);
     
@@ -40,6 +60,9 @@ const Login = () => {
     setLoading(false);
   };
 
+  /**
+   * Maneja login con redes sociales
+   */
   const handleSocialLogin = async (provider) => {
     setLoading(true);
     setError('');
@@ -54,6 +77,9 @@ const Login = () => {
     setLoading(false);
   };
 
+  /**
+   * Rellena automáticamente las credenciales de demo
+   */
   const fillDemoCredentials = () => {
     setFormData({
       email: 'demo@lucesa.com',
@@ -66,12 +92,14 @@ const Login = () => {
       <section className="auth-section">
         <div className="container">
           <div className="auth-card-compact">
+            {/* Header de la tarjeta */}
             <div className="auth-header">
               <div className="auth-icon">🔐</div>
               <h2 className="auth-title">Iniciar Sesión</h2>
               <p className="auth-subtitle">Bienvenido de nuevo a Lucesa</p>
             </div>
 
+            {/* Mostrar errores */}
             {error && (
               <div className="auth-error-compact">
                 <span className="error-icon">⚠️</span>
@@ -79,16 +107,19 @@ const Login = () => {
               </div>
             )}
 
+            {/* Botón de credenciales demo */}
             <div className="demo-credentials">
               <button 
                 type="button" 
                 onClick={fillDemoCredentials}
                 className="btn-demo"
+                disabled={loading}
               >
                 Usar Credenciales de Demo
               </button>
             </div>
 
+            {/* Formulario de login */}
             <form onSubmit={handleSubmit} className="auth-form">
               <div className="form-group">
                 <input
@@ -116,12 +147,14 @@ const Login = () => {
                 />
               </div>
 
+              {/* Opciones adicionales */}
               <div className="auth-options">
                 <Link to="/forgot-password" className="forgot-password">
                   ¿Olvidaste tu contraseña?
                 </Link>
               </div>
 
+              {/* Botón de submit */}
               <button 
                 type="submit" 
                 className="btn-auth-primary"
@@ -138,12 +171,14 @@ const Login = () => {
               </button>
             </form>
 
+            {/* Separador para login social */}
             <div className="auth-separator-corrected">
               <div className="separator-line"></div>
               <div className="separator-text">o continúa con</div>
               <div className="separator-line"></div>
             </div>
 
+            {/* Botones de redes sociales */}
             <div className="social-buttons-compact">
               <button
                 type="button"
@@ -173,6 +208,7 @@ const Login = () => {
               </button>
             </div>
 
+            {/* Enlace a registro */}
             <div className="auth-footer">
               <p>
                 ¿No tienes cuenta?{' '}

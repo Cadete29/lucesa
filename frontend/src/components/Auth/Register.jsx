@@ -1,14 +1,20 @@
+// src/components/auth/Register.jsx
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import './Auth.css';
 
+/**
+ * Componente de registro de usuario
+ * Maneja la creación de nuevas cuentas sin campo username visible
+ */
 const Register = () => {
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
     password: '',
     confirmPassword: '',
+    nombre: '',    // Campo para nombre completo (opcional)
     acceptTerms: false
   });
   const [error, setError] = useState('');
@@ -17,6 +23,9 @@ const Register = () => {
   const { register, socialLogin } = useAuth();
   const navigate = useNavigate();
 
+  /**
+   * Maneja cambios en los campos del formulario
+   */
   const handleChange = (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
     setFormData({
@@ -26,10 +35,20 @@ const Register = () => {
     setError('');
   };
 
+  /**
+   * Maneja el envío del formulario de registro
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Validaciones del frontend
+    if (!formData.email || !formData.password) {
+      setError('Por favor completa todos los campos obligatorios');
+      setLoading(false);
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Las contraseñas no coinciden');
@@ -49,7 +68,27 @@ const Register = () => {
       return;
     }
 
-    const result = await register(formData);
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Por favor ingresa un email válido');
+      setLoading(false);
+      return;
+    }
+
+    // Preparar datos para enviar al backend
+    // Generar username automáticamente desde el email
+    const username = formData.email.split('@')[0]; // Usar la parte antes del @ como username
+    const userData = {
+      username: username,
+      email: formData.email,
+      password: formData.password,
+      nombre: formData.nombre || '' // Enviar nombre si está presente
+    };
+
+    console.log('Enviando datos de registro:', userData);
+
+    const result = await register(userData);
     
     if (result.success) {
       navigate('/');
@@ -59,6 +98,9 @@ const Register = () => {
     setLoading(false);
   };
 
+  /**
+   * Maneja registro con redes sociales
+   */
   const handleSocialLogin = async (provider) => {
     setLoading(true);
     setError('');
@@ -73,17 +115,32 @@ const Register = () => {
     setLoading(false);
   };
 
+  /**
+   * Rellena automáticamente datos de demo
+   */
+  const fillDemoData = () => {
+    setFormData({
+      email: 'santiagoalanmichel@gmail.com',
+      password: 'password123',
+      confirmPassword: 'password123',
+      nombre: 'Alan Michel Santiago Serrano',
+      acceptTerms: true
+    });
+  };
+
   return (
     <main className="auth-main">
       <section className="auth-section">
         <div className="container">
           <div className="auth-card-compact">
+            {/* Header de la tarjeta */}
             <div className="auth-header">
               <div className="auth-icon">👤</div>
               <h2 className="auth-title">Crear Cuenta</h2>
               <p className="auth-subtitle">Únete a la comunidad Lucesa</p>
             </div>
 
+            {/* Mostrar errores */}
             {error && (
               <div className="auth-error-compact">
                 <span className="error-icon">⚠️</span>
@@ -91,20 +148,34 @@ const Register = () => {
               </div>
             )}
 
+            {/* Botón de datos demo */}
+            <div className="demo-credentials">
+              <button 
+                type="button" 
+                onClick={fillDemoData}
+                className="btn-demo"
+                disabled={loading}
+              >
+                Usar Datos de Demo
+              </button>
+            </div>
+
+            {/* Formulario de registro */}
             <form onSubmit={handleSubmit} className="auth-form">
+              {/* Campo Nombre Completo (opcional) */}
               <div className="form-group">
                 <input
                   type="text"
-                  name="name"
-                  value={formData.name}
+                  name="nombre"
+                  value={formData.nombre}
                   onChange={handleChange}
-                  required
-                  placeholder="Nombre completo"
+                  placeholder="Nombre completo (opcional)"
                   className="auth-input"
                   disabled={loading}
                 />
               </div>
 
+              {/* Campo Email (obligatorio) */}
               <div className="form-group">
                 <input
                   type="email"
@@ -112,12 +183,13 @@ const Register = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  placeholder="Email"
+                  placeholder="Email *"
                   className="auth-input"
                   disabled={loading}
                 />
               </div>
 
+              {/* Campo Contraseña (obligatorio) */}
               <div className="form-group">
                 <input
                   type="password"
@@ -125,12 +197,15 @@ const Register = () => {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  placeholder="Contraseña"
+                  placeholder="Contraseña *"
                   className="auth-input"
                   disabled={loading}
+                  minLength="6"
                 />
+                <small className="input-help">Mínimo 6 caracteres</small>
               </div>
 
+              {/* Campo Confirmar Contraseña (obligatorio) */}
               <div className="form-group">
                 <input
                   type="password"
@@ -138,12 +213,14 @@ const Register = () => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  placeholder="Confirmar contraseña"
+                  placeholder="Confirmar contraseña *"
                   className="auth-input"
                   disabled={loading}
+                  minLength="6"
                 />
               </div>
 
+              {/* Checkbox Términos y Condiciones */}
               <div className="form-checkbox-compact">
                 <label>
                   <input
@@ -158,6 +235,7 @@ const Register = () => {
                 </label>
               </div>
 
+              {/* Botón de registro */}
               <button 
                 type="submit" 
                 className="btn-auth-primary"
@@ -174,13 +252,14 @@ const Register = () => {
               </button>
             </form>
 
-            {/* Separador corregido */}
+            {/* Separador para registro social */}
             <div className="auth-separator-corrected">
               <div className="separator-line"></div>
               <div className="separator-text">o regístrate con</div>
               <div className="separator-line"></div>
             </div>
 
+            {/* Botones de redes sociales */}
             <div className="social-buttons-compact">
               <button
                 type="button"
@@ -210,6 +289,7 @@ const Register = () => {
               </button>
             </div>
 
+            {/* Enlace a login */}
             <div className="auth-footer">
               <p>
                 ¿Ya tienes cuenta?{' '}

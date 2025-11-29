@@ -1,8 +1,14 @@
+// src/context/AuthContext.jsx
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../api/authService';
 
+// Crear contexto de autenticación
 const AuthContext = createContext();
 
+/**
+ * Hook personalizado para usar el contexto de autenticación
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -11,22 +17,41 @@ export const useAuth = () => {
   return context;
 };
 
+/**
+ * Proveedor de autenticación que envuelve la aplicación
+ */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
 
+  // Cargar datos de autenticación desde localStorage al inicializar
   useEffect(() => {
-    const savedUser = localStorage.getItem('lucesa-user');
-    const savedToken = localStorage.getItem('lucesa-token');
-    
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
-      setToken(savedToken);
-    }
-    setLoading(false);
+    const initializeAuth = async () => {
+      try {
+        const savedUser = localStorage.getItem('lucesa-user');
+        const savedToken = localStorage.getItem('lucesa-token');
+        
+        if (savedUser && savedToken) {
+          setUser(JSON.parse(savedUser));
+          setToken(savedToken);
+        }
+      } catch (error) {
+        console.error('Error inicializando autenticación:', error);
+        // Limpiar datos corruptos
+        localStorage.removeItem('lucesa-user');
+        localStorage.removeItem('lucesa-token');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
+  /**
+   * Inicia sesión con email y contraseña
+   */
   const login = async (email, password) => {
     try {
       setLoading(true);
@@ -54,6 +79,7 @@ export const AuthProvider = ({ children }) => {
         return { success: true };
       }
       
+      // Login real con el backend
       const response = await authService.login(email, password);
       
       if (response.success) {
@@ -76,6 +102,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Registra un nuevo usuario
+   */
   const register = async (userData) => {
     try {
       setLoading(true);
@@ -83,7 +112,7 @@ export const AuthProvider = ({ children }) => {
       
       if (response.success) {
         const userData = response.data.user;
-        const userToken = response.data?.token || `demo-token-${Date.now()}`;
+        const userToken = response.data.token;
         
         setUser(userData);
         setToken(userToken);
@@ -101,6 +130,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Cierra la sesión del usuario
+   */
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -108,13 +140,21 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('lucesa-token');
   };
 
+  /**
+   * Solicita recuperación de contraseña
+   */
   const forgotPassword = async (email) => {
     try {
       setLoading(true);
       const response = await authService.forgotPassword(email);
       
       if (response.success) {
-        return { success: true, message: response.message };
+        return { 
+          success: true, 
+          message: response.message,
+          ...(response.resetToken && { resetToken: response.resetToken }),
+          ...(response.resetLink && { resetLink: response.resetLink })
+        };
       } else {
         return { success: false, error: response.message };
       }
@@ -125,6 +165,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Restablece la contraseña con token
+   */
   const resetPassword = async (token, newPassword) => {
     try {
       setLoading(true);
@@ -142,15 +185,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Verifica si un token de reset es válido
+   */
   const verifyResetToken = async (token) => {
     try {
       const response = await authService.verifyResetToken(token);
-      return { success: response.success, valid: response.valid };
+      return { 
+        success: response.success, 
+        valid: response.valid,
+        message: response.message 
+      };
     } catch (error) {
-      return { success: false, valid: false, error: error.message };
+      return { 
+        success: false, 
+        valid: false, 
+        error: error.message 
+      };
     }
   };
 
+  /**
+   * Actualiza el perfil del usuario
+   */
   const updateProfile = async (profileData) => {
     try {
       const response = await authService.updateProfile(token, profileData);
@@ -168,6 +225,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Guarda una orden en el historial del usuario
+   */
   const saveOrderToHistory = async (orderData) => {
     try {
       if (!user || !token) {
@@ -178,13 +238,13 @@ export const AuthProvider = ({ children }) => {
       const currentOrders = currentUser.orders || [];
 
       const newOrder = {
-        id: orderData.orderId,
+        id: orderData.orderId || Date.now(),
         date: new Date().toISOString(),
-        items: orderData.cartItems,
-        subtotal: orderData.subtotal,
-        tax: orderData.tax,
-        shipping: orderData.shipping,
-        total: orderData.total,
+        items: orderData.cartItems || [],
+        subtotal: orderData.subtotal || 0,
+        tax: orderData.tax || 0,
+        shipping: orderData.shipping || 0,
+        total: orderData.total || 0,
         status: 'confirmed'
       };
 
@@ -205,11 +265,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Obtiene el historial de órdenes del usuario
+   */
   const getOrderHistory = () => {
     if (!user) return [];
     return user.orders || [];
   };
 
+  /**
+   * Simula login con redes sociales
+   */
   const socialLogin = async (provider) => {
     try {
       setLoading(true);
@@ -220,6 +286,7 @@ export const AuthProvider = ({ children }) => {
             username: `user_${provider}`,
             email: `user_${provider}@example.com`,
             nombre: `Usuario ${provider}`,
+            rol: 'user',
             foto_perfil: null,
             created_at: new Date().toISOString(),
             orders: []
@@ -242,6 +309,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Valor del contexto
   const value = {
     user,
     token,
@@ -256,7 +324,9 @@ export const AuthProvider = ({ children }) => {
     saveOrderToHistory,
     getOrderHistory,
     loading,
-    isAuthenticated: !!user && !!token
+    isAuthenticated: !!user && !!token,
+    isAdmin: user?.rol === 'admin',
+    isUser: user?.rol === 'user' || !user?.rol // Por compatibilidad con usuarios sin rol
   };
 
   return (
@@ -265,3 +335,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+export default AuthContext;

@@ -3,6 +3,7 @@
  */
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const userRoutes = require('./routes/userRoutes');
 const ctonlineRoutes = require('./routes/ctonlineRoutes');
 const productosRoutes = require('./routes/productosRoutes');
@@ -12,9 +13,12 @@ const logger = require('./utils/logger');
 const imageProxyRoutes = require('./routes/imageProxy');
 const categoriasRoutes = require('./routes/categorias');
 
+// Importar las rutas principales que tenías en serverG.js
+const mainRoutesG = require('./routes/mainRoutesG');
+
 const app = express();
 
-// Configuración CORS
+// Configuración CORS (manteniendo tu configuración actual)
 app.use(cors({
   origin: [
     'http://localhost:5173',
@@ -29,8 +33,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
-// Middlewares básicos
-app.use(express.json());
+// Middlewares básicos (incluyendo los límites que tenías en serverG.js)
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Middleware de logging
@@ -46,8 +50,12 @@ app.use('/api/productos', productosRoutes);
 app.use('/api/debug', diagnosticRoutes);
 app.use('/api/images', imageProxyRoutes);
 app.use('/api/categorias', categoriasRoutes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Ruta de health check
+// Agregar las rutas principales de serverG.js bajo el prefijo /api
+app.use('/api', mainRoutesG);
+
+// Ruta de health check (mejorada)
 app.get('/', (req, res) => {
   res.json({
     message: 'API Server funcionando',
@@ -57,8 +65,17 @@ app.get('/', (req, res) => {
       productos: '/api/productos',
       ctonline: '/api/ctonline',
       debug: '/api/debug',
-      usuarios: '/api/usuarios'
+      usuarios: '/api/usuarios',
+      main: '/api' // Agregado para las rutas de mainRoutesG
     }
+  });
+});
+
+// Mantener la ruta de prueba de serverG.js en la misma ubicación
+app.get('/api/test', (req, res) => {
+  res.json({
+    message: 'API funcionando correctamente',
+    timestamp: new Date().toISOString()
   });
 });
 

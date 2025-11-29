@@ -5,6 +5,10 @@ import ProductManagement from '../../pages/ProductManagement';
 import OrderManagement from '../../pages/OrderManagement';
 import './UserProfile.css';
 
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://testpaginaweb.shop/api'
+  : 'http://localhost:4004/api';
+
 const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://testpaginaweb.shop/api/images/code'
   : 'http://localhost:4004/api/images/code';
@@ -15,6 +19,7 @@ const UserProfile = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [selectedAdminTab, setSelectedAdminTab] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -76,7 +81,7 @@ const UserProfile = () => {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      setError('Por favor selecciona una imagen válida');
+      setError('Por favor selecciona una imagen válida (JPEG, PNG, GIF)');
       return;
     }
 
@@ -85,49 +90,80 @@ const UserProfile = () => {
       return;
     }
 
-    setLoading(true);
+    setUploadLoading(true);
     setError('');
+    setMessage('');
 
     try {
       const formData = new FormData();
       formData.append('profileImage', file);
 
-      const response = await fetch('/api/upload-profile-image', {
+      const token = localStorage.getItem('lucesa-token');
+
+      console.log('📤 Subiendo imagen...');
+      const response = await fetch(`${API_BASE_URL}/user/me/upload-photo`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
         body: formData,
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const result = await updateProfile({ foto_perfil: data.imageUrl });
-        if (result.success) {
-          setMessage('Foto de perfil actualizada correctamente');
-        } else {
-          setError(result.error);
-        }
+      const data = await response.json();
+      console.log('📨 Respuesta del servidor:', data);
+
+      if (data.success) {
+        setMessage('Foto de perfil actualizada correctamente');
+        // Recargar la página para ver los cambios inmediatamente
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
-        setError('Error al subir la imagen');
+        setError(data.message || 'Error al subir la imagen');
       }
     } catch (error) {
-      setError('Error al subir la imagen');
+      console.error('❌ Error subiendo imagen:', error);
+      setError('Error de conexión al subir la imagen');
     } finally {
-      setLoading(false);
+      setUploadLoading(false);
+      // Limpiar el input file
+      event.target.value = '';
     }
   };
 
   const removeProfilePhoto = async () => {
-    setLoading(true);
+    setUploadLoading(true);
+    setError('');
+    setMessage('');
+
     try {
-      const result = await updateProfile({ foto_perfil: null });
-      if (result.success) {
-        setMessage('Foto de perfil eliminada');
+      const token = localStorage.getItem('lucesa-token');
+
+      const response = await fetch(`${API_BASE_URL}/user/me/remove-photo`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      console.log('📨 Respuesta del servidor (eliminar):', data);
+
+      if (data.success) {
+        setMessage('Foto de perfil eliminada correctamente');
+        // Recargar la página para ver los cambios
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       } else {
-        setError(result.error);
+        setError(data.message || 'Error al eliminar la foto');
       }
     } catch (error) {
-      setError('Error al eliminar la foto');
+      console.error('❌ Error eliminando imagen:', error);
+      setError('Error de conexión al eliminar la foto');
     } finally {
-      setLoading(false);
+      setUploadLoading(false);
     }
   };
 
@@ -144,7 +180,25 @@ const UserProfile = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  // Datos de ejemplo para pedidos (deberías reemplazar con datos reales)
+  // Función para obtener la URL completa de la imagen
+  const getProfileImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // Si es una ruta relativa, construir la URL completa
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://testpaginaweb.shop'
+      : 'http://localhost:4004';
+    
+    // Asegurarse de que la ruta comience con /
+    const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+    return `${baseUrl}${normalizedPath}`;
+  };
+
+  // Datos de ejemplo para pedidos
   const sampleOrders = [
     {
       id: 'ORD-001',
@@ -195,17 +249,22 @@ const UserProfile = () => {
             <div className="profile-sidebar">
               <div className="user-info-card">
                 <div className="user-avatar">
-                  {user?.foto_perfil ? (
+                  {user?.images_profile ? (
                     <img 
-                      src={user.foto_perfil} 
+                      src={getProfileImageUrl(user.images_profile)} 
                       alt="Avatar del usuario" 
                       className="avatar-image" 
+                      onError={(e) => {
+                        console.error('❌ Error cargando imagen:', user.images_profile);
+                        e.target.style.display = 'none';
+                        const fallback = e.target.nextSibling;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
                     />
-                  ) : (
-                    <div className="avatar-placeholder">
-                      {user?.nombre?.charAt(0) || user?.username?.charAt(0) || 'U'}
-                    </div>
-                  )}
+                  ) : null}
+                  <div className={`avatar-placeholder ${user?.images_profile ? 'avatar-fallback' : ''}`}>
+                    {user?.nombre?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                  </div>
                 </div>
                 <div className="user-details">
                   <h3>{user?.nombre || user?.username || 'Usuario'}</h3>
@@ -276,17 +335,22 @@ const UserProfile = () => {
             <div className={`mobile-sidebar ${mobileMenuOpen ? 'active' : ''}`}>
               <div className="mobile-user-info">
                 <div className="user-avatar">
-                  {user?.foto_perfil ? (
+                  {user?.images_profile ? (
                     <img 
-                      src={user.foto_perfil} 
+                      src={getProfileImageUrl(user.images_profile)} 
                       alt="Avatar del usuario" 
                       className="avatar-image" 
+                      onError={(e) => {
+                        console.error('❌ Error cargando imagen:', user.images_profile);
+                        e.target.style.display = 'none';
+                        const fallback = e.target.nextSibling;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
                     />
-                  ) : (
-                    <div className="avatar-placeholder">
-                      {user?.nombre?.charAt(0) || user?.username?.charAt(0) || 'U'}
-                    </div>
-                  )}
+                  ) : null}
+                  <div className={`avatar-placeholder ${user?.images_profile ? 'avatar-fallback' : ''}`}>
+                    {user?.nombre?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                  </div>
                 </div>
                 <div className="user-details">
                   <h3>{user?.nombre || user?.username || 'Usuario'}</h3>
@@ -369,41 +433,53 @@ const UserProfile = () => {
                       <h3>Foto de Perfil</h3>
                       <div className="photo-upload">
                         <div className="current-photo">
-                          {user?.foto_perfil ? (
+                          {user?.images_profile ? (
                             <img 
-                              src={user.foto_perfil} 
+                              src={getProfileImageUrl(user.images_profile)} 
                               alt="Foto de perfil" 
                               className="profile-photo" 
+                              onError={(e) => {
+                                console.error('❌ Error cargando imagen de perfil:', user.images_profile);
+                                e.target.style.display = 'none';
+                                const fallback = e.target.nextSibling;
+                                if (fallback) fallback.style.display = 'flex';
+                              }}
                             />
-                          ) : (
-                            <div className="no-photo">
-                              <span>👤</span>
-                              <p>Sin foto de perfil</p>
-                            </div>
-                          )}
+                          ) : null}
+                          <div className={`no-photo ${user?.images_profile ? 'photo-fallback' : ''}`}>
+                            <span>👤</span>
+                            <p>{user?.images_profile ? 'Error al cargar imagen' : 'Sin foto de perfil'}</p>
+                            {user?.images_profile && (
+                              <small>Ruta en BD: {user.images_profile}</small>
+                            )}
+                          </div>
                         </div>
                         <div className="photo-actions">
-                          <label htmlFor="photo-upload" className="btn-primary">
-                            {loading ? 'Subiendo...' : 'Cambiar Foto'}
+                          <label htmlFor="photo-upload" className={`btn-primary ${uploadLoading ? 'disabled' : ''}`}>
+                            {uploadLoading ? '📤 Subiendo...' : '📷 Cambiar Foto'}
                           </label>
                           <input
                             id="photo-upload"
                             type="file"
                             accept="image/*"
                             onChange={handlePhotoUpload}
-                            disabled={loading}
+                            disabled={uploadLoading}
                             style={{ display: 'none' }}
                           />
-                          {user?.foto_perfil && (
+                          {user?.images_profile && (
                             <button 
                               type="button"
-                              className="btn-secondary"
+                              className={`btn-secondary ${uploadLoading ? 'disabled' : ''}`}
                               onClick={removeProfilePhoto}
-                              disabled={loading}
+                              disabled={uploadLoading}
                             >
-                              Eliminar Foto
+                              🗑️ Eliminar Foto
                             </button>
                           )}
+                        </div>
+                        <div className="photo-requirements">
+                          <p><strong>Formatos aceptados:</strong> JPEG, PNG, GIF</p>
+                          <p><strong>Tamaño máximo:</strong> 5MB</p>
                         </div>
                       </div>
                     </div>
@@ -446,7 +522,7 @@ const UserProfile = () => {
                       </div>
 
                       <button type="submit" className="btn-primary" disabled={loading}>
-                        {loading ? 'Guardando...' : 'Actualizar Perfil'}
+                        {loading ? '💾 Guardando...' : '💾 Actualizar Perfil'}
                       </button>
                     </form>
                   </div>
@@ -566,23 +642,23 @@ const UserProfile = () => {
                                 </button>
                               </div>
 
-                              {/* <div className="admin-card">
+                              <div className="admin-card">
                                 <div className="admin-card-icon">👥</div>
                                 <h3>Gestión de Usuarios</h3>
                                 <p>Administrar usuarios y permisos</p>
                                 <button className="btn-primary">
                                   Gestionar Usuarios
                                 </button>
-                              </div> */}
+                              </div>
 
-                              {/* <div className="admin-card">
+                              <div className="admin-card">
                                 <div className="admin-card-icon">📊</div>
                                 <h3>Reportes y Análisis</h3>
                                 <p>Ver reportes y estadísticas del sistema</p>
                                 <button className="btn-primary">
                                   Ver Reportes
                                 </button>
-                              </div> */}
+                              </div>
                             </div>
                           </div>
                         ) : (
