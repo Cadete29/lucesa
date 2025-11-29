@@ -1,8 +1,8 @@
 // routes/orders.js
 const express = require('express');
 const router = express.Router();
-const db = require('../config/database'); // Tu conexión a PostgreSQL
-const auth = require('../middleware/auth');
+const db = require('../config/db'); // Tu conexión a PostgreSQL
+const auth = require('../middlewares/authenticateTokenG.js');
 
 // Guardar nueva orden
 router.post('/', auth, async (req, res) => {

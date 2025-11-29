@@ -263,8 +263,10 @@ const Home = () => {
             );
             
             if (productosConImagen.length >= 3) {
-                const shuffled = [...productosConImagen].sort(() => 0.5 - Math.random());
-                return shuffled.slice(0, 3);
+                const productosUnicos = [...new Map(productosConImagen.map(item => 
+                    [item.idProducto || item.codigo, item]
+                )).values()];
+                return productosUnicos.slice(0, 3);
             }
             
             const productosConExistencia = todosProductos.filter(p => 
@@ -272,11 +274,16 @@ const Home = () => {
             );
             
             if (productosConExistencia.length >= 3) {
-                const shuffled = [...productosConExistencia].sort(() => 0.5 - Math.random());
-                return shuffled.slice(0, 3);
+                const productosUnicos = [...new Map(productosConExistencia.map(item => 
+                    [item.idProducto || item.codigo, item]
+                )).values()];
+                return productosUnicos.slice(0, 3);
             }
             
-            return todosProductos.slice(0, 3);
+            const todosUnicos = [...new Map(todosProductos.map(item => 
+                [item.idProducto || item.codigo, item]
+            )).values()];
+            return todosUnicos.slice(0, 3);
         }
         
         return [];
@@ -287,7 +294,25 @@ const Home = () => {
             return [];
         }
         
-        return todosProductos.slice(3, 6);
+        // Obtener IDs de productos destacados para evitar duplicados
+        const productosDestacadosIds = displayProductosDestacadosHome.map(p => p.idProducto || p.codigo);
+        
+        // Filtrar productos que no están en destacados
+        const productosNoDestacados = todosProductos.filter(producto => 
+            !productosDestacadosIds.includes(producto.idProducto || producto.codigo)
+        );
+        
+        // Si no hay suficientes productos no destacados, tomar algunos aleatorios
+        if (productosNoDestacados.length === 0) {
+            // Si no hay productos no destacados, usar todos y eliminar duplicados después
+            const todosUnicos = [...new Map(todosProductos.map(item => 
+                [item.idProducto || item.codigo, item]
+            )).values()];
+            return todosUnicos.slice(0, 3);
+        }
+        
+        // Tomar hasta 3 productos no destacados
+        return productosNoDestacados.slice(0, 3);
     };
 
     const getMarcasPopularesHome = () => {
@@ -477,38 +502,34 @@ const Home = () => {
                 </div>
             </section>
 
-            <section className="mas-productos-home">
-                <div className="container-home">
-                    <div className="section-header-home">
-                        <h2 className="section-title-home">Descubre Más Productos</h2>
-                        <p className="section-subtitle-home">Una selección cuidadosamente curada para tus necesidades tecnológicas</p>
-                    </div>
-                    
-                    {displayMasProductosHome.length > 0 ? (
-                        <>
-                            <div className="productos-grid-home">
-                                {displayMasProductosHome.map((producto) => (
-                                    <ProductCard 
-                                        key={producto.idProducto || producto.codigo} 
-                                        product={producto}
-                                        onQuickView={handleQuickViewHome}
-                                    />
-                                ))}
-                            </div>
-                            
+            {displayMasProductosHome.length > 0 && (
+                <section className="mas-productos-home">
+                    <div className="container-home">
+                        <div className="section-header-home">
+                            <h2 className="section-title-home">Descubre Más Productos</h2>
+                            <p className="section-subtitle-home">Una selección cuidadosamente curada para tus necesidades tecnológicas</p>
+                        </div>
+                        
+                        <div className="productos-grid-home">
+                            {displayMasProductosHome.map((producto) => (
+                                <ProductCard 
+                                    key={producto.idProducto || producto.codigo} 
+                                    product={producto}
+                                    onQuickView={handleQuickViewHome}
+                                />
+                            ))}
+                        </div>
+                        
+                        {todosProductos.length > 6 && (
                             <div className="view-all-container-home">
                                 <Link to="/products" className="btn-view-all-home">
                                     Explorar Catálogo Completo
                                 </Link>
                             </div>
-                        </>
-                    ) : (
-                        <div className="no-products-home">
-                            <p>No hay productos disponibles en este momento.</p>
-                        </div>
-                    )}
-                </div>
-            </section>
+                        )}
+                    </div>
+                </section>
+            )}
 
             <section className="beneficios-compactos-home">
                 <div className="container-home">

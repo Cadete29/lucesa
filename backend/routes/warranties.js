@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../config/database');
-const auth = require('../middleware/auth');
+const db = require('../config/db');
+const auth = require('../middlewares/authenticateTokenG');
 
 // Obtener todas las garantías
 router.get('/', auth, async (req, res) => {

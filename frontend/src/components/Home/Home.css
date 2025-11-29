@@ -342,11 +342,58 @@
     background: linear-gradient(135deg, #0f2642 0%, #16395C 100%);
 }
 
+/* SOLUCIÓN PARA MANTENER PROPORCIONES DE LAS CARDS */
 .productos-grid-home {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 350px));
     gap: 2rem;
     margin-bottom: 2rem;
+    justify-content: center; /* Siempre centrado */
+    justify-items: center; /* Centra cada card */
+}
+
+/* Asegurar que las ProductCard mantengan tamaño consistente */
+.productos-grid-home > * {
+    width: 100%;
+    max-width: 350px;
+    min-width: 280px;
+}
+
+/* Estados específicos para diferentes cantidades */
+.productos-grid-home:has(> :only-child) {
+    grid-template-columns: minmax(300px, 350px);
+}
+
+.productos-grid-home:has(> :nth-child(2):last-child) {
+    grid-template-columns: repeat(2, minmax(300px, 350px));
+}
+
+@media (max-width: 768px) {
+    .productos-grid-home:has(> :nth-child(2):last-child) {
+        grid-template-columns: minmax(300px, 350px);
+    }
+}
+
+.productos-grid-home:has(> :nth-child(3):last-child) {
+    grid-template-columns: repeat(3, minmax(300px, 350px));
+}
+
+@media (max-width: 1024px) {
+    .productos-grid-home:has(> :nth-child(3):last-child) {
+        grid-template-columns: repeat(2, minmax(300px, 350px));
+    }
+}
+
+@media (max-width: 768px) {
+    .productos-grid-home:has(> :nth-child(3):last-child) {
+        grid-template-columns: minmax(300px, 350px);
+    }
+}
+
+/* Para 4+ productos, usar auto-fit normal */
+.productos-grid-home:has(> :nth-child(4)) {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    justify-content: stretch;
 }
 
 .ofertas-compactas-home {
@@ -680,7 +727,7 @@
     }
     
     .productos-grid-home {
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
         gap: 1.5rem;
     }
 }
@@ -707,7 +754,7 @@
     }
     
     .productos-grid-home {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: minmax(280px, 350px);
         gap: 1rem;
     }
     
@@ -786,5 +833,9 @@
     
     .marcas-grid-home {
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .productos-grid-home {
+        grid-template-columns: 1fr;
     }
 }

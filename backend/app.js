@@ -12,7 +12,7 @@ const errorHandler = require('./middlewares/errorHandler');
 const logger = require('./utils/logger');
 const imageProxyRoutes = require('./routes/imageProxy');
 const categoriasRoutes = require('./routes/categorias');
-const orderRoutes = require('./routes/orders');
+const orderRoutes = require('./routes/ordersG');
 const warrantyRoutes = require('./routes/warranties');
 
 // Importar las rutas principales que tenías en serverG.js
