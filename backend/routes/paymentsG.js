@@ -4,7 +4,7 @@ const router = express.Router();
 const db = require('../config/db');
 const auth = require('../middlewares/authenticateTokenG.js');
 const { Preference } = require('../config/mercadopago'); // ← ASÍ COMO EN TU OTRO PROYECTO
-
+//aqui es donde tengo la falla crep
 router.post('/create-checkout', auth, async (req, res) => {
   const client = await db.connect();
 
