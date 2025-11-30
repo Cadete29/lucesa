@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const auth = require('../middlewares/authenticateTokenG');
-const { preferenceClient } = require('../config/mercadopago');
+const { Preference } = require('../config/mercadopago');
 
 /**
  * Ruta para crear checkout de Mercado Pago
@@ -177,11 +177,11 @@ router.post('/create-checkout', auth, async (req, res) => {
             area_code: "52"
           }
         },
-        payment_methods: {
-          excluded_payment_methods: [],
-          excluded_payment_types: [],
-          installments: 1
-        },
+        // payment_methods: {
+        //   excluded_payment_methods: [],
+        //   excluded_payment_types: [],
+        //   installments: 1
+        // },
         metadata: {
           order_id: orderId,
           order_number: orderNumber,
@@ -194,11 +194,11 @@ router.post('/create-checkout', auth, async (req, res) => {
     console.log('📋 Datos de preferencia:', JSON.stringify(preferenceData, null, 2));
 
     try {
-      const mpResponse = await preferenceClient.create(preferenceData);
+      const mpResponse = await Preference.create(preferenceData);
 
       console.log('✅ Preferencia de Mercado Pago creada:', mpResponse.id);
       console.log('🔗 URL de pago:', mpResponse.init_point);
-      console.log('🔗 Sandbox URL:', mpResponse.sandbox_init_point);
+      console.log('🔗 Sandbox URL:', mpResponse.init_point);
 
       // Actualizar orden con datos de Mercado Pago
       await client.query(`
@@ -213,7 +213,7 @@ router.post('/create-checkout', auth, async (req, res) => {
       // Usar sandbox_init_point si estamos en desarrollo
       const paymentUrl = process.env.NODE_ENV === 'production' 
         ? mpResponse.init_point 
-        : (mpResponse.sandbox_init_point || mpResponse.init_point);
+        : (mpResponse.init_point || mpResponse.init_point);
 
       res.json({
         success: true,
