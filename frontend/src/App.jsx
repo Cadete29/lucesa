@@ -20,6 +20,9 @@ import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import OrderConfirmation from './pages/OrderConfirmation'
 import UserProfile from './components/Profile/UserProfile';
+import PagoExito from './pages/PagoExitoso';
+import PagoError from './pages/PagoError';
+import PagoPendiente from './pages/PagoPendiente';
 import './App.css'
 
 function App() {
@@ -53,6 +56,9 @@ function App() {
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/order-confirmation" element={<OrderConfirmation />} />
                   <Route path="/my-account" element={<UserProfile />} />
+                  <Route path="/pago/exito" element={<PagoExito />} />
+                  <Route path="/pago/error" element={<PagoError />} />
+                  <Route path="/pago/pendiente" element={<PagoPendiente />} />
                 </Routes>
               </main>
               <Footer />

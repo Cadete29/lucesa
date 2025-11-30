@@ -13,7 +13,7 @@ const logger = require('./utils/logger');
 const imageProxyRoutes = require('./routes/imageProxy');
 const categoriasRoutes = require('./routes/categorias');
 const orderRoutes = require('./routes/ordersG');
-const paymentsRoutes = require('./routes/paymentsG');
+const paymentsRoutes = require('./routes/paymentsG'); // ✅ Asegúrate que esta línea esté presente
 const warrantyRoutes = require('./routes/warranties');
 const returnRoutes = require('./routes/returns');
 
@@ -56,10 +56,9 @@ app.use('/api/images', imageProxyRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/orders', orderRoutes);
-app.use('/api/payments', paymentsRoutes);
+app.use('/api/payments', paymentsRoutes); // ✅ Asegúrate que esta línea esté presente
 app.use('/api/warranties', warrantyRoutes);
 app.use('/api/returns', returnRoutes);
-
 
 // Agregar las rutas principales de serverG.js bajo el prefijo /api
 app.use('/api', mainRoutesG);
@@ -75,7 +74,8 @@ app.get('/', (req, res) => {
       ctonline: '/api/ctonline',
       debug: '/api/debug',
       usuarios: '/api/usuarios',
-      main: '/api' // Agregado para las rutas de mainRoutesG
+      payments: '/api/payments', // ✅ Añadir payments a la lista
+      main: '/api'
     }
   });
 });

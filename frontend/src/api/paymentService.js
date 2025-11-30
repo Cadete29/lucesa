@@ -6,11 +6,10 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
 
 const makeRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
-  // AQUÍ ESTABA EL ERROR → el token no se enviaba
+  
+  // OBTENER EL TOKEN CORRECTAMENTE
   const token = localStorage.getItem('lucesa-token');
 
-
-// LOGS PARA VER QUÉ ESTÁ PASANDO
   console.log('TOKEN GUARDADO EN localStorage:', token);
   console.log('¿El token existe?', !!token);
   if (token) {
@@ -18,14 +17,10 @@ const makeRequest = async (endpoint, options = {}) => {
     console.log('Longitud del token:', token.length);
   }
 
-
-
-
-
   const config = {
     headers: {
       'Content-Type': 'application/json',
-      // ESTO ES LO QUE FALTABA:
+      // ✅ AÑADIR EL HEADER DE AUTORIZACIÓN SI HAY TOKEN
       ...(token && { 'Authorization': `Bearer ${token}` }),
       ...options.headers,
     },
@@ -37,36 +32,38 @@ const makeRequest = async (endpoint, options = {}) => {
   }
 
   try {
+    console.log('📤 Enviando petición a:', url);
+    console.log('🔑 Con headers:', config.headers);
+    
     const response = await fetch(url, config);
-    const data = await response.json();
-
+    
+    console.log('📥 Respuesta recibida - Status:', response.status);
+    
+    // ✅ MEJOR MANEJO DE ERRORES
     if (!response.ok) {
-      const errorMessage = data.message || `Error ${response.status}`;
-      throw new Error(errorMessage);
+      if (response.status === 403) {
+        throw new Error('Token inválido o expirado');
+      }
+      if (response.status === 401) {
+        throw new Error('No autorizado - token requerido');
+      }
+      const errorText = await response.text();
+      throw new Error(`Error ${response.status}: ${errorText}`);
     }
 
+    const data = await response.json();
     return data;
+    
   } catch (error) {
     console.error(`Error en paymentService (${endpoint}):`, error);
-    throw error; // Lo lanzamos para que el componente lo agarre con try/catch
+    throw error;
   }
 };
 
 export const paymentService = {
-  /**
-   * Crea la orden + preferencia de Mercado Pago y devuelve el link de pago
-   * @param {string} token - JWT del usuario
-   * @param {Array} cartItems - items del carrito (con codigo, nombre, precioFinal/precio, quantity, marca...)
-   * @param {Object} shippingAddress - { address, city, state, zipCode }
-   * @param {Object} customerInfo - { firstName, lastName, email, phone }
-   * @returns {Object { payment_url, order_number }
-   */
-  async createCheckout(token, cartItems, shippingAddress, customerInfo) {
+  async createCheckout(cartItems, shippingAddress, customerInfo) {
     return await makeRequest('/payments/create-checkout', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
       body: {
         cartItems,
         shippingAddress,

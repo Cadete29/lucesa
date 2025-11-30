@@ -12,13 +12,13 @@ const IMAGE_BASE_URL = process.env.NODE_ENV === 'production'
 
 const Checkout = () => {
   const { cartItems, getCartTotal, clearCart, getCartItemsCount } = useCart();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [formData, setFormData] = useState({
-    firstName: user?.name?.split(' ')[0] || '',
-    lastName: user?.name?.split(' ').slice(1).join(' ') || '',
+    firstName: user?.nombre?.split(' ')[0] || '',
+    lastName: user?.nombre?.split(' ').slice(1).join(' ') || '',
     email: user?.email || '',
     phone: '',
     address: '',
@@ -38,6 +38,23 @@ const Checkout = () => {
   const tax = subtotal * 0.16;
   const total = subtotal + tax + shipping;
 
+  // ✅ Validación PERMISIVA - Solo verifica precio y cantidad
+  const validateCartItems = (items) => {
+    const invalidItems = items.filter(item => {
+      const hasPrice = (item.precioFinal || item.precio) > 0;
+      const hasQuantity = item.quantity && item.quantity > 0;
+      
+      return !hasPrice || !hasQuantity;
+    });
+
+    if (invalidItems.length > 0) {
+      console.warn('⚠️ Productos con precio o cantidad inválida:', invalidItems);
+      return false;
+    }
+
+    return true;
+  };
+
   const canContinueToConfirmation = () => {
     if (currentStep === 1) {
       const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'address', 'city', 'state', 'zipCode'];
@@ -54,87 +71,77 @@ const Checkout = () => {
     }));
   };
 
-  const prepareOrderForPayment = () => {
-    const orderId = `ORD-${Date.now()}`;
-    
-    const order = {
-      orderId,
-      customer: {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone
-      },
-      shipping: {
+  const handleMercadoPagoPayment = async () => {
+    if (!formData.acceptTerms) {
+      alert('Debes aceptar los términos y condiciones');
+      return;
+    }
+
+    // ✅ Validación PERMISIVA - Solo precio y cantidad
+    if (!validateCartItems(cartItems)) {
+      alert('Algunos productos tienen precio o cantidad inválida. Por favor, revisa tu carrito.');
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const shippingAddress = {
         address: formData.address,
         city: formData.city,
         state: formData.state,
         zipCode: formData.zipCode,
-        country: formData.country
-      },
-      items: cartItems,
-      totals: {
-        subtotal,
-        tax,
-        shipping,
-        total
-      },
-      timestamp: new Date().toISOString()
-    };
+        country: 'México'
+      };
 
-    setOrderData(order);
-    return order;
-  };
+      const customerInfo = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone
+      };
 
-const handleMercadoPagoPayment = async () => {
-  if (!formData.acceptTerms) {
-    alert('Debes aceptar los términos y condiciones');
-    return;
-  }
+      console.log('🛒 Iniciando proceso de pago...');
+      console.log('📦 Items:', cartItems.length);
+      console.log('🏠 Dirección:', shippingAddress);
+      console.log('👤 Cliente:', customerInfo);
+      console.log('🔍 Productos en carrito:', cartItems.map(item => ({
+        nombre: item.nombre || 'Sin nombre (se generará automáticamente)',
+        codigo: item.codigo || 'Sin código',
+        precio: item.precioFinal || item.precio,
+        cantidad: item.quantity
+      })));
 
-  setIsProcessing(true);
+      // ✅ EL TOKEN SE ENVÍA AUTOMÁTICAMENTE DESDE EL SERVICE
+      const result = await paymentService.createCheckout(
+        cartItems,
+        shippingAddress,
+        customerInfo
+      );
 
-  try {
-    const shippingAddress = {
-      address: formData.address,
-      city: formData.city,
-      state: formData.state,
-      zipCode: formData.zipCode,
-      country: 'México'
-    };
+      console.log('✅ Pago creado exitosamente:', result);
+      
+      // Redirigir al checkout de Mercado Pago
+      if (result.payment_url) {
+        window.location.href = result.payment_url;
+      } else {
+        throw new Error('No se recibió URL de pago');
+      }
 
-    const customerInfo = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      phone: formData.phone
-    };
-
-    // USA TU SERVICE → ENVÍA TOKEN AUTOMÁTICO
-    const result = await paymentService.createCheckout(
-      cartItems,
-      shippingAddress,
-      customerInfo
-    );
-
-    // REDIRIGE AL CHECKOUT REAL
-    window.location.href = result.payment_url;
-
-  } catch (error) {
-    console.error('Error al pagar:', error);
-    alert('Error: ' + error.message);
-    setIsProcessing(false);
-  }
-};
-  const createMercadoPagoPreference = async (order) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          id: `mp-${Date.now()}`,
-          init_point: `https://www.mercadopago.com.mx/checkout/v1/redirect?pref_id=MP-${Date.now()}`,
-        });
-      }, 1000);
-    });
+    } catch (error) {
+      console.error('❌ Error al procesar el pago:', error);
+      
+      if (error.message.includes('Token inválido') || error.message.includes('expirado')) {
+        // Token expirado - forzar logout
+        alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+        logout();
+        navigate('/login');
+      } else {
+        alert('Error al procesar el pago: ' + error.message);
+      }
+      
+      setIsProcessing(false);
+    }
   };
 
   const nextStep = () => {
@@ -464,10 +471,6 @@ const handleMercadoPagoPayment = async () => {
                           <span className="co-method-icon">📱</span>
                           <span className="co-method-name">Mercado Pago</span>
                         </div>
-                        {/* <div className="co-payment-method">
-                          <span className="co-method-icon">💰</span>
-                          <span className="co-method-name">Efectivo</span>
-                        </div> */}
                       </div>
                     </div>
 
@@ -517,6 +520,9 @@ const handleMercadoPagoPayment = async () => {
                   <div className="co-payment-note">
                     <p className="co-note-text">
                       💡 <strong>Nota:</strong> Después del pago, serás redirigido automáticamente a nuestra página de confirmación.
+                    </p>
+                    <p className="co-note-text">
+                      🔄 <strong>Información:</strong> Los productos sin nombre se procesarán automáticamente con nombres generados.
                     </p>
                   </div>
                 </div>
@@ -680,7 +686,7 @@ const CheckoutOrderItem = ({ item }) => {
         <div className="co-order-item-image-error">
           <div className="co-error-icon">📷</div>
           <div className="co-error-text">Imagen no disponible</div>
-          <small className="co-error-code">{item.codigo}</small>
+          <small className="co-error-code">{item.codigo || 'Sin código'}</small>
         </div>
       );
     }
@@ -690,7 +696,7 @@ const CheckoutOrderItem = ({ item }) => {
         <img 
           ref={imgRef}
           src={currentImageUrl}
-          alt={item.nombre || 'Producto'}
+          alt={item.nombre || 'Producto Lucesa'}
           className={`co-order-item-image-img ${imageStatus === 'loaded' ? 'co-loaded' : 'co-loading'}`}
           crossOrigin="anonymous"
           loading="lazy"
@@ -708,6 +714,40 @@ const CheckoutOrderItem = ({ item }) => {
     );
   };
 
+  // ✅ Función para generar nombre amigable si no hay nombre
+  const getProductName = () => {
+    if (item.nombre && item.nombre.trim() !== '') {
+      return item.nombre;
+    }
+    
+    if (item.descripcion && item.descripcion.trim() !== '') {
+      return item.descripcion.substring(0, 60) + '...';
+    }
+    
+    if (item.codigo) {
+      return `Producto ${item.codigo}`;
+    }
+    
+    if (item.marca && item.marca.trim() !== '') {
+      return `Producto ${item.marca}`;
+    }
+    
+    return 'Producto Lucesa';
+  };
+
+  // ✅ Función para generar código amigable si no hay código
+  const getProductCode = () => {
+    if (item.codigo && item.codigo.trim() !== '') {
+      return item.codigo;
+    }
+    
+    if (item.id) {
+      return `ID-${item.id}`;
+    }
+    
+    return 'N/A';
+  };
+
   return (
     <div className="co-order-item">
       <div className="co-order-item-image">
@@ -715,9 +755,15 @@ const CheckoutOrderItem = ({ item }) => {
       </div>
 
       <div className="co-order-item-details">
-        <h4 className="co-order-item-name">{item.nombre || 'Producto sin nombre'}</h4>
+        <h4 className="co-order-item-name">{getProductName()}</h4>
         <p className="co-order-item-brand">{item.marca || 'Sin marca'}</p>
-        <p className="co-order-item-code">Código: {item.codigo || 'N/A'}</p>
+        <p className="co-order-item-code">Código: {getProductCode()}</p>
+        
+        {(!item.nombre || !item.codigo) && (
+          <div className="co-order-item-info">
+            <span className="co-auto-generated-badge">🔄 Nombre generado automáticamente</span>
+          </div>
+        )}
         
         {item.promociones && item.promociones.length > 0 && (
           <div className="co-order-item-promo">
@@ -818,7 +864,7 @@ const CheckoutPreviewItem = ({ item }) => {
         <img 
           ref={imgRef}
           src={currentImageUrl}
-          alt={item.nombre || 'Producto'}
+          alt={item.nombre || 'Producto Lucesa'}
           className={`co-preview-item-image ${imageStatus === 'loaded' ? 'co-loaded' : 'co-loading'}`}
           crossOrigin="anonymous"
           loading="lazy"
@@ -833,13 +879,30 @@ const CheckoutPreviewItem = ({ item }) => {
     );
   };
 
+  // ✅ Función para generar nombre amigable si no hay nombre
+  const getProductName = () => {
+    if (item.nombre && item.nombre.trim() !== '') {
+      return item.nombre;
+    }
+    
+    if (item.descripcion && item.descripcion.trim() !== '') {
+      return item.descripcion.substring(0, 30) + '...';
+    }
+    
+    if (item.codigo) {
+      return `Producto ${item.codigo}`;
+    }
+    
+    return 'Producto Lucesa';
+  };
+
   return (
     <div className="co-preview-item">
       <div className="co-preview-item-image-container">
         {renderImage()}
       </div>
       <div className="co-preview-info">
-        <span className="co-preview-name">{item.nombre || 'Producto sin nombre'}</span>
+        <span className="co-preview-name">{getProductName()}</span>
         <span className="co-preview-brand">{item.marca || 'Sin marca'}</span>
         <span className="co-preview-code">Código: {item.codigo || 'N/A'}</span>
         <span className="co-preview-quantity">x{item.quantity}</span>
