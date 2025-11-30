@@ -15,6 +15,7 @@ const categoriasRoutes = require('./routes/categorias');
 const orderRoutes = require('./routes/ordersG');
 const paymentsRoutes = require('./routes/paymentsG');
 const warrantyRoutes = require('./routes/warranties');
+const returnRoutes = require('./routes/returns');
 
 // Importar las rutas principales que tenías en serverG.js
 const mainRoutesG = require('./routes/mainRoutesG');
@@ -57,6 +58,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/warranties', warrantyRoutes);
+app.use('/api/returns', returnRoutes);
 
 
 // Agregar las rutas principales de serverG.js bajo el prefijo /api
