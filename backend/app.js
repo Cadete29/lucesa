@@ -16,6 +16,7 @@ const orderRoutes = require('./routes/ordersG');
 const paymentsRoutes = require('./routes/paymentsG'); // ✅ Asegúrate que esta línea esté presente
 const warrantyRoutes = require('./routes/warranties');
 const returnRoutes = require('./routes/returns');
+const favoritesRoutesG = require('./routes/favoritesRoutesG');
 
 // Importar las rutas principales que tenías en serverG.js
 const mainRoutesG = require('./routes/mainRoutesG');
@@ -59,6 +60,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentsRoutes); // ✅ Asegúrate que esta línea esté presente
 app.use('/api/warranties', warrantyRoutes);
 app.use('/api/returns', returnRoutes);
+app.use('/api/favorites', favoritesRoutesG);
 
 // Agregar las rutas principales de serverG.js bajo el prefijo /api
 app.use('/api', mainRoutesG);

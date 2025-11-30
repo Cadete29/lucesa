@@ -972,6 +972,19 @@ const UserProfile = () => {
                                   Ver Reportes
                                 </button>
                               </div> */}
+
+                              <div className="admin-card">
+                                  <div className="admin-card-icon">❤️</div>
+                                  <h3>Gestión de Favoritos</h3>
+                                  <p>Ver estadísticas de productos favoritos</p>
+                                  <button 
+                                      className="btn-primary"
+                                      onClick={() => handleAdminTabChange('favorites')}
+                                  >
+                                      Ver Estadísticas
+                                  </button>
+                              </div>
+
                             </div>
                           </div>
                         ) : (
@@ -985,6 +998,7 @@ const UserProfile = () => {
                             
                             {selectedAdminTab === 'products' && <ProductManagement />}
                             {selectedAdminTab === 'orders' && <OrderManagement />}
+                            {selectedAdminTab === 'favorites' && <AdminFavorites />}
                           </div>
                         )}
                       </div>

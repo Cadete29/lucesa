@@ -1,3 +1,4 @@
+// src/components/Product Card/ProductCard.jsx
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useFavorites } from '../../context/FavoritesContext';
@@ -32,36 +33,55 @@ const ProductCard = ({ product, onQuickView }) => {
     const [imageStatusPcard, setImageStatusPcard] = useState('loading');
     const [currentImageUrlPcard, setCurrentImageUrlPcard] = useState('');
     const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
+    const [favoriteError, setFavoriteError] = useState('');
     const imgRefPcard = useRef(null);
     const retryCountRefPcard = useRef(0);
 
     // ✅ Contexto de favoritos
-    const { isFavorite, toggleFavorite } = useFavorites();
+    const { isFavorite, toggleFavorite, favorites } = useFavorites();
 
     // ✅ Normalizar el producto
     const normalizedProductPcard = useMemo(() => {
+        console.log('🔄 Normalizando producto:', product?.nombre, 'ID:', product?.id);
         return normalizarProductoPcard(product);
     }, [product]);
 
     // ✅ Verificar si el producto está en favoritos
     const productIsFavorite = useMemo(() => {
-        return isFavorite(normalizedProductPcard.id);
-    }, [isFavorite, normalizedProductPcard.id]);
+        const isFav = isFavorite(normalizedProductPcard.id);
+        console.log(`🔍 Verificando favorito: ${normalizedProductPcard.nombre} (ID: ${normalizedProductPcard.id}) - Es favorito: ${isFav}`);
+        return isFav;
+    }, [isFavorite, normalizedProductPcard.id, normalizedProductPcard.nombre]);
 
-    // ✅ Manejo de favoritos
+    // ✅ Manejo de favoritos - MEJORADO CON MANEJO DE ERRORES
     const handleFavoriteClick = useCallback(async (e) => {
         e.preventDefault();
         e.stopPropagation();
         
+        console.log('❤️ Click en favorito:', {
+            producto: normalizedProductPcard.nombre,
+            id: normalizedProductPcard.id,
+            actualmenteFavorito: productIsFavorite
+        });
+        
         setIsFavoriteLoading(true);
+        setFavoriteError('');
+        
         try {
             await toggleFavorite(normalizedProductPcard);
+            console.log('✅ Toggle completado para:', normalizedProductPcard.nombre);
         } catch (error) {
-            console.error('Error al toggle favorite:', error);
+            console.error('❌ Error al toggle favorite:', error);
+            setFavoriteError(error.message);
+            
+            // Mostrar mensaje de error al usuario
+            setTimeout(() => {
+                alert('Error al actualizar favoritos: ' + error.message);
+            }, 100);
         } finally {
             setIsFavoriteLoading(false);
         }
-    }, [toggleFavorite, normalizedProductPcard]);
+    }, [toggleFavorite, normalizedProductPcard, productIsFavorite]);
 
     // ✅ CÁLCULO DE PRECIOS EN MXN CON 10% ADICIONAL (BASE Y PROMOCIONES)
     const productCalculationsPcard = useMemo(() => {
@@ -206,6 +226,15 @@ const ProductCard = ({ product, onQuickView }) => {
         window.location.href = `/product/${normalizedProductPcard.idProducto || normalizedProductPcard.id || normalizedProductPcard.codigo}`;
     }, [normalizedProductPcard]);
 
+    // ✅ DEBUG: Mostrar información del producto
+    useEffect(() => {
+        console.log(`📦 ProductCard renderizado: ${normalizedProductPcard.nombre}`, {
+            id: normalizedProductPcard.id,
+            esFavorito: productIsFavorite,
+            totalFavoritos: favorites.length
+        });
+    }, [normalizedProductPcard, productIsFavorite, favorites.length]);
+
     const {
         tienePromocionActivaPcard,
         precioBaseMXNPcard,
@@ -223,7 +252,7 @@ const ProductCard = ({ product, onQuickView }) => {
     }
 
     return (
-        <div className="product-card-pcard" data-code={normalizedProductPcard.codigo}>
+        <div className="product-card-pcard" data-code={normalizedProductPcard.codigo} data-product-id={normalizedProductPcard.id}>
             {/* Badge de promoción - SOLO SI TIENE PROMOCIÓN ACTIVA */}
             {tienePromocionActivaPcard && (
                 <div className="promotion-badge-pcard">
@@ -237,6 +266,7 @@ const ProductCard = ({ product, onQuickView }) => {
                 onClick={handleFavoriteClick}
                 disabled={isFavoriteLoading}
                 aria-label={productIsFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
+                title={productIsFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'}
             >
                 {isFavoriteLoading ? (
                     <div className="favorite-spinner"></div>
@@ -369,14 +399,16 @@ const ProductCard = ({ product, onQuickView }) => {
                 {process.env.NODE_ENV === 'development' && (
                     <div className="debug-info-pcard">
                         <strong>DEBUG:</strong> 
-                        Entorno: {process.env.NODE_ENV} | 
-                        Stock: {normalizedProductPcard.existencia} | 
-                        Base Original: ${precioOriginalBasePcard} | 
-                        Base +10%: ${precioBaseMXNPcard} |
-                        {tienePromocionActivaPcard && 
-                            ` Promo Original: $${precioOriginalPromoPcard} | 
-                            Promo +10%: $${precioPromoMXNPcard} | 
-                            Descuento: ${discountPercentagePcard}%`}
+                        ID: {normalizedProductPcard.id} | 
+                        Favorito: {productIsFavorite ? 'SÍ' : 'NO'} | 
+                        Stock: {normalizedProductPcard.existencia}
+                    </div>
+                )}
+
+                {/* Mensaje de error */}
+                {favoriteError && (
+                    <div className="favorite-error-pcard">
+                        ❌ {favoriteError}
                     </div>
                 )}
 
