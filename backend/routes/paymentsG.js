@@ -254,4 +254,220 @@ router.post('/create-checkout', auth, async (req, res) => {
   }
 });
 
+
+
+// WEBHOOK MEJORADO - CORREGIR ORDERID NULL
+router.post('/webhook', async (req, res) => {
+  console.log('WEBHOOK RECIBIDO →', req.body.topic || 'desconocido');
+
+  try {
+    const { Preference, Payment, MerchantOrder } = require('../config/mercadopago');
+
+    let paymentId = null;
+    let orderId = null;
+
+    // ==================== CASO 1: topic = payment ====================
+    if (req.body.topic === 'payment' || req.body.type === 'payment') {
+      paymentId = req.body.data?.id || req.body.resource?.split('/').pop() || req.query.id;
+      
+      console.log(`💰 Webhook PAYMENT recibido - PaymentID: ${paymentId}`);
+      
+      // ✅ CORRECCIÓN: Obtener el pago inmediatamente para buscar external_reference
+      if (paymentId) {
+        try {
+          const payment = await Payment.get({ id: paymentId });
+          console.log(`✅ Pago obtenido: ${payment.id}, Status: ${payment.status}`);
+          
+          // Buscar external_reference en el pago
+          if (payment.external_reference) {
+            orderId = parseInt(payment.external_reference);
+            console.log(`📦 Order ID desde external_reference: ${orderId}`);
+          } else {
+            console.log('⚠️ Pago sin external_reference, buscando en merchant_order...');
+            
+            // Si no tiene external_reference, buscar en merchant_order
+            if (payment.order && payment.order.id) {
+              try {
+                const mo = await MerchantOrder.get({ id: payment.order.id });
+                if (mo.external_reference) {
+                  orderId = parseInt(mo.external_reference);
+                  console.log(`📦 Order ID desde merchant_order: ${orderId}`);
+                }
+              } catch (moError) {
+                console.log('❌ Error obteniendo merchant_order:', moError.message);
+              }
+            }
+          }
+        } catch (paymentError) {
+          console.log('❌ Error obteniendo pago:', paymentError.message);
+        }
+      }
+    }
+
+    // ==================== CASO 2: topic = merchant_order ====================
+    if (req.body.topic === 'merchant_order') {
+      const moId = req.body.data?.id || 
+                   req.body.resource?.split('/').pop() || 
+                   req.query.id;
+
+      console.log(`📦 Webhook MERCHANT_ORDER recibido - MO ID: ${moId}`);
+
+      if (!moId || isNaN(moId)) {
+        console.log('❌ ID de merchant_order inválido');
+        return res.status(200).send('OK');
+      }
+
+      let mo;
+      try {
+        mo = await MerchantOrder.get({ id: moId });
+        console.log('✅ Merchant Order obtenido:', mo.id);
+        
+        // Buscar pagos en la merchant order
+        if (mo.payments && mo.payments.length > 0) {
+          // Tomar el primer pago (generalmente el más reciente)
+          const primerPago = mo.payments[0];
+          paymentId = primerPago.id;
+          console.log(`💰 Pago encontrado: ${paymentId}, Status: ${primerPago.status}`);
+        }
+        
+        if (mo.external_reference) {
+          orderId = parseInt(mo.external_reference);
+          console.log(`📦 Order ID desde external_reference: ${orderId}`);
+        }
+      } catch (e) {
+        console.log('❌ Error obteniendo merchant_order:', e.message);
+        return res.status(200).send('OK');
+      }
+    }
+
+    // ==================== VALIDACIONES FINALES ====================
+    if (!paymentId) {
+      console.log('❌ No se pudo obtener paymentId');
+      return res.status(200).send('OK');
+    }
+
+    if (!orderId) {
+      console.log('❌ No se pudo determinar orderId');
+      return res.status(200).send('OK');
+    }
+
+    console.log(`🔍 Datos finales - PaymentID: ${paymentId}, OrderID: ${orderId}`);
+
+    // ==================== PROCESAR PAGO ====================
+    let payment;
+    try {
+      payment = await Payment.get({ id: paymentId });
+      console.log(`✅ Pago final obtenido: ${payment.id}, Status: ${payment.status}`);
+    } catch (e) {
+      console.log('❌ Error obteniendo pago final:', e.message);
+      return res.status(200).send('OK');
+    }
+
+    // FORZAR TODO A STRING 
+    const mpStatus = String(payment.status || 'pending').toLowerCase().trim();
+    const mpStatusDetail = payment.status_detail ? String(payment.status_detail) : 'none';
+
+    console.log(`📊 Estado del pago: ${mpStatus}, Detalle: ${mpStatusDetail}`);
+
+    // MAPEO DE ESTADOS
+    const statusMap = {
+      approved: 'completed',
+      pending: 'pending',
+      in_process: 'processing',
+      rejected: 'cancelled',
+      cancelled: 'cancelled',
+      refunded: 'refunded'
+    };
+
+    const newStatus = statusMap[mpStatus] || 'pending';
+    const mpPaymentStatus = mpStatus;
+
+    console.log(`🔄 Actualizando orden ${orderId} a: ${newStatus}`);
+
+    // ==================== ACTUALIZAR BASE DE DATOS ====================
+    const client = await db.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Verificar si la orden existe
+      const orderCheck = await client.query(
+        'SELECT id, status, order_number FROM orders WHERE id = $1',
+        [orderId]
+      );
+
+      if (orderCheck.rows.length === 0) {
+        console.log(`❌ Orden ${orderId} no encontrada`);
+        await client.query('ROLLBACK');
+        return res.status(200).send('Orden no encontrada');
+      }
+
+      const currentOrder = orderCheck.rows[0];
+      console.log(`📋 Orden actual: ${currentOrder.order_number}, Status: ${currentOrder.status}`);
+
+      // Solo actualizar si no está ya completada
+      if (currentOrder.status !== 'completed') {
+        const result = await client.query(`
+          UPDATE orders SET
+            status = $1::varchar,
+            mp_payment_id = $2::varchar,
+            mp_payment_status = $3::varchar,
+            mp_status_detail = $4::varchar,
+            paid_at = CASE WHEN $1::varchar = 'completed' THEN NOW() ELSE paid_at END,
+            updated_at = NOW()
+          WHERE id = $5
+          RETURNING order_number, status
+        `, [newStatus, paymentId, mpPaymentStatus, mpStatusDetail, orderId]);
+
+        if (result.rowCount > 0) {
+          const updatedOrder = result.rows[0];
+          console.log(`✅ ORDEN ${updatedOrder.order_number} ACTUALIZADA: ${updatedOrder.status.toUpperCase()}`);
+          
+          if (newStatus === 'completed') {
+            console.log(`🎉 PAGO COMPLETADO para orden ${updatedOrder.order_number}`);
+          }
+        }
+      } else {
+        console.log(`ℹ️ Orden ${currentOrder.order_number} ya estaba completada`);
+      }
+
+      await client.query('COMMIT');
+      console.log('✅ Transacción completada exitosamente');
+
+    } catch (dbError) {
+      await client.query('ROLLBACK');
+      console.error('❌ Error en transacción de base de datos:', dbError.message);
+    } finally {
+      client.release();
+    }
+
+    res.status(200).send('OK');
+
+  } catch (error) {
+    console.error('❌ Error crítico en webhook:', error.message);
+    res.status(500).send('Error');
+  }
+});
+// Función alternativa para actualización si falla la principal
+async function actualizacionAlternativa(orderId, newStatus, paymentId, mpPaymentStatus, mpStatusDetail) {
+  const client = await db.connect();
+  try {
+    console.log('🔄 Intentando actualización alternativa...');
+    
+    // Consulta más simple con menos parámetros
+    await client.query(`
+      UPDATE orders SET 
+        status = $1,
+        mp_payment_id = $2,
+        updated_at = NOW()
+      WHERE id = $3
+    `, [newStatus, paymentId, orderId]);
+    
+    console.log(`✅ Actualización alternativa exitosa para orden ${orderId}`);
+    
+  } catch (error) {
+    console.error('❌ Error en actualización alternativa:', error.message);
+  } finally {
+    client.release();
+  }
+}
 module.exports = router;
