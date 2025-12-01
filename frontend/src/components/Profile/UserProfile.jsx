@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ProductManagement from '../../pages/ProductManagement';
 import OrderManagement from '../../pages/OrderManagement';
+import AdminFavorites from '../AdminFavorites';
 import './UserProfile.css';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 

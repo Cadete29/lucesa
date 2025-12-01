@@ -1,4 +1,4 @@
-// components/AdminFavorites.jsx
+// src/components/Admin/AdminFavorites.jsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import './AdminFavorites.css';
@@ -26,6 +26,8 @@ const AdminFavorites = () => {
             setError('');
             
             const token = localStorage.getItem('lucesa-token');
+            console.log('📊 Cargando estadísticas de favoritos...');
+            
             const response = await fetch(`${API_BASE_URL}/favorites/admin/stats`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -33,20 +35,31 @@ const AdminFavorites = () => {
             });
 
             if (!response.ok) {
-                throw new Error('Error al cargar estadísticas');
+                throw new Error(`Error ${response.status} al cargar estadísticas`);
             }
 
             const result = await response.json();
+            console.log('📈 Respuesta de estadísticas:', result);
             
             if (result.success) {
                 setStats(result.data.stats);
-                setTopProducts(result.data.top_products);
+                setTopProducts(result.data.top_products || []);
+                console.log('✅ Estadísticas cargadas correctamente');
             } else {
-                throw new Error(result.message);
+                throw new Error(result.message || 'Error en la respuesta del servidor');
             }
         } catch (error) {
-            console.error('Error:', error);
-            setError('Error al cargar las estadísticas de favoritos');
+            console.error('❌ Error cargando estadísticas:', error);
+            setError(error.message);
+            
+            // Establecer estadísticas por defecto
+            setStats({
+                total_favorites: 0,
+                total_users_with_favorites: 0,
+                unique_products: 0,
+                avg_favorites_per_user: 0
+            });
+            setTopProducts([]);
         } finally {
             setLoading(false);
         }
@@ -63,21 +76,6 @@ const AdminFavorites = () => {
         );
     }
 
-    if (error) {
-        return (
-            <div className="admin-favorites">
-                <div className="admin-favorites-error">
-                    <div className="error-icon">⚠️</div>
-                    <h3>Error</h3>
-                    <p>{error}</p>
-                    <button onClick={loadFavoritesStats} className="btn-retry">
-                        Reintentar
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="admin-favorites">
             <div className="admin-favorites-header">
@@ -86,6 +84,21 @@ const AdminFavorites = () => {
                     🔄 Actualizar
                 </button>
             </div>
+
+            {error && (
+                <div className="admin-favorites-error">
+                    <div className="error-icon">⚠️</div>
+                    <h3>Error</h3>
+                    <p>{error}</p>
+                    <p className="error-detail">
+                        Se muestran estadísticas por defecto. 
+                        Esto puede ocurrir si no hay datos de favoritos aún.
+                    </p>
+                    <button onClick={loadFavoritesStats} className="btn-retry">
+                        Reintentar
+                    </button>
+                </div>
+            )}
 
             {stats && (
                 <div className="favorites-stats-grid">
@@ -150,7 +163,10 @@ const AdminFavorites = () => {
                     </div>
                 ) : (
                     <div className="no-top-products">
-                        <p>No hay datos de productos favoritos aún.</p>
+                        <p>No hay productos favoritos aún.</p>
+                        <p className="no-data-info">
+                            Los productos aparecerán aquí cuando los usuarios comiencen a agregar favoritos.
+                        </p>
                     </div>
                 )}
             </div>

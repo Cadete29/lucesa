@@ -27,13 +27,19 @@ const checkTokenValidity = (token) => {
   }
   
   try {
-    // Decodificar el token sin verificar (solo para ver la expiración)
+    // Verificar si es un token demo (no JWT)
+    if (token.startsWith('demo-token-') || token.startsWith('social-token-')) {
+      console.log('🔐 Token demo/social - considerado válido');
+      return true;
+    }
+    
+    // Decodificar el token JWT sin verificar (solo para ver la expiración)
     const payload = JSON.parse(atob(token.split('.')[1]));
     const expirationTime = payload.exp * 1000; // Convertir a milisegundos
     const currentTime = Date.now();
     const timeUntilExpiration = expirationTime - currentTime;
     
-    console.log('🔐 Token Info:', {
+    console.log('🔐 Token JWT Info:', {
       userId: payload.id,
       email: payload.email,
       expira: new Date(expirationTime).toLocaleString(),
@@ -256,51 +262,134 @@ export const FavoritesProvider = ({ children }) => {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, checkAuth, loading: authLoading, token: authToken } = useAuth();
+
+  // Función temporal para debug
+  const debugUserState = () => {
+    console.log('🐛 DEBUG User State:', {
+      user: user ? {
+        id: user.id,
+        email: user.email,
+        hasToken: !!user.token,
+        token: user.token ? `${user.token.substring(0, 20)}...` : 'No token in user'
+      } : 'No user',
+      authToken: authToken ? `${authToken.substring(0, 20)}...` : 'No authToken',
+      isAuthenticated,
+      loading: authLoading
+    });
+  };
 
   console.log('🔄 FavoritesProvider Render - Estado:', {
     favoritesCount: favorites.length,
     isAuthenticated,
     user: user ? `Usuario: ${user.email}` : 'No user',
+    userId: user?.id,
+    userToken: user?.token ? `${user.token.substring(0, 20)}...` : 'No token in user',
+    authToken: authToken ? `${authToken.substring(0, 20)}...` : 'No authToken',
     loading,
-    syncing
+    syncing,
+    authLoading
   });
 
   // Debug: mostrar entorno actual
   useEffect(() => {
     console.log('🚀 FavoritesProvider Montado');
     favoritesApi.debug.logEnvironment();
+    debugUserState();
   }, []);
 
-  // Cargar favoritos al cambiar el estado de autenticación
+  // Cargar favoritos al cambiar el estado de autenticación - CORREGIDO
   useEffect(() => {
-    console.log('🔄 Effect - Cambio en autenticación:', { isAuthenticated, user: user?.id });
+    console.log('🔄 FavoritesContext - Cambio en autenticación:', { 
+      isAuthenticated, 
+      user: user?.email,
+      userId: user?.id,
+      userToken: user?.token ? 'Presente' : 'Faltante',
+      authToken: authToken ? 'Presente' : 'Faltante',
+      authLoading
+    });
     
-    if (isAuthenticated && user) {
+    debugUserState();
+    
+    // Esperar a que AuthContext termine de cargar
+    if (authLoading) {
+      console.log('⏳ AuthContext aún cargando...');
+      return;
+    }
+    
+    // Usar authToken directamente (más confiable)
+    const effectiveToken = authToken || user?.token;
+    
+    if (isAuthenticated && user && user.id && effectiveToken) {
+      console.log('✅ Usuario autenticado, cargando favoritos del servidor...', {
+        userId: user.id,
+        tokenSource: authToken ? 'authToken' : 'user.token',
+        tokenPreview: effectiveToken.substring(0, 20) + '...'
+      });
       loadUserFavorites();
     } else {
       // Cargar favoritos locales para usuarios no autenticados
       const guestFavorites = favoritesApi.storage.getGuestFavorites();
-      console.log('👤 Cargando favoritos guest:', guestFavorites.length);
+      console.log('👤 Usuario no autenticado, cargando favoritos guest:', guestFavorites.length, {
+        razon: !isAuthenticated ? 'No autenticado' : 
+               !user ? 'No user' : 
+               !user.id ? 'No user.id' : 
+               !effectiveToken ? 'No token' : 'Otra razón'
+      });
       setFavorites(guestFavorites);
     }
-  }, [user, isAuthenticated]);
+  }, [user, isAuthenticated, authLoading, authToken]);
 
-  // Cargar favoritos del usuario desde el servidor
+  // Cargar favoritos del usuario desde el servidor - MEJORADO
   const loadUserFavorites = async () => {
-    if (!user?.id || !user?.token) {
-      console.log('❌ No hay usuario o token para cargar favoritos');
+    // Usar authToken directamente (más confiable)
+    const effectiveToken = authToken || user?.token;
+    
+    // Verificaciones más robustas
+    if (!user?.id || !effectiveToken) {
+      console.log('❌ No hay usuario o token para cargar favoritos:', {
+        userId: user?.id,
+        hasUserToken: !!user?.token,
+        hasAuthToken: !!authToken,
+        effectiveToken: !!effectiveToken,
+        userEmail: user?.email
+      });
+      return;
+    }
+    
+    // Verificar autenticación antes de cargar
+    if (!isAuthenticated) {
+      console.log('❌ Usuario no autenticado, no se pueden cargar favoritos');
       return;
     }
     
     setLoading(true);
     try {
-      console.log('🔄 Cargando favoritos del usuario...', user.id);
-      const userFavorites = await favoritesApi.getUserFavorites(user.id, user.token);
+      console.log('🔄 Cargando favoritos del usuario...', { 
+        userId: user.id, 
+        email: user.email,
+        tokenSource: authToken ? 'authToken' : 'user.token',
+        tokenPreview: effectiveToken.substring(0, 20) + '...'
+      });
+      
+      const userFavorites = await favoritesApi.getUserFavorites(user.id, effectiveToken);
       console.log('✅ Favoritos cargados del servidor:', userFavorites.length);
       setFavorites(userFavorites);
     } catch (error) {
       console.error('❌ Error cargando favoritos:', error);
+      
+      // Manejo mejorado de errores
+      if (error.message.includes('403') || error.message.includes('Token') || error.message.includes('autenticación')) {
+        console.log('🔐 Error de autenticación detectado al cargar favoritos');
+        
+        // Forzar verificación de autenticación
+        if (checkAuth && !checkAuth()) {
+          console.log('🔄 Autenticación inválida confirmada, limpiando estado');
+          setFavorites([]);
+          return;
+        }
+      }
+      
       // Fallback a favoritos locales en caso de error
       const guestFavorites = favoritesApi.storage.getGuestFavorites();
       console.log('🔄 Fallback a favoritos locales:', guestFavorites.length);
@@ -310,68 +399,124 @@ export const FavoritesProvider = ({ children }) => {
     }
   };
 
-  // Sincronizar favoritos locales con el servidor al iniciar sesión
+  // Sincronizar favoritos locales con el servidor al iniciar sesión - MEJORADO
   const syncLocalFavorites = async () => {
-    if (!user?.id || !user?.token) return;
+    // Usar authToken directamente (más confiable)
+    const effectiveToken = authToken || user?.token;
+    
+    // Verificaciones más estrictas
+    if (!user?.id || !effectiveToken || !isAuthenticated || authLoading) {
+      console.log('❌ No se puede sincronizar - condiciones no cumplidas:', {
+        hasUserId: !!user?.id,
+        hasUserToken: !!user?.token,
+        hasAuthToken: !!authToken,
+        effectiveToken: !!effectiveToken,
+        isAuthenticated,
+        authLoading
+      });
+      return;
+    }
     
     const guestFavorites = favoritesApi.storage.getGuestFavorites();
+    console.log('🔄 Sincronizando favoritos locales...', {
+      guestCount: guestFavorites.length,
+      userId: user.id,
+      tokenSource: authToken ? 'authToken' : 'user.token'
+    });
+
     if (guestFavorites.length > 0) {
       try {
         setSyncing(true);
-        console.log('🔄 Sincronizando favoritos locales...', guestFavorites.length);
         
         // Agregar cada favorito local al servidor
+        let syncedCount = 0;
+        let errors = [];
+        
         for (const product of guestFavorites) {
           try {
-            await favoritesApi.addToFavorites(user.id, product, user.token);
+            await favoritesApi.addToFavorites(user.id, product, effectiveToken);
             console.log('✅ Sincronizado:', product.nombre);
+            syncedCount++;
           } catch (error) {
             console.warn('⚠️ No se pudo sincronizar:', product.nombre, error.message);
-            // Continuar con los demás productos
+            errors.push({ product: product.nombre, error: error.message });
           }
         }
         
-        // Limpiar favoritos locales después de sincronizar
-        favoritesApi.storage.removeGuestFavorites();
+        // Limpiar favoritos locales después de sincronizar (solo los exitosos)
+        if (syncedCount > 0) {
+          favoritesApi.storage.removeGuestFavorites();
+        }
         
         // Recargar favoritos del servidor
         await loadUserFavorites();
         
-        console.log('✅ Sincronización completada');
+        console.log(`✅ Sincronización completada: ${syncedCount}/${guestFavorites.length} productos sincronizados`);
+        if (errors.length > 0) {
+          console.warn('⚠️ Errores durante sincronización:', errors);
+        }
       } catch (error) {
         console.error('❌ Error en sincronización:', error);
       } finally {
         setSyncing(false);
       }
+    } else {
+      console.log('ℹ️ No hay favoritos locales para sincronizar');
     }
   };
 
-  // Sincronizar al iniciar sesión
+  // Sincronizar al iniciar sesión - MEJORADO
   useEffect(() => {
-    if (isAuthenticated && user) {
-      console.log('🔄 Iniciando sincronización al login...');
-      syncLocalFavorites();
+    // Usar authToken directamente (más confiable)
+    const effectiveToken = authToken || user?.token;
+    
+    if (isAuthenticated && user && user.id && effectiveToken && !authLoading) {
+      console.log('🔄 Iniciando sincronización al login...', {
+        userId: user.id,
+        guestFavoritesCount: favoritesApi.storage.getGuestFavorites().length,
+        tokenSource: authToken ? 'authToken' : 'user.token'
+      });
+      
+      // Pequeño delay para asegurar que todo esté cargado
+      const syncTimer = setTimeout(() => {
+        syncLocalFavorites();
+      }, 1000);
+      
+      return () => clearTimeout(syncTimer);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, authLoading, authToken]);
 
   // Manejar error de autenticación
   const handleAuthError = (error) => {
-    console.log('🔐 Error de autenticación detectado:', error.message);
+    console.log('🔐 Error de autenticación detectado en FavoritesContext:', error.message);
     
-    // Limpiar datos de sesión
-    localStorage.removeItem('lucesa-token');
-    localStorage.removeItem('lucesa-user');
-    
-    // Si hay función logout, usarla
-    if (logout) {
-      logout();
+    // Verificar autenticación actual
+    if (checkAuth && !checkAuth()) {
+      console.log('🔄 Autenticación inválida confirmada, procediendo con logout...');
+      
+      // Limpiar datos de sesión
+      localStorage.removeItem('lucesa-token');
+      localStorage.removeItem('lucesa-user');
+      
+      // Si hay función logout, usarla
+      if (logout) {
+        logout();
+      }
+      
+      // Limpiar favoritos del estado
+      setFavorites([]);
+      
+      // Redirigir a login
+      const currentPath = window.location.pathname;
+      setTimeout(() => {
+        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+      }, 1000);
+      
+      throw new Error('Tu sesión ha expirado. Serás redirigido para iniciar sesión nuevamente.');
+    } else {
+      console.log('ℹ️ La autenticación parece válida, puede ser un error temporal');
+      throw new Error('Error temporal de autenticación. Por favor, intenta nuevamente.');
     }
-    
-    // Redirigir a login
-    const currentPath = window.location.pathname;
-    window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
-    
-    throw new Error('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
   };
 
   // Agregar a favoritos
@@ -381,17 +526,38 @@ export const FavoritesProvider = ({ children }) => {
       throw new Error('Producto inválido');
     }
 
+    // Usar authToken directamente (más confiable)
+    const effectiveToken = authToken || user?.token;
+
     console.log('❤️ AGREGAR FAVORITO - Iniciando:', {
       producto: product.nombre,
       id: product.id,
-      usuario: user?.email || 'guest'
+      usuario: user?.email || 'guest',
+      isAuthenticated,
+      userToken: user?.token ? 'Presente' : 'Faltante',
+      authToken: authToken ? 'Presente' : 'Faltante',
+      effectiveToken: effectiveToken ? 'Presente' : 'Faltante',
+      userId: user?.id
     });
 
     try {
-      if (isAuthenticated && user) {
+      // Verificar autenticación antes de proceder - VERIFICACIÓN MEJORADA
+      if (isAuthenticated && user && user.id && effectiveToken) {
+        // Verificar token válido
+        if (!checkTokenValidity(effectiveToken)) {
+          console.log('❌ Token inválido, forzando re-autenticación');
+          return handleAuthError(new Error('Token inválido o expirado'));
+        }
+
         // Usuario autenticado - guardar en servidor
-        console.log('🔐 Usuario autenticado - guardando en servidor');
-        const result = await favoritesApi.addToFavorites(user.id, product, user.token);
+        console.log('🔐 Usuario autenticado - guardando en servidor', {
+          userId: user.id,
+          productId: product.id,
+          tokenSource: authToken ? 'authToken' : 'user.token',
+          tokenPreview: effectiveToken.substring(0, 20) + '...'
+        });
+        
+        const result = await favoritesApi.addToFavorites(user.id, product, effectiveToken);
         console.log('✅ Agregado a favoritos en servidor:', result);
         
         // Actualizar estado local
@@ -407,7 +573,14 @@ export const FavoritesProvider = ({ children }) => {
         });
       } else {
         // Usuario no autenticado - guardar localmente
-        console.log('👤 Usuario guest - guardando localmente');
+        console.log('👤 Usuario guest - guardando localmente. Razón:', {
+          isAuthenticated,
+          hasUser: !!user,
+          hasUserId: !!user?.id,
+          hasUserToken: !!user?.token,
+          hasAuthToken: !!authToken,
+          hasEffectiveToken: !!effectiveToken
+        });
         const updatedFavorites = [...favorites, product];
         setFavorites(updatedFavorites);
         favoritesApi.storage.setGuestFavorites(updatedFavorites);
@@ -417,7 +590,7 @@ export const FavoritesProvider = ({ children }) => {
       console.error('❌ Error agregando favorito:', error);
       
       // Si es error de autenticación, manejar específicamente
-      if (error.message.includes('403') || error.message.includes('Token') || error.message.includes('autenticación')) {
+      if (error.message.includes('403') || error.message.includes('Token') || error.message.includes('autenticación') || error.message.includes('sesión')) {
         return handleAuthError(error);
       }
       
@@ -429,14 +602,26 @@ export const FavoritesProvider = ({ children }) => {
   const removeFromFavorites = async (productId) => {
     console.log('🗑️ ELIMINAR FAVORITO - Iniciando:', {
       productId,
-      usuario: user?.email || 'guest'
+      usuario: user?.email || 'guest',
+      isAuthenticated
     });
 
+    // Usar authToken directamente (más confiable)
+    const effectiveToken = authToken || user?.token;
+
     try {
-      if (isAuthenticated && user) {
+      if (isAuthenticated && user && user.id && effectiveToken) {
+        // Verificar token válido
+        if (!checkTokenValidity(effectiveToken)) {
+          console.log('❌ Token inválido, forzando re-autenticación');
+          return handleAuthError(new Error('Token inválido o expirado'));
+        }
+
         // Usuario autenticado - eliminar del servidor
-        console.log('🔐 Usuario autenticado - eliminando del servidor');
-        await favoritesApi.removeFromFavorites(user.id, productId, user.token);
+        console.log('🔐 Usuario autenticado - eliminando del servidor', {
+          tokenSource: authToken ? 'authToken' : 'user.token'
+        });
+        await favoritesApi.removeFromFavorites(user.id, productId, effectiveToken);
         console.log('✅ Eliminado de favoritos en servidor');
       } else {
         // Usuario no autenticado - eliminar localmente
@@ -457,7 +642,7 @@ export const FavoritesProvider = ({ children }) => {
       console.error('❌ Error eliminando favorito:', error);
       
       // Si es error de autenticación, manejar específicamente
-      if (error.message.includes('403') || error.message.includes('Token') || error.message.includes('autenticación')) {
+      if (error.message.includes('403') || error.message.includes('Token') || error.message.includes('autenticación') || error.message.includes('sesión')) {
         return handleAuthError(error);
       }
       
@@ -477,7 +662,9 @@ export const FavoritesProvider = ({ children }) => {
       producto: product.nombre,
       id: product.id,
       actualmenteFavorito: isCurrentlyFavorite,
-      totalFavoritos: favorites.length
+      totalFavoritos: favorites.length,
+      usuario: user?.email || 'guest',
+      isAuthenticated
     });
     
     try {
@@ -500,11 +687,22 @@ export const FavoritesProvider = ({ children }) => {
   const clearFavorites = async () => {
     console.log('🧹 LIMPIAR FAVORITOS - Iniciando');
 
+    // Usar authToken directamente (más confiable)
+    const effectiveToken = authToken || user?.token;
+
     try {
-      if (isAuthenticated && user) {
+      if (isAuthenticated && user && user.id && effectiveToken) {
+        // Verificar token válido
+        if (!checkTokenValidity(effectiveToken)) {
+          console.log('❌ Token inválido, forzando re-autenticación');
+          return handleAuthError(new Error('Token inválido o expirado'));
+        }
+
         // Usuario autenticado - limpiar en servidor
-        console.log('🔐 Usuario autenticado - limpiando en servidor');
-        const result = await favoritesApi.clearAllFavorites(user.id, user.token);
+        console.log('🔐 Usuario autenticado - limpiando en servidor', {
+          tokenSource: authToken ? 'authToken' : 'user.token'
+        });
+        const result = await favoritesApi.clearAllFavorites(user.id, effectiveToken);
         console.log('✅ Favoritos limpiados en servidor:', result);
       } else {
         // Usuario no autenticado - limpiar localmente
@@ -524,7 +722,7 @@ export const FavoritesProvider = ({ children }) => {
   // Verificar si un producto está en favoritos
   const isFavorite = (productId) => {
     const result = favorites.some(item => item.id === productId);
-    console.log(`🔍 isFavorite Check: ${productId} -> ${result}`);
+    console.log(`🔍 isFavorite Check: ${productId} -> ${result} (Total: ${favorites.length})`);
     return result;
   };
 
@@ -579,7 +777,8 @@ export const FavoritesProvider = ({ children }) => {
   console.log('🎯 FavoritesContext Value:', {
     favoritesCount: value.favoritesCount,
     loading: value.loading,
-    syncing: value.syncing
+    syncing: value.syncing,
+    isAuthenticated: value.isAuthenticated
   });
 
   return (

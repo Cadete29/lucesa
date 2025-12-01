@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const auth = require('../middlewares/authenticateTokenG');
-const { preferenceClient } = require('../config/mercadopago');
+const { Preference } = require('../config/mercadopago');
 
 /**
  * Ruta para crear checkout de Mercado Pago
@@ -39,7 +39,7 @@ router.post('/create-checkout', auth, async (req, res) => {
     const validatedCartItems = cartItems.map(item => {
       // Si no hay nombre, usar una descripción alternativa
       let productName = item.nombre;
-      
+
       if (!productName || productName.trim() === '') {
         if (item.descripcion && item.descripcion.trim() !== '') {
           // Usar la descripción si está disponible
@@ -53,7 +53,7 @@ router.post('/create-checkout', auth, async (req, res) => {
         }
         console.log(`⚠️ Producto sin nombre - Usando: ${productName}`);
       }
-      
+
       return {
         ...item,
         nombre: productName
@@ -86,15 +86,15 @@ router.post('/create-checkout', auth, async (req, res) => {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10)
       RETURNING id
     `, [
-      userId, 
-      orderNumber, 
-      total, 
-      subtotal, 
-      tax, 
+      userId,
+      orderNumber,
+      total,
+      subtotal,
+      tax,
       shipping,
       JSON.stringify(shippingAddress),
       `${customerInfo.firstName} ${customerInfo.lastName}`,
-      customerInfo.email, 
+      customerInfo.email,
       customerInfo.phone
     ]);
 
@@ -107,7 +107,7 @@ router.post('/create-checkout', auth, async (req, res) => {
       : 'http://localhost:4004/api/images/code';
 
     console.log('📦 Guardando items de la orden...');
-    
+
     for (const item of validatedCartItems) {
       const imageUrl = `${IMAGE_BASE_URL}/${item.codigo}?size=small`;
       const unitPrice = Number(item.precioFinal || item.precio);
@@ -120,20 +120,20 @@ router.post('/create-checkout', auth, async (req, res) => {
           product_image_url, unit_price, quantity, total_price
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       `, [
-        orderId, 
-        item.codigo, 
-        item.nombre, 
+        orderId,
+        item.codigo,
+        item.nombre,
         item.marca || 'Sin marca',
-        imageUrl, 
-        unitPrice, 
-        item.quantity, 
+        imageUrl,
+        unitPrice,
+        item.quantity,
         unitPrice * item.quantity
       ]);
     }
 
     // CREAR PREFERENCIA EN MERCADO PAGO
     console.log('💳 Creando preferencia en Mercado Pago...');
-    
+
     const preferenceItems = validatedCartItems.map(item => ({
       title: item.nombre.substring(0, 255), // Mercado Pago limita a 255 caracteres
       unit_price: parseFloat((item.precioFinal || item.precio).toFixed(2)),
@@ -146,11 +146,11 @@ router.post('/create-checkout', auth, async (req, res) => {
 
     // ✅ CORRECCIÓN: URLs de retorno ABSOLUTAS y VÁLIDAS
     const baseFrontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    
+
     // Asegurar que las URLs sean absolutas y válidas
     const backUrls = {
       success: `${baseFrontendUrl}/pago/exito`,
-      failure: `${baseFrontendUrl}/pago/error`, 
+      failure: `${baseFrontendUrl}/pago/error`,
       pending: `${baseFrontendUrl}/pago/pendiente`
     };
 
@@ -160,12 +160,17 @@ router.post('/create-checkout', auth, async (req, res) => {
     console.log('   Pending:', backUrls.pending);
 
     // ✅ CORRECCIÓN: Remover auto_return temporalmente para evitar errores
+    // Dentro de tu ruta /create-checkout
     const preferenceData = {
       body: {
         items: preferenceItems,
-        back_urls: backUrls,
-        // ❌ REMOVER auto_return temporalmente para debugging
-        // auto_return: "approved",
+        back_urls: {
+          success: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/pago/exito`,
+          failure: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/pago/error`,
+          pending: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/pago/pendiente`
+        },
+        // prueba de all
+        auto_return: "all",
         external_reference: orderId.toString(),
         notification_url: `${process.env.BACKEND_URL || 'http://localhost:4004'}/api/payments/webhook`,
         payer: {
@@ -173,32 +178,27 @@ router.post('/create-checkout', auth, async (req, res) => {
           surname: customerInfo.lastName,
           email: customerInfo.email,
           phone: {
-            number: customerInfo.phone.replace(/\D/g, ''), // Solo números
-            area_code: "52"
+            area_code: "52",
+            number: customerInfo.phone.replace(/\D/g, '')
           }
-        },
-        payment_methods: {
-          excluded_payment_methods: [],
-          excluded_payment_types: [],
-          installments: 1
         },
         metadata: {
           order_id: orderId,
           order_number: orderNumber,
           user_id: userId
         }
+        // SIN auto_return → FUNCIONA EN LOCAL
       }
     };
-
     console.log('📤 Enviando datos a Mercado Pago...');
     console.log('📋 Datos de preferencia:', JSON.stringify(preferenceData, null, 2));
 
     try {
-      const mpResponse = await preferenceClient.create(preferenceData);
+      const mpResponse = await Preference.create(preferenceData);
 
       console.log('✅ Preferencia de Mercado Pago creada:', mpResponse.id);
       console.log('🔗 URL de pago:', mpResponse.init_point);
-      console.log('🔗 Sandbox URL:', mpResponse.sandbox_init_point);
+      console.log('🔗 Sandbox URL:', mpResponse.init_point);
 
       // Actualizar orden con datos de Mercado Pago
       await client.query(`
@@ -211,9 +211,9 @@ router.post('/create-checkout', auth, async (req, res) => {
       console.log('✅ Transacción completada exitosamente');
 
       // Usar sandbox_init_point si estamos en desarrollo
-      const paymentUrl = process.env.NODE_ENV === 'production' 
-        ? mpResponse.init_point 
-        : (mpResponse.sandbox_init_point || mpResponse.init_point);
+      const paymentUrl = process.env.NODE_ENV === 'production'
+        ? mpResponse.init_point
+        : (mpResponse.init_point || mpResponse.init_point);
 
       res.json({
         success: true,
@@ -231,23 +231,23 @@ router.post('/create-checkout', auth, async (req, res) => {
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('❌ Error creando pago:', error);
-    
+
     // Log detallado del error
     console.error('🔍 Detalles del error:');
     console.error('   - Mensaje:', error.message);
     console.error('   - Stack:', error.stack);
-    
+
     // Manejar errores específicos de Mercado Pago
     if (error.message && error.message.includes('Mercado Pago')) {
-      return res.status(500).json({ 
-        success: false, 
+      return res.status(500).json({
+        success: false,
         message: error.message
       });
     }
-    
-    res.status(500).json({ 
-      success: false, 
-      message: error.message || 'Error del servidor al procesar el pago' 
+
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error del servidor al procesar el pago'
     });
   } finally {
     client.release();
