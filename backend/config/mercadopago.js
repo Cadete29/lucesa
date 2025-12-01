@@ -1,7 +1,7 @@
 // backend/config/mercadopago.js
 
 // backend/config/mercadopago.js
-const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
+const { MercadoPagoConfig, Preference, Payment,MerchantOrder } = require('mercadopago');
 
 // ESTA ES LA CONFIGURACIÓN QUE FUNCIONA EN TODOS TUS PROYECTOS
 const client = new MercadoPagoConfig({
@@ -15,5 +15,6 @@ const client = new MercadoPagoConfig({
 module.exports = {
   mercadopagoClient: client,
   Preference: new Preference(client),
+  MerchantOrder: new MerchantOrder(client),   // ← ESTA ES LA ÚNICA LÍNEA NUEVA
   Payment: new Payment(client)
 };
