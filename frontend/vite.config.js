@@ -6,8 +6,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     allowedHosts: [
-      '6809d6fce692.ngrok-free.app', 
-      '1f43c734cc4b.ngrok-free.app',// Tu dominio de ngrok
+      '77fe952b7b48.ngrok-free.app', 
+      '7363391fa0ef.ngrok-free.app',// Tu dominio de ngrok
       'localhost',
       '127.0.0.1'
     ],
