@@ -1,14 +1,9 @@
-// src/context/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../api/AuthService';
 import ordersService from '../api/ordersService';
 
-// Crear contexto de autenticación
 const AuthContext = createContext();
 
-/**
- * Hook personalizado para usar el contexto de autenticación
- */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -17,9 +12,6 @@ export const useAuth = () => {
   return context;
 };
 
-/**
- * Verificar si un token es válido
- */
 const checkTokenValidity = (token) => {
   if (!token) {
     console.log('❌ No hay token para verificar');
@@ -27,13 +19,11 @@ const checkTokenValidity = (token) => {
   }
   
   try {
-    // Verificar si es un token demo (no JWT)
     if (token.startsWith('demo-token-') || token.startsWith('social-token-') || token.startsWith('demo-jwt-token-')) {
       console.log('🔐 Token demo/social - considerado válido');
       return true;
     }
     
-    // Verificar si es un token JWT válido
     const parts = token.split('.');
     if (parts.length !== 3) {
       console.log('❌ Token no tiene formato JWT válido');
@@ -53,23 +43,19 @@ const checkTokenValidity = (token) => {
       estaExpirado: timeUntilExpiration <= 0
     });
     
-    return timeUntilExpiration > 300000; // Válido si expira en más de 5 minutos
+    return timeUntilExpiration > 300000;
   } catch (error) {
     console.error('❌ Error verificando token:', error);
     return false;
   }
 };
 
-/**
- * Proveedor de autenticación que envuelve la aplicación
- */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
 
-  // Cargar datos de autenticación desde localStorage al inicializar - CORREGIDO
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -91,10 +77,9 @@ export const AuthProvider = ({ children }) => {
             console.log('✅ Token válido encontrado, restaurando sesión');
             const userData = JSON.parse(savedUser);
             
-            // Asegurar que el user restaurado tenga una estructura consistente
             const userWithToken = {
               ...userData,
-              token: savedToken // Mantener el token en el objeto user
+              token: savedToken
             };
             
             setUser(userWithToken);
@@ -109,7 +94,6 @@ export const AuthProvider = ({ children }) => {
             });
           } else {
             console.log('❌ Token inválido o expirado, limpiando sesión');
-            // Limpiar datos inválidos o expirados
             localStorage.removeItem('lucesa-user');
             localStorage.removeItem('lucesa-token');
             setUser(null);
@@ -122,7 +106,6 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (error) {
         console.error('❌ Error inicializando autenticación:', error);
-        // Limpiar datos corruptos
         localStorage.removeItem('lucesa-user');
         localStorage.removeItem('lucesa-token');
         setUser(null);
@@ -134,15 +117,11 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    // Solo inicializar una vez
     if (!initialized) {
       initializeAuth();
     }
   }, [initialized]);
 
-  /**
-   * Inicia sesión con email y contraseña
-   */
   const login = async (email, password) => {
     try {
       setLoading(true);
@@ -154,10 +133,9 @@ export const AuthProvider = ({ children }) => {
         const userData = response.data.user;
         const userToken = response.data.token;
         
-        // Crear objeto user con estructura consistente
         const userWithToken = {
           ...userData,
-          token: userToken // Incluir token en el objeto user
+          token: userToken
         };
         
         console.log('✅ Login exitoso:', {
@@ -170,7 +148,6 @@ export const AuthProvider = ({ children }) => {
         setUser(userWithToken);
         setToken(userToken);
         
-        // Guardar en localStorage
         localStorage.setItem('lucesa-user', JSON.stringify(userWithToken));
         localStorage.setItem('lucesa-token', userToken);
         
@@ -187,9 +164,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /**
-   * Registra un nuevo usuario
-   */
   const register = async (userData) => {
     try {
       setLoading(true);
@@ -230,9 +204,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /**
-   * Cierra la sesión del usuario
-   */
   const logout = () => {
     console.log('🚪 Cerrando sesión para:', user?.email);
     setUser(null);
@@ -243,9 +214,6 @@ export const AuthProvider = ({ children }) => {
     console.log('🧹 Sesión limpiada completamente');
   };
 
-  /**
-   * Verifica y refresca la autenticación si es necesario
-   */
   const checkAuth = () => {
     try {
       const savedUser = localStorage.getItem('lucesa-user');
@@ -277,9 +245,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /**
-   * Actualiza el perfil del usuario
-   */
   const updateProfile = async (profileData) => {
     try {
       console.log('📝 Actualizando perfil para:', user?.email);
@@ -289,7 +254,7 @@ export const AuthProvider = ({ children }) => {
         const updatedUser = { 
           ...user, 
           ...response.data.user,
-          token: user.token // Mantener el token
+          token: user.token
         };
         
         setUser(updatedUser);
@@ -306,9 +271,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /**
-   * Solicita recuperación de contraseña
-   */
   const forgotPassword = async (email) => {
     try {
       setLoading(true);
@@ -331,9 +293,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /**
-   * Restablece la contraseña con token
-   */
   const resetPassword = async (token, newPassword) => {
     try {
       setLoading(true);
@@ -351,9 +310,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  /**
-   * Verifica si un token de reset es válido
-   */
   const verifyResetToken = async (token) => {
     try {
       const response = await authService.verifyResetToken(token);
@@ -371,18 +327,92 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Verificar autenticación periódicamente
+  // NUEVA FUNCIÓN: Obtener historial de órdenes
+  const getOrderHistory = async () => {
+    try {
+      console.log('📦 Obteniendo historial de órdenes...');
+      
+      if (!token) {
+        console.log('❌ No hay token disponible');
+        return user?.orders || [];
+      }
+      
+      const response = await ordersService.getOrderHistory(token);
+      
+      if (response.success) {
+        console.log(`✅ ${response.orders?.length || 0} órdenes obtenidas`);
+        
+        // Formatear las órdenes para compatibilidad con el frontend
+        const formattedOrders = response.orders.map(order => ({
+          id: order.id,
+          order_number: order.order_number,
+          status: order.status,
+          total: order.total_amount || order.total,
+          total_amount: order.total_amount,
+          subtotal: order.subtotal,
+          tax_amount: order.tax_amount,
+          shipping_amount: order.shipping_amount,
+          created_at: order.created_at,
+          order_date: order.order_date || order.created_at,
+          items: order.items || order.items_details || [],
+          items_details: order.items || order.items_details || [],
+          customer_name: order.customer_name,
+          customer_email: order.customer_email,
+          shipping_address: order.shipping_address || {}
+        }));
+        
+        return formattedOrders;
+      } else {
+        console.log('❌ Error obteniendo historial:', response.message);
+        return user?.orders || [];
+      }
+    } catch (error) {
+      console.error('❌ Error en getOrderHistory:', error);
+      return user?.orders || [];
+    }
+  };
+
+  // NUEVA FUNCIÓN: Obtener detalles de una orden específica
+  const getOrderDetails = async (orderId) => {
+    try {
+      console.log('🔍 Obteniendo detalles de orden:', orderId);
+      
+      if (!token) {
+        throw new Error('No autenticado');
+      }
+      
+      const response = await ordersService.getOrderDetails(token, orderId);
+      
+      if (response.success) {
+        console.log('✅ Detalles de orden obtenidos:', response.order.order_number);
+        
+        // Formatear para compatibilidad
+        const order = response.order;
+        return {
+          ...order,
+          items: order.items || order.items_details || [],
+          items_details: order.items || order.items_details || [],
+          total: order.total_amount || order.total
+        };
+      } else {
+        throw new Error(response.message || 'Error obteniendo detalles');
+      }
+    } catch (error) {
+      console.error('❌ Error en getOrderDetails:', error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     const interval = setInterval(() => {
       if (initialized) {
         checkAuth();
       }
-    }, 30000); // Verificar cada 30 segundos
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [initialized, user, token]);
 
-  // Valor del contexto
   const value = {
     // Estado
     user,
@@ -399,20 +429,14 @@ export const AuthProvider = ({ children }) => {
     updateProfile,
     checkAuth,
     
+    // Métodos de órdenes
+    getOrderHistory,
+    getOrderDetails,
+    
     // Computados
     isAuthenticated: !!user && !!token && checkTokenValidity(token),
     isAdmin: user?.rol === 'admin',
     isUser: user?.rol === 'user' || !user?.rol,
-    
-    // Métodos de órdenes (si los necesitas)
-    saveOrderToHistory: async (orderData) => {
-      // Implementación simplificada
-      console.log('Guardando orden:', orderData);
-      return { success: true };
-    },
-    getOrderHistory: async () => {
-      return user?.orders || [];
-    }
   };
 
   console.log('🔐 AuthContext State:', {

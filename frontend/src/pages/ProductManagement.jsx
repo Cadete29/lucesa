@@ -27,7 +27,7 @@ const ProductManagement = () => {
   // Nuevos estados para el modal de detalles
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedDetailItem, setSelectedDetailItem] = useState(null);
-  const [detailModalType, setDetailModalType] = useState(''); // 'warranty' o 'return'
+  const [detailModalType, setDetailModalType] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
 
@@ -89,8 +89,8 @@ const ProductManagement = () => {
     if (warrantyOrderSearchTerm) {
       const filtered = orders.filter(order => 
         order.order_number?.toLowerCase().includes(warrantyOrderSearchTerm.toLowerCase()) ||
-        (order.shipping_address?.nombre || order.user_nombre)?.toLowerCase().includes(warrantyOrderSearchTerm.toLowerCase()) ||
-        order.user_email?.toLowerCase().includes(warrantyOrderSearchTerm.toLowerCase())
+        (order.shipping_address?.nombre || order.customer_name || order.user_nombre)?.toLowerCase().includes(warrantyOrderSearchTerm.toLowerCase()) ||
+        (order.shipping_address?.email || order.customer_email || order.user_email)?.toLowerCase().includes(warrantyOrderSearchTerm.toLowerCase())
       );
       setFilteredWarrantyOrders(filtered);
     } else {
@@ -103,8 +103,8 @@ const ProductManagement = () => {
     if (returnOrderSearchTerm) {
       const filtered = orders.filter(order => 
         order.order_number?.toLowerCase().includes(returnOrderSearchTerm.toLowerCase()) ||
-        (order.shipping_address?.nombre || order.user_nombre)?.toLowerCase().includes(returnOrderSearchTerm.toLowerCase()) ||
-        order.user_email?.toLowerCase().includes(returnOrderSearchTerm.toLowerCase())
+        (order.shipping_address?.nombre || order.customer_name || order.user_nombre)?.toLowerCase().includes(returnOrderSearchTerm.toLowerCase()) ||
+        (order.shipping_address?.email || order.customer_email || order.user_email)?.toLowerCase().includes(returnOrderSearchTerm.toLowerCase())
       );
       setFilteredReturnOrders(filtered);
     } else {
@@ -115,7 +115,8 @@ const ProductManagement = () => {
   // Cargar todas las órdenes para el selector
   const loadOrders = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/orders`, {
+      console.log('🔍 Cargando órdenes para ProductManagement...');
+      const response = await fetch(`${API_BASE_URL}/orders/admin/orders`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -124,6 +125,7 @@ const ProductManagement = () => {
       });
 
       const data = await response.json();
+      console.log('📊 Órdenes cargadas:', data.orders?.length || 0);
       
       if (data.success) {
         setOrders(data.orders || []);
@@ -140,20 +142,36 @@ const ProductManagement = () => {
   const loadWarranties = async () => {
     try {
       setWarrantiesLoading(true);
-      const response = await fetch(`${API_BASE_URL}/warranties`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
+      console.log('🛡️ Cargando garantías...');
       
-      if (data.success) {
-        setWarranties(data.warranties || []);
+      try {
+        const response = await fetch(`${API_BASE_URL}/warranties`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setWarranties(data.warranties || []);
+            console.log('✅ Garantías cargadas desde API:', data.warranties?.length || 0);
+            return;
+          }
+        }
+      } catch (apiError) {
+        console.warn('API de garantías no disponible:', apiError.message);
+      }
+      
+      const savedWarranties = localStorage.getItem('lucesa_warranties');
+      if (savedWarranties) {
+        setWarranties(JSON.parse(savedWarranties));
+        console.log('📦 Garantías cargadas desde localStorage');
       } else {
         setWarranties(getSampleWarranties());
+        console.log('📋 Usando datos de muestra para garantías');
       }
     } catch (error) {
       console.error('Error cargando garantías:', error);
@@ -163,12 +181,64 @@ const ProductManagement = () => {
     }
   };
 
-  // Cargar devoluciones desde la base de datos
+  // Cargar devoluciones desde la base de datos - CORREGIDO
   const loadReturns = async () => {
     try {
       setReturnsLoading(true);
-      // En producción, aquí iría la llamada real a la API
-      setReturns(getSampleReturns());
+      console.log('🔄 Cargando devoluciones desde backend...');
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/returns`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('📊 Respuesta del backend:', data);
+          
+          if (data.success) {
+            // Convertir campos del backend al formato del frontend
+            const formattedReturns = data.returns.map(item => ({
+              id: item.id,
+              order_id: item.order_id,
+              order_number: item.order_number,
+              product_code: item.product_code,
+              product_name: item.product_name,
+              customer_name: item.customer_name,
+              customer_email: item.customer_email,
+              purchase_amount: item.purchase_amount,
+              fecha_devolucion: item.return_date, // Convertir return_date → fecha_devolucion
+              motivo: item.return_reason, // Convertir return_reason → motivo
+              estado: item.status, // Convertir status → estado
+              numero_serie: item.serial_number, // Convertir serial_number → numero_serie
+              observaciones: item.observations,
+              ticket_soporte: item.ticket_number, // Convertir ticket_number → ticket_soporte
+              created_at: item.created_at,
+              updated_at: item.updated_at
+            }));
+            
+            setReturns(formattedReturns);
+            console.log('✅ Devoluciones cargadas desde API y convertidas:', formattedReturns.length);
+            return;
+          }
+        }
+      } catch (apiError) {
+        console.warn('API de devoluciones no disponible:', apiError.message);
+      }
+      
+      // Fallback: cargar desde localStorage o datos de muestra
+      const savedReturns = localStorage.getItem('lucesa_returns');
+      if (savedReturns) {
+        setReturns(JSON.parse(savedReturns));
+        console.log('📦 Devoluciones cargadas desde localStorage');
+      } else {
+        setReturns(getSampleReturns());
+        console.log('📋 Usando datos de muestra para devoluciones');
+      }
     } catch (error) {
       console.error('Error cargando devoluciones:', error);
       setReturns(getSampleReturns());
@@ -177,82 +247,74 @@ const ProductManagement = () => {
     }
   };
 
+  // Guardar garantías en localStorage
+  const saveWarrantiesToStorage = (warrantiesData) => {
+    localStorage.setItem('lucesa_warranties', JSON.stringify(warrantiesData));
+  };
+
+  // Guardar devoluciones en localStorage
+  const saveReturnsToStorage = (returnsData) => {
+    localStorage.setItem('lucesa_returns', JSON.stringify(returnsData));
+  };
+
+  // Generar número de ticket único para garantías
+  const generateWarrantyTicketNumber = () => {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substr(2, 5).toUpperCase();
+    return `TS-${timestamp}-${random}`;
+  };
+
+  // Generar número de ticket único para devoluciones
+  const generateReturnTicketNumber = () => {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substr(2, 5).toUpperCase();
+    return `DEV-${timestamp}-${random}`;
+  };
+
   // Datos de ejemplo para órdenes
   const getSampleOrders = () => {
     return [
       {
         id: 1,
-        order_number: 'ORD-001',
-        user_nombre: 'Juan Pérez',
-        user_email: 'juan@email.com',
+        order_number: 'LUCESA-001',
+        customer_name: 'Juan Pérez',
+        customer_email: 'juan@email.com',
         total_amount: 1200.00,
         created_at: '2024-01-20T10:00:00Z',
         shipping_address: {
           nombre: 'Juan Pérez',
-          email: 'juan@email.com'
+          email: 'juan@email.com',
+          telefono: '555-123-4567'
         },
         items: [
           {
             product_code: 'PROD001',
             product_name: 'Laptop Gaming Pro',
-            product_brand: 'GamingBrand'
+            product_brand: 'GamingBrand',
+            unit_price: 1200,
+            quantity: 1
           }
         ]
       },
       {
         id: 2,
-        order_number: 'ORD-002',
-        user_nombre: 'María García',
-        user_email: 'maria@email.com',
+        order_number: 'LUCESA-002',
+        customer_name: 'María García',
+        customer_email: 'maria@email.com',
         total_amount: 599.00,
         created_at: '2024-01-18T14:30:00Z',
         shipping_address: {
           nombre: 'María García',
-          email: 'maria@email.com'
+          email: 'maria@email.com',
+          telefono: '555-987-6543'
         },
         items: [
           {
             product_code: 'PROD002',
             product_name: 'Smartphone Android',
-            product_brand: 'TechCorp'
-          }
-        ]
-      },
-      {
-        id: 3,
-        order_number: 'ORD-003',
-        user_nombre: 'Carlos López',
-        user_email: 'carlos@email.com',
-        total_amount: 399.00,
-        created_at: '2024-01-22T09:15:00Z',
-        shipping_address: {
-          nombre: 'Carlos López',
-          email: 'carlos@email.com'
-        },
-        items: [
-          {
-            product_code: 'PROD004',
-            product_name: 'Monitor 4K 27"',
-            product_brand: 'DisplayTech'
-          }
-        ]
-      },
-      {
-        id: 4,
-        order_number: 'ORD-004',
-        user_nombre: 'Ana Martínez',
-        user_email: 'ana@email.com',
-        total_amount: 149.00,
-        created_at: '2024-01-25T16:45:00Z',
-        shipping_address: {
-          nombre: 'Ana Martínez',
-          email: 'ana@email.com'
-        },
-        items: [
-          {
-            product_code: 'PROD003',
-            product_name: 'Auriculares Inalámbricos',
-            product_brand: 'AudioPlus'
+            product_brand: 'TechCorp',
+            unit_price: 599,
+            quantity: 1
           }
         ]
       }
@@ -264,7 +326,8 @@ const ProductManagement = () => {
     return [
       {
         id: 1,
-        order_number: 'ORD-001',
+        order_id: 1,
+        order_number: 'LUCESA-001',
         product_code: 'PROD001',
         product_name: 'Laptop Gaming Pro',
         customer_name: 'Juan Pérez',
@@ -275,12 +338,14 @@ const ProductManagement = () => {
         old_serial_number: 'SN-001-OLD',
         new_serial_number: 'SN-001-NEW',
         status: 'activa',
-        ticket_number: 'TS-001',
-        created_at: '2024-03-15T10:00:00Z'
+        ticket_number: 'TS-1738361600000-ABCDE',
+        created_at: '2024-03-15T10:00:00Z',
+        updated_at: '2024-03-15T10:00:00Z'
       },
       {
         id: 2,
-        order_number: 'ORD-002',
+        order_id: 2,
+        order_number: 'LUCESA-002',
         product_code: 'PROD002',
         product_name: 'Smartphone Android',
         customer_name: 'María García',
@@ -291,8 +356,9 @@ const ProductManagement = () => {
         old_serial_number: 'SN-002-OLD',
         new_serial_number: 'SN-002-NEW',
         status: 'aplicada',
-        ticket_number: 'TS-002',
-        created_at: '2024-03-10T14:30:00Z'
+        ticket_number: 'TS-1738275200000-FGHIJ',
+        created_at: '2024-03-10T14:30:00Z',
+        updated_at: '2024-03-10T14:30:00Z'
       }
     ];
   };
@@ -302,35 +368,39 @@ const ProductManagement = () => {
     return [
       {
         id: 1,
-        order_number: 'ORD-003',
-        product_code: 'PROD004',
-        product_name: 'Monitor 4K 27"',
-        customer_name: 'Carlos López',
-        customer_email: 'carlos@email.com',
-        purchase_amount: 399.00,
-        fecha_devolucion: '2024-01-28',
-        motivo: 'Producto defectuoso',
+        order_id: 1,
+        order_number: 'LUCESA-001',
+        product_code: 'PROD001',
+        product_name: 'Laptop Gaming Pro',
+        customer_name: 'Juan Pérez',
+        customer_email: 'juan@email.com',
+        purchase_amount: 1200.00,
+        fecha_devolucion: '2024-03-20',
+        motivo: 'Pantalla defectuosa',
         estado: 'pendiente',
-        numero_serie: 'SN-003-001',
-        observaciones: 'El monitor presenta pixeles muertos',
-        ticket_soporte: 'DEV-001',
-        created_at: '2024-01-28T09:00:00Z'
+        numero_serie: 'SN-001-001',
+        observaciones: 'La pantalla presenta líneas verticales',
+        ticket_soporte: 'DEV-1738448000000-KLMNO',
+        created_at: '2024-03-20T09:00:00Z',
+        updated_at: '2024-03-20T09:00:00Z'
       },
       {
         id: 2,
-        order_number: 'ORD-004',
-        product_code: 'PROD003',
-        product_name: 'Auriculares Inalámbricos',
-        customer_name: 'Ana Martínez',
-        customer_email: 'ana@email.com',
-        purchase_amount: 149.00,
-        fecha_devolucion: '2024-01-26',
+        order_id: 2,
+        order_number: 'LUCESA-002',
+        product_code: 'PROD002',
+        product_name: 'Smartphone Android',
+        customer_name: 'María García',
+        customer_email: 'maria@email.com',
+        purchase_amount: 599.00,
+        fecha_devolucion: '2024-03-18',
         motivo: 'Cambio de modelo',
         estado: 'aprobada',
-        numero_serie: 'SN-004-001',
-        observaciones: 'Cliente prefiere modelo con cancelación de ruido',
-        ticket_soporte: 'DEV-002',
-        created_at: '2024-01-26T14:20:00Z'
+        numero_serie: 'SN-002-001',
+        observaciones: 'Cliente prefiere modelo más reciente',
+        ticket_soporte: 'DEV-1738275200000-PQRST',
+        created_at: '2024-03-18T14:20:00Z',
+        updated_at: '2024-03-18T14:20:00Z'
       }
     ];
   };
@@ -344,15 +414,15 @@ const ProductManagement = () => {
         order_number: order.order_number,
         product_code: firstItem.product_code,
         product_name: firstItem.product_name,
-        customer_name: order.shipping_address?.nombre || order.user_nombre,
-        customer_email: order.shipping_address?.email || order.user_email,
-        purchase_date: order.created_at.split('T')[0],
+        customer_name: order.customer_name || order.shipping_address?.nombre || order.user_nombre,
+        customer_email: order.customer_email || order.shipping_address?.email || order.user_email,
+        purchase_date: order.created_at ? order.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
         purchase_amount: order.total_amount,
         warranty_application_date: new Date().toISOString().split('T')[0],
         old_serial_number: '',
         new_serial_number: '',
         status: 'activa',
-        ticket_number: `TS-${Date.now()}`
+        ticket_number: generateWarrantyTicketNumber()
       });
     }
     setShowWarrantyOrderSearch(false);
@@ -368,15 +438,15 @@ const ProductManagement = () => {
         order_number: order.order_number,
         product_code: firstItem.product_code,
         product_name: firstItem.product_name,
-        customer_name: order.shipping_address?.nombre || order.user_nombre,
-        customer_email: order.shipping_address?.email || order.user_email,
+        customer_name: order.customer_name || order.shipping_address?.nombre || order.user_nombre,
+        customer_email: order.customer_email || order.shipping_address?.email || order.user_email,
         purchase_amount: order.total_amount,
         fecha_devolucion: new Date().toISOString().split('T')[0],
         motivo: '',
         estado: 'pendiente',
         numero_serie: '',
         observaciones: '',
-        ticket_soporte: `DEV-${Date.now()}`
+        ticket_soporte: generateReturnTicketNumber()
       });
     }
     setShowReturnOrderSearch(false);
@@ -389,45 +459,175 @@ const ProductManagement = () => {
       setLoading(true);
       
       const newWarranty = {
-        id: warranties.length + 1,
-        ...warrantyForm,
+        id: warranties.length ? Math.max(...warranties.map(w => w.id)) + 1 : 1,
+        order_id: selectedWarrantyOrder?.id,
+        order_number: warrantyForm.order_number,
+        product_code: warrantyForm.product_code,
+        product_name: warrantyForm.product_name,
+        customer_name: warrantyForm.customer_name,
+        customer_email: warrantyForm.customer_email,
+        purchase_date: warrantyForm.purchase_date,
         purchase_amount: parseFloat(warrantyForm.purchase_amount),
-        created_at: new Date().toISOString()
+        warranty_application_date: warrantyForm.warranty_application_date,
+        old_serial_number: warrantyForm.old_serial_number,
+        new_serial_number: warrantyForm.new_serial_number,
+        status: warrantyForm.status,
+        ticket_number: warrantyForm.ticket_number,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
       
-      setWarranties([...warranties, newWarranty]);
+      console.log('📋 Nueva garantía:', newWarranty);
+      
+      // Guardar en API si está disponible
+      try {
+        const response = await fetch(`${API_BASE_URL}/warranties`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(newWarranty)
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            newWarranty.id = data.warranty?.id || newWarranty.id;
+            console.log('✅ Garantía guardada en API:', data.warranty);
+          }
+        }
+      } catch (apiError) {
+        console.warn('API de garantías no disponible, guardando localmente:', apiError.message);
+      }
+      
+      const updatedWarranties = [...warranties, newWarranty];
+      setWarranties(updatedWarranties);
+      saveWarrantiesToStorage(updatedWarranties);
+      
       setShowAddWarranty(false);
       resetWarrantyForm();
       setSelectedWarrantyOrder(null);
-
+      
+      alert(`✅ Garantía agregada exitosamente\nTicket: ${newWarranty.ticket_number}`);
+      
     } catch (error) {
       console.error('Error agregando garantía:', error);
-      alert('Error de conexión al agregar garantía');
+      alert('❌ Error al agregar garantía');
     } finally {
       setLoading(false);
     }
   };
 
-  // Agregar nueva devolución
+  // Agregar nueva devolución - CORREGIDO PARA ENVIAR DATOS CORRECTOS AL BACKEND
   const handleAddReturn = async () => {
     try {
       setLoading(true);
       
-      const newReturn = {
-        id: returns.length + 1,
-        ...returnForm,
+      // Mapear campos del frontend a los que espera el backend
+      const returnDataForBackend = {
+        order_number: returnForm.order_number,
+        product_code: returnForm.product_code,
+        product_name: returnForm.product_name,
+        customer_name: returnForm.customer_name,
+        customer_email: returnForm.customer_email,
         purchase_amount: parseFloat(returnForm.purchase_amount),
-        created_at: new Date().toISOString()
+        return_date: returnForm.fecha_devolucion, // Cambiado: fecha_devolucion → return_date
+        serial_number: returnForm.numero_serie, // Cambiado: numero_serie → serial_number
+        return_reason: returnForm.motivo, // Cambiado: motivo → return_reason
+        observations: returnForm.observaciones,
+        status: returnForm.estado, // Cambiado: estado → status
+        ticket_number: returnForm.ticket_soporte // Cambiado: ticket_soporte → ticket_number
       };
       
-      setReturns([...returns, newReturn]);
-      setShowAddReturn(false);
-      resetReturnForm();
-      setSelectedReturnOrder(null);
-
+      console.log('📋 Datos a enviar al backend:', returnDataForBackend);
+      
+      // Guardar en API
+      const response = await fetch(`${API_BASE_URL}/returns`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(returnDataForBackend)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Respuesta del backend:', data);
+      
+      if (data.success) {
+        // Actualizar estado local con la respuesta del backend
+        const newReturn = {
+          id: data.return?.id || (returns.length ? Math.max(...returns.map(r => r.id)) + 1 : 1),
+          order_id: selectedReturnOrder?.id,
+          order_number: data.return?.order_number || returnDataForBackend.order_number,
+          product_code: data.return?.product_code || returnDataForBackend.product_code,
+          product_name: data.return?.product_name || returnDataForBackend.product_name,
+          customer_name: data.return?.customer_name || returnDataForBackend.customer_name,
+          customer_email: data.return?.customer_email || returnDataForBackend.customer_email,
+          purchase_amount: data.return?.purchase_amount || returnDataForBackend.purchase_amount,
+          fecha_devolucion: data.return?.return_date || returnDataForBackend.return_date,
+          motivo: data.return?.return_reason || returnDataForBackend.return_reason,
+          estado: data.return?.status || returnDataForBackend.status,
+          numero_serie: data.return?.serial_number || returnDataForBackend.serial_number,
+          observaciones: data.return?.observations || returnDataForBackend.observations,
+          ticket_soporte: data.return?.ticket_number || returnDataForBackend.ticket_number,
+          created_at: data.return?.created_at || new Date().toISOString(),
+          updated_at: data.return?.updated_at || new Date().toISOString()
+        };
+        
+        const updatedReturns = [...returns, newReturn];
+        setReturns(updatedReturns);
+        saveReturnsToStorage(updatedReturns);
+        
+        setShowAddReturn(false);
+        resetReturnForm();
+        setSelectedReturnOrder(null);
+        
+        alert(`✅ Devolución agregada exitosamente\nTicket: ${newReturn.ticket_soporte}`);
+      } else {
+        throw new Error(data.message || 'Error en la respuesta del servidor');
+      }
+      
     } catch (error) {
-      console.error('Error agregando devolución:', error);
-      alert('Error de conexión al agregar devolución');
+      console.error('❌ Error agregando devolución:', error);
+      alert(`❌ Error al agregar devolución: ${error.message}`);
+      
+      // Fallback: guardar localmente si el backend falla
+      try {
+        const newReturn = {
+          id: returns.length ? Math.max(...returns.map(r => r.id)) + 1 : 1,
+          order_id: selectedReturnOrder?.id,
+          order_number: returnForm.order_number,
+          product_code: returnForm.product_code,
+          product_name: returnForm.product_name,
+          customer_name: returnForm.customer_name,
+          customer_email: returnForm.customer_email,
+          purchase_amount: parseFloat(returnForm.purchase_amount),
+          fecha_devolucion: returnForm.fecha_devolucion,
+          motivo: returnForm.motivo,
+          estado: returnForm.estado,
+          numero_serie: returnForm.numero_serie,
+          observaciones: returnForm.observaciones,
+          ticket_soporte: returnForm.ticket_soporte,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        const updatedReturns = [...returns, newReturn];
+        setReturns(updatedReturns);
+        saveReturnsToStorage(updatedReturns);
+        
+        console.log('📦 Devolución guardada localmente como fallback');
+        alert('⚠️ El backend no está disponible. La devolución se guardó localmente.');
+        
+      } catch (localError) {
+        console.error('Error en fallback local:', localError);
+      }
     } finally {
       setLoading(false);
     }
@@ -436,27 +636,119 @@ const ProductManagement = () => {
   // Actualizar estado de garantía
   const handleWarrantyStatusUpdate = async (warrantyId, newStatus) => {
     try {
-      setWarranties(warranties.map(warranty =>
-        warranty.id === warrantyId ? { ...warranty, status: newStatus } : warranty
-      ));
+      const updatedWarranties = warranties.map(warranty =>
+        warranty.id === warrantyId ? { 
+          ...warranty, 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        } : warranty
+      );
+      
+      setWarranties(updatedWarranties);
+      saveWarrantiesToStorage(updatedWarranties);
+      
+      if (newStatus === 'aplicada') {
+        const warranty = warranties.find(w => w.id === warrantyId);
+        if (warranty?.order_id) {
+          await updateOrderStatus(warranty.order_id, 'processing');
+        }
+      }
+      
+      alert(`✅ Estado de garantía actualizado a: ${getWarrantyStatusLabel(newStatus)}`);
+      
     } catch (error) {
-      console.error('Error actualizando estado:', error);
-      alert('Error de conexión al actualizar estado');
+      console.error('Error actualizando estado de garantía:', error);
+      alert('❌ Error al actualizar estado');
+    }
+  };
+
+  // Actualizar estado de devolución - CORREGIDO PARA ENVIAR DATOS CORRECTOS
+  const handleReturnStatusUpdate = async (returnId, newStatus) => {
+    try {
+      // Enviar actualización al backend
+      try {
+        const response = await fetch(`${API_BASE_URL}/returns/${returnId}/status`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status: newStatus }) // Enviar 'status' en lugar de 'estado'
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            console.log('✅ Estado actualizado en backend:', data.return);
+          }
+        }
+      } catch (apiError) {
+        console.warn('Error actualizando en backend, continuando localmente:', apiError.message);
+      }
+
+      // Actualizar localmente
+      const updatedReturns = returns.map(ret =>
+        ret.id === returnId ? { 
+          ...ret, 
+          estado: newStatus, // Mantener 'estado' en frontend
+          updated_at: new Date().toISOString()
+        } : ret
+      );
+      
+      setReturns(updatedReturns);
+      saveReturnsToStorage(updatedReturns);
+      
+      alert(`✅ Estado de devolución actualizado a: ${getReturnStatusLabel(newStatus)}`);
+      
+    } catch (error) {
+      console.error('Error actualizando estado de devolución:', error);
+      alert('❌ Error al actualizar estado');
+    }
+  };
+
+  // Actualizar estado de orden
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      console.log(`🔄 Actualizando estado de orden ${orderId} a ${newStatus}`);
+      
+      const response = await fetch(`${API_BASE_URL}/orders/admin/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log(`✅ Orden ${orderId} actualizada a ${newStatus}`);
+        loadOrders();
+      } else {
+        console.warn(`⚠️ No se pudo actualizar orden: ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Error actualizando estado de orden:', error);
     }
   };
 
   // Manejar acciones de garantía
   const handleWarrantyAction = (warrantyId, action) => {
     if (action === 'extender') {
-      setWarranties(warranties.map(warranty => 
+      const updatedWarranties = warranties.map(warranty => 
         warranty.id === warrantyId 
           ? { 
               ...warranty, 
               status: 'activa',
-              warranty_application_date: new Date().toISOString().split('T')[0]
+              warranty_application_date: new Date().toISOString().split('T')[0],
+              updated_at: new Date().toISOString()
             } 
           : warranty
-      ));
+      );
+      setWarranties(updatedWarranties);
+      saveWarrantiesToStorage(updatedWarranties);
+      alert(`✅ Garantía ${warrantyId} extendida`);
     } else {
       alert(`${action} garantía ${warrantyId}`);
     }
@@ -465,27 +757,21 @@ const ProductManagement = () => {
   // Manejar acciones de devolución
   const handleReturnAction = (returnId, action) => {
     if (action === 'aprobar') {
-      setReturns(returns.map(ret => 
-        ret.id === returnId ? { ...ret, estado: 'aprobada' } : ret
-      ));
+      handleReturnStatusUpdate(returnId, 'aprobada');
     } else if (action === 'rechazar') {
-      setReturns(returns.map(ret => 
-        ret.id === returnId ? { ...ret, estado: 'rechazada' } : ret
-      ));
+      handleReturnStatusUpdate(returnId, 'rechazada');
     } else if (action === 'completar') {
-      setReturns(returns.map(ret => 
-        ret.id === returnId ? { ...ret, estado: 'completada' } : ret
-      ));
+      handleReturnStatusUpdate(returnId, 'completada');
     } else {
       alert(`${action} devolución ${returnId}`);
     }
   };
 
-  // Nuevas funciones para manejar el modal de detalles
+  // Manejar mostrar detalles
   const handleShowDetails = (item, type) => {
     setSelectedDetailItem(item);
     setDetailModalType(type);
-    setEditForm(item);
+    setEditForm({...item});
     setIsEditing(false);
     setShowDetailModal(true);
   };
@@ -509,27 +795,69 @@ const ProductManagement = () => {
     }));
   };
 
+  // Guardar edición - CORREGIDO PARA ENVIAR DATOS CORRECTOS
   const handleSaveEdit = async () => {
     try {
       setLoading(true);
       
       if (detailModalType === 'warranty') {
-        setWarranties(warranties.map(warranty =>
-          warranty.id === selectedDetailItem.id ? { ...editForm } : warranty
-        ));
+        const updatedWarranties = warranties.map(warranty =>
+          warranty.id === selectedDetailItem.id ? { 
+            ...editForm, 
+            updated_at: new Date().toISOString(),
+            purchase_amount: parseFloat(editForm.purchase_amount) || 0
+          } : warranty
+        );
+        setWarranties(updatedWarranties);
+        saveWarrantiesToStorage(updatedWarranties);
       } else if (detailModalType === 'return') {
-        setReturns(returns.map(ret =>
-          ret.id === selectedDetailItem.id ? { ...editForm } : ret
-        ));
+        // Para devoluciones, enviar datos al backend
+        const returnUpdateData = {
+          status: editForm.estado, // Enviar 'status' en lugar de 'estado'
+          return_reason: editForm.motivo, // Enviar 'return_reason' en lugar de 'motivo'
+          serial_number: editForm.numero_serie, // Enviar 'serial_number' en lugar de 'numero_serie'
+          return_date: editForm.fecha_devolucion, // Enviar 'return_date' en lugar de 'fecha_devolucion'
+          observations: editForm.observaciones,
+          ticket_number: editForm.ticket_soporte // Enviar 'ticket_number' en lugar de 'ticket_soporte'
+        };
+        
+        try {
+          const response = await fetch(`${API_BASE_URL}/returns/${selectedDetailItem.id}`, {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(returnUpdateData)
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Devolución actualizada en backend:', data.return);
+          }
+        } catch (apiError) {
+          console.warn('Error actualizando en backend:', apiError.message);
+        }
+        
+        // Actualizar localmente
+        const updatedReturns = returns.map(ret =>
+          ret.id === selectedDetailItem.id ? { 
+            ...editForm, 
+            updated_at: new Date().toISOString(),
+            purchase_amount: parseFloat(editForm.purchase_amount) || 0
+          } : ret
+        );
+        setReturns(updatedReturns);
+        saveReturnsToStorage(updatedReturns);
       }
       
       setIsEditing(false);
       setSelectedDetailItem(editForm);
-      alert('Cambios guardados exitosamente');
+      alert('✅ Cambios guardados exitosamente');
       
     } catch (error) {
       console.error('Error guardando cambios:', error);
-      alert('Error al guardar los cambios');
+      alert('❌ Error al guardar los cambios');
     } finally {
       setLoading(false);
     }
@@ -570,7 +898,7 @@ const ProductManagement = () => {
       old_serial_number: '',
       new_serial_number: '',
       status: 'activa',
-      ticket_number: ''
+      ticket_number: generateWarrantyTicketNumber()
     });
     setSelectedWarrantyOrder(null);
     setWarrantyOrderSearchTerm('');
@@ -590,7 +918,7 @@ const ProductManagement = () => {
       estado: 'pendiente',
       numero_serie: '',
       observaciones: '',
-      ticket_soporte: ''
+      ticket_soporte: generateReturnTicketNumber()
     });
     setSelectedReturnOrder(null);
     setReturnOrderSearchTerm('');
@@ -643,7 +971,16 @@ const ProductManagement = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('es-ES');
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Fecha inválida';
+    }
   };
 
   // Componente del Modal de Detalles
@@ -665,18 +1002,19 @@ const ProductManagement = () => {
 
           <div className="modal-body">
             {!isEditing ? (
-              // Vista de solo lectura
               <div className="detail-view">
                 <div className="detail-section">
                   <h3>Información General</h3>
                   <div className="detail-grid">
                     <div className="detail-item">
                       <strong>Ticket:</strong>
-                      <code>{isWarranty ? item.ticket_number : item.ticket_soporte}</code>
+                      <code className="ticket-code">
+                        {isWarranty ? item.ticket_number : item.ticket_soporte}
+                      </code>
                     </div>
                     <div className="detail-item">
                       <strong>Orden:</strong>
-                      <span>{item.order_number}</span>
+                      <span className="lucesa-order-number">{item.order_number}</span>
                     </div>
                     <div className="detail-item">
                       <strong>Producto:</strong>
@@ -766,17 +1104,22 @@ const ProductManagement = () => {
                   </div>
                 </div>
 
-                {item.created_at && (
-                  <div className="detail-section">
+                <div className="detail-section">
+                  <div className="detail-grid">
                     <div className="detail-item">
                       <strong>Fecha de Creación:</strong>
                       <span>{formatDate(item.created_at)}</span>
                     </div>
+                    {item.updated_at && item.updated_at !== item.created_at && (
+                      <div className="detail-item">
+                        <strong>Última Actualización:</strong>
+                        <span>{formatDate(item.updated_at)}</span>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             ) : (
-              // Vista de edición
               <div className="edit-view">
                 <div className="form-grid">
                   <div className="form-group">
@@ -948,7 +1291,6 @@ const ProductManagement = () => {
         <p>Administra garantías y devoluciones del sistema</p>
       </div>
 
-      {/* Navegación por pestañas */}
       <div className="admin-tabs">
         <button 
           className={`tab-button ${activeTab === 'warranties' ? 'active' : ''}`}
@@ -964,7 +1306,6 @@ const ProductManagement = () => {
         </button>
       </div>
 
-      {/* Contenido de Garantías */}
       {activeTab === 'warranties' && (
         <div className="tab-content">
           <div className="admin-toolbar">
@@ -986,13 +1327,11 @@ const ProductManagement = () => {
             </button>
           </div>
 
-          {/* Formulario de Garantía */}
           {showAddWarranty && (
             <div className="form-modal">
               <div className="form-content">
                 <h3>Agregar Nueva Garantía</h3>
                 
-                {/* Buscador de Órdenes */}
                 <div className="form-group">
                   <label>Buscar Orden *</label>
                   <div className="order-search-container">
@@ -1009,7 +1348,6 @@ const ProductManagement = () => {
                     />
                     <span className="search-icon">🔍</span>
                     
-                    {/* Resultados de búsqueda */}
                     {showWarrantyOrderSearch && warrantyOrderSearchTerm && (
                       <div className="order-search-results">
                         {filteredWarrantyOrders.length > 0 ? (
@@ -1021,8 +1359,8 @@ const ProductManagement = () => {
                             >
                               <div className="order-info">
                                 <strong>{order.order_number}</strong>
-                                <span>{order.shipping_address?.nombre || order.user_nombre}</span>
-                                <span>{order.user_email}</span>
+                                <span>{order.customer_name || order.shipping_address?.nombre || order.user_nombre}</span>
+                                <span>{order.customer_email || order.shipping_address?.email || order.user_email}</span>
                               </div>
                               <div className="order-details">
                                 <span>{formatCurrency(order.total_amount)}</span>
@@ -1040,7 +1378,6 @@ const ProductManagement = () => {
                   </div>
                 </div>
 
-                {/* Información de la Orden Seleccionada */}
                 {selectedWarrantyOrder && (
                   <div className="selected-order-info">
                     <h4>Información de la Orden Seleccionada</h4>
@@ -1049,10 +1386,10 @@ const ProductManagement = () => {
                         <strong>Orden:</strong> {selectedWarrantyOrder.order_number}
                       </div>
                       <div className="detail-item">
-                        <strong>Cliente:</strong> {selectedWarrantyOrder.shipping_address?.nombre || selectedWarrantyOrder.user_nombre}
+                        <strong>Cliente:</strong> {selectedWarrantyOrder.customer_name || selectedWarrantyOrder.shipping_address?.nombre || selectedWarrantyOrder.user_nombre}
                       </div>
                       <div className="detail-item">
-                        <strong>Email:</strong> {selectedWarrantyOrder.shipping_address?.email || selectedWarrantyOrder.user_email}
+                        <strong>Email:</strong> {selectedWarrantyOrder.customer_email || selectedWarrantyOrder.shipping_address?.email || selectedWarrantyOrder.user_email}
                       </div>
                       <div className="detail-item">
                         <strong>Producto:</strong> {selectedWarrantyOrder.items?.[0]?.product_name}
@@ -1070,7 +1407,6 @@ const ProductManagement = () => {
                   </div>
                 )}
 
-                {/* Campos manuales */}
                 <div className="form-grid">
                   <div className="form-group">
                     <label>Número de Ticket *</label>
@@ -1078,9 +1414,12 @@ const ProductManagement = () => {
                       type="text"
                       value={warrantyForm.ticket_number}
                       onChange={(e) => setWarrantyForm({...warrantyForm, ticket_number: e.target.value})}
-                      placeholder="Ej: TS-001"
+                      placeholder="Ej: TS-1738361600000-ABCDE"
                       required
+                      readOnly
+                      className="ticket-display"
                     />
+                    <small className="ticket-note">Ticket generado automáticamente</small>
                   </div>
 
                   <div className="form-group">
@@ -1148,7 +1487,6 @@ const ProductManagement = () => {
             </div>
           )}
 
-          {/* Tabla de Garantías */}
           {warrantiesLoading ? (
             <div className="loading">
               <div className="loading-spinner"></div>
@@ -1181,10 +1519,10 @@ const ProductManagement = () => {
                   {filteredWarranties.map(warranty => (
                     <tr key={warranty.id}>
                       <td>
-                        <code>{warranty.ticket_number}</code>
+                        <code className="ticket-cell">{warranty.ticket_number || 'N/A'}</code>
                       </td>
                       <td>
-                        <strong>{warranty.order_number}</strong>
+                        <strong className="lucesa-order-number">{warranty.order_number}</strong>
                       </td>
                       <td>
                         <strong>{warranty.product_name}</strong>
@@ -1256,7 +1594,6 @@ const ProductManagement = () => {
         </div>
       )}
 
-      {/* Contenido de Devoluciones */}
       {activeTab === 'returns' && (
         <div className="tab-content">
           <div className="admin-toolbar">
@@ -1278,13 +1615,11 @@ const ProductManagement = () => {
             </button>
           </div>
 
-          {/* Formulario de Devolución */}
           {showAddReturn && (
             <div className="form-modal">
               <div className="form-content">
                 <h3>Agregar Nueva Devolución</h3>
                 
-                {/* Buscador de Órdenes para Devoluciones */}
                 <div className="form-group">
                   <label>Buscar Orden *</label>
                   <div className="order-search-container">
@@ -1301,7 +1636,6 @@ const ProductManagement = () => {
                     />
                     <span className="search-icon">🔍</span>
                     
-                    {/* Resultados de búsqueda */}
                     {showReturnOrderSearch && returnOrderSearchTerm && (
                       <div className="order-search-results">
                         {filteredReturnOrders.length > 0 ? (
@@ -1313,8 +1647,8 @@ const ProductManagement = () => {
                             >
                               <div className="order-info">
                                 <strong>{order.order_number}</strong>
-                                <span>{order.shipping_address?.nombre || order.user_nombre}</span>
-                                <span>{order.user_email}</span>
+                                <span>{order.customer_name || order.shipping_address?.nombre || order.user_nombre}</span>
+                                <span>{order.customer_email || order.shipping_address?.email || order.user_email}</span>
                               </div>
                               <div className="order-details">
                                 <span>{formatCurrency(order.total_amount)}</span>
@@ -1332,7 +1666,6 @@ const ProductManagement = () => {
                   </div>
                 </div>
 
-                {/* Información de la Orden Seleccionada */}
                 {selectedReturnOrder && (
                   <div className="selected-order-info">
                     <h4>Información de la Orden Seleccionada</h4>
@@ -1341,10 +1674,10 @@ const ProductManagement = () => {
                         <strong>Orden:</strong> {selectedReturnOrder.order_number}
                       </div>
                       <div className="detail-item">
-                        <strong>Cliente:</strong> {selectedReturnOrder.shipping_address?.nombre || selectedReturnOrder.user_nombre}
+                        <strong>Cliente:</strong> {selectedReturnOrder.customer_name || selectedReturnOrder.shipping_address?.nombre || selectedReturnOrder.user_nombre}
                       </div>
                       <div className="detail-item">
-                        <strong>Email:</strong> {selectedReturnOrder.shipping_address?.email || selectedReturnOrder.user_email}
+                        <strong>Email:</strong> {selectedReturnOrder.customer_email || selectedReturnOrder.shipping_address?.email || selectedReturnOrder.user_email}
                       </div>
                       <div className="detail-item">
                         <strong>Producto:</strong> {selectedReturnOrder.items?.[0]?.product_name}
@@ -1362,7 +1695,6 @@ const ProductManagement = () => {
                   </div>
                 )}
 
-                {/* Campos manuales para devoluciones */}
                 <div className="form-grid">
                   <div className="form-group">
                     <label>Número de Ticket *</label>
@@ -1370,9 +1702,12 @@ const ProductManagement = () => {
                       type="text"
                       value={returnForm.ticket_soporte}
                       onChange={(e) => setReturnForm({...returnForm, ticket_soporte: e.target.value})}
-                      placeholder="Ej: DEV-001"
+                      placeholder="Ej: DEV-1738448000000-KLMNO"
                       required
+                      readOnly
+                      className="ticket-display"
                     />
+                    <small className="ticket-note">Ticket generado automáticamente</small>
                   </div>
 
                   <div className="form-group">
@@ -1461,7 +1796,6 @@ const ProductManagement = () => {
             </div>
           )}
 
-          {/* Tabla de Devoluciones */}
           {returnsLoading ? (
             <div className="loading">
               <div className="loading-spinner"></div>
@@ -1493,10 +1827,10 @@ const ProductManagement = () => {
                   {filteredReturns.map(returnItem => (
                     <tr key={returnItem.id}>
                       <td>
-                        <code>{returnItem.ticket_soporte}</code>
+                        <code className="ticket-cell">{returnItem.ticket_soporte || 'N/A'}</code>
                       </td>
                       <td>
-                        <strong>{returnItem.order_number}</strong>
+                        <strong className="lucesa-order-number">{returnItem.order_number}</strong>
                       </td>
                       <td>
                         <strong>{returnItem.product_name}</strong>
@@ -1577,7 +1911,6 @@ const ProductManagement = () => {
         </div>
       )}
 
-      {/* Modal de Detalles */}
       <DetailModal />
     </div>
   );

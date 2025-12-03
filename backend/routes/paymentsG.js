@@ -68,7 +68,9 @@ router.post('/create-checkout', auth, async (req, res) => {
     const shipping = subtotal >= 1000 ? 0 : 150;
     const total = subtotal + tax + shipping;
 
+    // ✅ GENERAR NÚMERO DE ORDEN LUCESA EN EL BACKEND
     const orderNumber = 'LUCESA-' + Date.now();
+    console.log('🔢 Generando número de orden LUCESA:', orderNumber);
 
     console.log('💰 Cálculos realizados:');
     console.log('   Subtotal:', subtotal);
@@ -82,9 +84,9 @@ router.post('/create-checkout', auth, async (req, res) => {
       INSERT INTO orders (
         user_id, order_number, total_amount, subtotal, tax_amount, 
         shipping_amount, shipping_address, status, 
-        customer_name, customer_email, customer_phone
+        customer_name, customer_email, customer_phone  -- ✅ AGREGAR customer_phone
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10)
-      RETURNING id
+      RETURNING id, order_number
     `, [
       userId,
       orderNumber,
@@ -95,11 +97,14 @@ router.post('/create-checkout', auth, async (req, res) => {
       JSON.stringify(shippingAddress),
       `${customerInfo.firstName} ${customerInfo.lastName}`,
       customerInfo.email,
-      customerInfo.phone
+      customerInfo.phone  // ✅ GUARDAR customer_phone
     ]);
 
-    const orderId = orderResult.rows[0].id;
-    console.log('✅ Orden guardada en BD con ID:', orderId);
+console.log(`📞 Customer phone guardado: ${customerInfo.phone}`);
+
+    const savedOrder = orderResult.rows[0];
+    const orderId = savedOrder.id;
+    console.log('✅ Orden guardada en BD con ID:', orderId, 'Número:', savedOrder.order_number);
 
     // Guardar ítems de la orden
     const IMAGE_BASE_URL = process.env.NODE_ENV === 'production'
@@ -144,7 +149,6 @@ router.post('/create-checkout', auth, async (req, res) => {
 
     console.log('📋 Items para Mercado Pago:', preferenceItems);
 
-    // ✅ CORRECCIÓN: URLs de retorno ABSOLUTAS y VÁLIDAS
     const baseFrontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
 
     // Asegurar que las URLs sean absolutas y válidas
@@ -159,8 +163,6 @@ router.post('/create-checkout', auth, async (req, res) => {
     console.log('   Failure:', backUrls.failure);
     console.log('   Pending:', backUrls.pending);
 
-    // ✅ CORRECCIÓN: Remover auto_return temporalmente para evitar errores
-    // Dentro de tu ruta /create-checkout
     const preferenceData = {
       body: {
         items: preferenceItems,
@@ -169,7 +171,6 @@ router.post('/create-checkout', auth, async (req, res) => {
           failure: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/pago/error`,
           pending: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/pago/pendiente`
         },
-        // prueba de all
         auto_return: "all",
         external_reference: orderId.toString(),
         notification_url: `${process.env.BACKEND_URL || 'http://localhost:4004'}/api/payments/webhook`,
@@ -184,12 +185,12 @@ router.post('/create-checkout', auth, async (req, res) => {
         },
         metadata: {
           order_id: orderId,
-          order_number: orderNumber,
+          order_number: orderNumber, // ✅ Enviar número LUCESA
           user_id: userId
         }
-        // SIN auto_return → FUNCIONA EN LOCAL
       }
     };
+    
     console.log('📤 Enviando datos a Mercado Pago...');
     console.log('📋 Datos de preferencia:', JSON.stringify(preferenceData, null, 2));
 
@@ -215,12 +216,18 @@ router.post('/create-checkout', auth, async (req, res) => {
         ? mpResponse.init_point
         : (mpResponse.init_point || mpResponse.init_point);
 
+      // ✅ DEVOLVER EL NÚMERO DE ORDEN LUCESA AL FRONTEND
       res.json({
         success: true,
         payment_url: paymentUrl,
-        order_number: orderNumber,
+        order_number: savedOrder.order_number, // ✅ Número LUCESA
         order_id: orderId,
-        mp_preference_id: mpResponse.id
+        mp_preference_id: mpResponse.id,
+        total: total,
+        subtotal: subtotal,
+        tax: tax,
+        shipping: shipping,
+        cartItems: cartItems
       });
 
     } catch (mpError) {
@@ -253,8 +260,6 @@ router.post('/create-checkout', auth, async (req, res) => {
     client.release();
   }
 });
-
-
 
 // WEBHOOK MEJORADO - CORREGIR ORDERID NULL
 router.post('/webhook', async (req, res) => {
@@ -389,9 +394,9 @@ router.post('/webhook', async (req, res) => {
     try {
       await client.query('BEGIN');
 
-      // Verificar si la orden existe
+      // Verificar si la orden existe y obtener su número LUCESA
       const orderCheck = await client.query(
-        'SELECT id, status, order_number FROM orders WHERE id = $1',
+        'SELECT id, order_number, status FROM orders WHERE id = $1',
         [orderId]
       );
 
@@ -423,11 +428,11 @@ router.post('/webhook', async (req, res) => {
           console.log(`✅ ORDEN ${updatedOrder.order_number} ACTUALIZADA: ${updatedOrder.status.toUpperCase()}`);
           
           if (newStatus === 'completed') {
-            console.log(`🎉 PAGO COMPLETADO para orden ${updatedOrder.order_number}`);
+            console.log(`🎉 PAGO COMPLETADO para orden LUCESA: ${updatedOrder.order_number}`);
           }
         }
       } else {
-        console.log(`ℹ️ Orden ${currentOrder.order_number} ya estaba completada`);
+        console.log(`ℹ️ Orden LUCESA ${currentOrder.order_number} ya estaba completada`);
       }
 
       await client.query('COMMIT');
@@ -447,27 +452,5 @@ router.post('/webhook', async (req, res) => {
     res.status(500).send('Error');
   }
 });
-// Función alternativa para actualización si falla la principal
-async function actualizacionAlternativa(orderId, newStatus, paymentId, mpPaymentStatus, mpStatusDetail) {
-  const client = await db.connect();
-  try {
-    console.log('🔄 Intentando actualización alternativa...');
-    
-    // Consulta más simple con menos parámetros
-    await client.query(`
-      UPDATE orders SET 
-        status = $1,
-        mp_payment_id = $2,
-        updated_at = NOW()
-      WHERE id = $3
-    `, [newStatus, paymentId, orderId]);
-    
-    console.log(`✅ Actualización alternativa exitosa para orden ${orderId}`);
-    
-  } catch (error) {
-    console.error('❌ Error en actualización alternativa:', error.message);
-  } finally {
-    client.release();
-  }
-}
+
 module.exports = router;

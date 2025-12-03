@@ -1,8 +1,158 @@
-// routes/orders.js
 const express = require('express');
 const router = express.Router();
-const db = require('../config/db'); // Tu conexión a PostgreSQL
+const db = require('../config/db');
 const auth = require('../middlewares/authenticateTokenG.js');
+
+// Helper para parsear shipping_address
+const parseShippingAddress = (shippingAddress) => {
+  if (!shippingAddress) return null;
+  
+  try {
+    if (typeof shippingAddress === 'string') {
+      return JSON.parse(shippingAddress);
+    }
+    return shippingAddress;
+  } catch (error) {
+    console.error('Error parseando shipping_address:', error);
+    return { error: 'Error parsing address' };
+  }
+};
+
+// Helper para formatear respuesta de orden
+const formatOrderResponse = (order) => {
+  const shippingAddress = parseShippingAddress(order.shipping_address);
+  
+  const formattedOrder = {
+    id: order.id,
+    user_id: order.user_id,
+    order_number: order.order_number,
+    total_amount: parseFloat(order.total_amount) || 0,
+    subtotal: parseFloat(order.subtotal) || 0,
+    tax_amount: parseFloat(order.tax_amount) || 0,
+    shipping_amount: parseFloat(order.shipping_amount) || 0,
+    shipping_address: shippingAddress,
+    customer_name: order.customer_name,
+    customer_email: order.customer_email,
+    customer_phone: order.customer_phone,
+    mp_payment_id: order.mp_payment_id,
+    mp_preference_id: order.mp_preference_id,
+    mp_payment_status: order.mp_payment_status,
+    mp_status_detail: order.mp_status_detail,
+    status: order.status,
+    paid_at: order.paid_at,
+    created_at: order.created_at,
+    updated_at: order.updated_at,
+    items: Array.isArray(order.items) ? order.items.map(item => ({
+      id: item.id,
+      product_code: item.product_code,
+      product_name: item.product_name,
+      nombre: item.product_name, // Alias para frontend
+      codigo: item.product_code, // Alias para frontend
+      product_brand: item.product_brand,
+      marca: item.product_brand, // Alias para frontend
+      product_image_url: item.product_image_url,
+      unit_price: parseFloat(item.unit_price) || 0,
+      precio: parseFloat(item.unit_price) || 0, // Alias para frontend
+      precioFinal: parseFloat(item.unit_price) || 0, // Alias para frontend
+      quantity: item.quantity || 1,
+      total_price: parseFloat(item.total_price) || 0
+    })) : []
+  };
+
+  // Añadir alias para compatibilidad con frontend
+  formattedOrder.total = formattedOrder.total_amount;
+  formattedOrder.order_date = formattedOrder.created_at;
+  formattedOrder.items_details = formattedOrder.items;
+
+  return formattedOrder;
+};
+
+// Obtener todas las órdenes (para administradores)
+router.get('/admin/orders', auth, async (req, res) => {
+  try {
+    // Verificar si el usuario es administrador
+    if (req.user.rol !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'No tienes permisos para acceder a esta información'
+      });
+    }
+
+    console.log('📊 Administrador solicitando todas las órdenes:', req.user.email);
+
+    const query = `
+      SELECT 
+        o.*,
+        u.username,
+        u.email as user_email,
+        u.nombre as user_nombre,
+        json_agg(
+          json_build_object(
+            'id', oi.id,
+            'product_code', oi.product_code,
+            'product_name', oi.product_name,
+            'product_brand', oi.product_brand,
+            'product_image_url', oi.product_image_url,
+            'unit_price', oi.unit_price,
+            'quantity', oi.quantity,
+            'total_price', oi.total_price
+          )
+        ) as items
+      FROM orders o
+      LEFT JOIN users u ON o.user_id = u.id
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      GROUP BY o.id, u.id, u.username, u.email, u.nombre
+      ORDER BY o.created_at DESC
+    `;
+
+    const result = await db.query(query);
+    
+    console.log(`✅ Se encontraron ${result.rows.length} órdenes`);
+
+    // Formatear cada orden
+    const formattedOrders = result.rows.map(row => {
+      const order = formatOrderResponse(row);
+      
+      // Asegurar que la dirección de envío tenga toda la información disponible
+      if (!order.shipping_address || Object.keys(order.shipping_address).length === 0) {
+        order.shipping_address = {
+          nombre: order.customer_name || row.user_nombre || row.username,
+          email: order.customer_email || row.user_email,
+          telefono: order.customer_phone || ''
+        };
+      }
+      
+      // Si los campos individuales están vacíos pero la dirección tiene datos, usarlos
+      if (!order.customer_name && order.shipping_address.nombre) {
+        order.customer_name = order.shipping_address.nombre;
+      }
+      if (!order.customer_email && order.shipping_address.email) {
+        order.customer_email = order.shipping_address.email;
+      }
+      if (!order.customer_phone && order.shipping_address.telefono) {
+        order.customer_phone = order.shipping_address.telefono;
+      }
+      
+      return order;
+    });
+
+    res.json({
+      success: true,
+      orders: formattedOrders,
+      count: formattedOrders.length,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Error al obtener todas las órdenes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener las órdenes',
+      error: error.message,
+      fallbackError: error.message
+    });
+  }
+});
 
 // Guardar nueva orden
 router.post('/', auth, async (req, res) => {
@@ -12,7 +162,6 @@ router.post('/', auth, async (req, res) => {
     await client.query('BEGIN');
     
     const {
-      orderId,
       total,
       subtotal,
       tax,
@@ -23,6 +172,25 @@ router.post('/', auth, async (req, res) => {
 
     const userId = req.user.id;
 
+    // Generar número de orden LUCESA en el backend
+    const timestamp = Date.now();
+    const randomNum = Math.floor(Math.random() * 1000);
+    const orderNumber = `LUCESA-${timestamp}-${randomNum}`;
+    console.log(`🔢 Backend generando orden LUCESA: ${orderNumber} para usuario ${userId}`);
+
+    // Parsear shipping address
+    let parsedShippingAddress = null;
+    if (shippingAddress) {
+      try {
+        parsedShippingAddress = typeof shippingAddress === 'string' 
+          ? JSON.parse(shippingAddress)
+          : shippingAddress;
+      } catch (error) {
+        console.warn('Error parseando shippingAddress:', error);
+        parsedShippingAddress = shippingAddress;
+      }
+    }
+
     // 1. Insertar la orden principal
     const orderQuery = `
       INSERT INTO orders (
@@ -32,23 +200,36 @@ router.post('/', auth, async (req, res) => {
         subtotal, 
         tax_amount, 
         shipping_amount,
-        shipping_address
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        shipping_address,
+        status,
+        customer_name,
+        customer_email,
+        customer_phone
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'confirmed', $8, $9, $10)
       RETURNING *
     `;
 
+    // Extraer información del usuario para customer fields
+    const customerName = req.user.nombre || req.user.username || 'Cliente';
+    const customerEmail = req.user.email;
+    const customerPhone = parsedShippingAddress?.telefono || '';
+
     const orderValues = [
       userId,
-      orderId,
+      orderNumber,
       total,
       subtotal,
       tax,
       shipping,
-      shippingAddress ? JSON.stringify(shippingAddress) : null
+      parsedShippingAddress ? JSON.stringify(parsedShippingAddress) : null,
+      customerName,
+      customerEmail,
+      customerPhone
     ];
 
     const orderResult = await client.query(orderQuery, orderValues);
     const savedOrder = orderResult.rows[0];
+    console.log(`✅ Orden LUCESA creada: ${savedOrder.order_number}, ID: ${savedOrder.id}`);
 
     // 2. Insertar items de la orden
     if (cartItems && cartItems.length > 0) {
@@ -56,11 +237,17 @@ router.post('/', auth, async (req, res) => {
         ? 'https://testpaginaweb.shop/api/images/code'
         : 'http://localhost:4004/api/images/code';
 
+      console.log(`📦 Insertando ${cartItems.length} items para orden ${savedOrder.order_number}`);
+
       for (const item of cartItems) {
-        const imageUrl = `${IMAGE_BASE_URL}/${item.codigo}?size=small`;
+        // Construir URL de imagen
+        const imageUrl = item.codigo ? `${IMAGE_BASE_URL}/${item.codigo}?size=small` : null;
         const quantity = item.quantity || 1;
         const unitPrice = item.precioFinal || item.precio || 0;
         const totalPrice = unitPrice * quantity;
+
+        // Manejar nombres de productos que puedan estar vacíos
+        const productName = item.nombre?.trim() || `Producto ${item.codigo || 'Lucesa'}`;
 
         const itemQuery = `
           INSERT INTO order_items (
@@ -78,7 +265,7 @@ router.post('/', auth, async (req, res) => {
         const itemValues = [
           savedOrder.id,
           item.codigo || 'N/A',
-          item.nombre || 'Producto sin nombre',
+          productName,
           item.marca || 'Sin marca',
           imageUrl,
           unitPrice,
@@ -88,6 +275,8 @@ router.post('/', auth, async (req, res) => {
 
         await client.query(itemQuery, itemValues);
       }
+      
+      console.log(`✅ ${cartItems.length} items insertados para orden ${savedOrder.order_number}`);
     }
 
     await client.query('COMMIT');
@@ -115,30 +304,36 @@ router.post('/', auth, async (req, res) => {
     `;
 
     const completeOrderResult = await client.query(completeOrderQuery, [savedOrder.id]);
-    const completeOrder = completeOrderResult.rows[0];
+    const completeOrder = formatOrderResponse(completeOrderResult.rows[0]);
+
+    console.log(`📤 Enviando respuesta con orden LUCESA: ${completeOrder.order_number}`);
 
     res.json({
       success: true,
       message: 'Orden guardada correctamente',
-      order: completeOrder
+      order: completeOrder,
+      order_number: completeOrder.order_number
     });
 
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('Error al guardar orden:', error);
+    console.error('❌ Error al guardar orden:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al guardar la orden'
+      message: 'Error al guardar la orden',
+      error: error.message
     });
   } finally {
     client.release();
   }
 });
 
-// Obtener historial de órdenes del usuario
+// Obtener historial de órdenes del usuario - CORREGIDO
 router.get('/history', auth, async (req, res) => {
   try {
     const userId = req.user.id;
+    
+    console.log('📊 Obteniendo historial para usuario:', userId, req.user.email);
 
     const query = `
       SELECT 
@@ -164,16 +359,31 @@ router.get('/history', auth, async (req, res) => {
 
     const result = await db.query(query, [userId]);
     
+    console.log(`✅ Se encontraron ${result.rows.length} órdenes para el usuario ${userId}`);
+    
+    // Debug: Mostrar primera orden
+    if (result.rows.length > 0) {
+      console.log('📋 Primera orden:', {
+        order_number: result.rows[0].order_number,
+        items_count: result.rows[0].items?.length || 0,
+        items: result.rows[0].items
+      });
+    }
+    
+    const formattedOrders = result.rows.map(row => formatOrderResponse(row));
+
     res.json({
       success: true,
-      orders: result.rows
+      orders: formattedOrders,
+      count: formattedOrders.length
     });
 
   } catch (error) {
-    console.error('Error al obtener historial:', error);
+    console.error('❌ Error al obtener historial:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al obtener el historial de órdenes'
+      message: 'Error al obtener el historial de órdenes',
+      error: error.message
     });
   }
 });
@@ -184,60 +394,7 @@ router.get('/:orderId', auth, async (req, res) => {
     const { orderId } = req.params;
     const userId = req.user.id;
 
-    const query = `
-      SELECT 
-        o.*,
-        json_agg(
-          json_build_object(
-            'id', oi.id,
-            'product_code', oi.product_code,
-            'product_name', oi.product_name,
-            'product_brand', oi.product_brand,
-            'product_image_url', oi.product_image_url,
-            'unit_price', oi.unit_price,
-            'quantity', oi.quantity,
-            'total_price', oi.total_price
-          )
-        ) as items
-      FROM orders o
-      LEFT JOIN order_items oi ON o.id = oi.order_id
-      WHERE o.id = $1 AND o.user_id = $2
-      GROUP BY o.id
-    `;
-
-    const result = await db.query(query, [orderId, userId]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Orden no encontrada'
-      });
-    }
-
-    res.json({
-      success: true,
-      order: result.rows[0]
-    });
-
-  } catch (error) {
-    console.error('Error al obtener orden:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener la orden'
-    });
-  }
-});
-
-// Obtener todas las órdenes (para administradores)
-router.get('/admin/orders', auth, async (req, res) => {
-  try {
-    // Verificar si el usuario es administrador
-    if (req.user.rol !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'No tienes permisos para acceder a esta información'
-      });
-    }
+    console.log('🔍 Obteniendo detalles de orden:', orderId, 'para usuario:', userId);
 
     const query = `
       SELECT 
@@ -260,33 +417,33 @@ router.get('/admin/orders', auth, async (req, res) => {
       FROM orders o
       LEFT JOIN users u ON o.user_id = u.id
       LEFT JOIN order_items oi ON o.id = oi.order_id
-      GROUP BY o.id, u.id
-      ORDER BY o.created_at DESC
+      WHERE o.id = $1 AND o.user_id = $2
+      GROUP BY o.id, u.id, u.username, u.email, u.nombre
     `;
 
-    const result = await db.query(query);
+    const result = await db.query(query, [orderId, userId]);
     
-    // Formatear la respuesta para incluir información del cliente
-    const formattedOrders = result.rows.map(order => {
-      return {
-        ...order,
-        shipping_address: order.shipping_address || {
-          nombre: order.user_nombre || order.username,
-          email: order.user_email
-        }
-      };
-    });
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Orden no encontrada'
+      });
+    }
 
+    const order = formatOrderResponse(result.rows[0]);
+    
+    console.log('✅ Detalles de orden obtenidos:', order.order_number);
+    
     res.json({
       success: true,
-      orders: formattedOrders
+      order: order
     });
 
   } catch (error) {
-    console.error('Error al obtener todas las órdenes:', error);
+    console.error('Error al obtener orden:', error);
     res.status(500).json({
       success: false,
-      message: 'Error al obtener las órdenes'
+      message: 'Error al obtener la orden'
     });
   }
 });
@@ -294,7 +451,6 @@ router.get('/admin/orders', auth, async (req, res) => {
 // Obtener estadísticas de órdenes (para administradores)
 router.get('/admin/stats', auth, async (req, res) => {
   try {
-    // Verificar si el usuario es administrador
     if (req.user.rol !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -302,7 +458,6 @@ router.get('/admin/stats', auth, async (req, res) => {
       });
     }
 
-    // Estadísticas generales
     const statsQuery = `
       SELECT 
         COUNT(*) as total_orders,
@@ -311,12 +466,12 @@ router.get('/admin/stats', auth, async (req, res) => {
         COUNT(*) FILTER (WHERE status = 'shipped') as shipped_orders,
         COUNT(*) FILTER (WHERE status = 'delivered') as delivered_orders,
         COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled_orders,
+        COUNT(*) FILTER (WHERE status = 'completed') as completed_orders,
         SUM(total_amount) as total_revenue,
         AVG(total_amount) as average_order_value
       FROM orders
     `;
 
-    // Órdenes recientes (últimos 7 días)
     const recentOrdersQuery = `
       SELECT 
         COUNT(*) as recent_orders,
@@ -325,7 +480,6 @@ router.get('/admin/stats', auth, async (req, res) => {
       WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
     `;
 
-    // Productos más vendidos
     const topProductsQuery = `
       SELECT 
         oi.product_code,
@@ -357,6 +511,7 @@ router.get('/admin/stats', auth, async (req, res) => {
         shipped_orders: parseInt(stats.shipped_orders) || 0,
         delivered_orders: parseInt(stats.delivered_orders) || 0,
         cancelled_orders: parseInt(stats.cancelled_orders) || 0,
+        completed_orders: parseInt(stats.completed_orders) || 0,
         total_revenue: parseFloat(stats.total_revenue) || 0,
         average_order_value: parseFloat(stats.average_order_value) || 0,
         recent_orders: parseInt(recent.recent_orders) || 0,
@@ -379,7 +534,6 @@ router.put('/admin/orders/:orderId/status', auth, async (req, res) => {
   const client = await db.connect();
   
   try {
-    // Verificar si el usuario es administrador
     if (req.user.rol !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -390,7 +544,7 @@ router.put('/admin/orders/:orderId/status', auth, async (req, res) => {
     const { orderId } = req.params;
     const { status } = req.body;
 
-    const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+    const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'completed'];
     
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
@@ -418,25 +572,14 @@ router.put('/admin/orders/:orderId/status', auth, async (req, res) => {
       });
     }
 
-    // Registrar el cambio de estado en un log (opcional)
-    const logQuery = `
-      INSERT INTO order_status_log (order_id, previous_status, new_status, changed_by)
-      VALUES ($1, $2, $3, $4)
-    `;
-
-    // Aquí necesitarías obtener el estado anterior primero
-    const previousStatusQuery = `SELECT status FROM orders WHERE id = $1`;
-    const previousStatusResult = await client.query(previousStatusQuery, [orderId]);
-    const previousStatus = previousStatusResult.rows[0]?.status;
-
-    await client.query(logQuery, [orderId, previousStatus, status, req.user.id]);
-
     await client.query('COMMIT');
 
+    const updatedOrder = formatOrderResponse(result.rows[0]);
+    
     res.json({
       success: true,
       message: 'Estado actualizado correctamente',
-      order: result.rows[0]
+      order: updatedOrder
     });
 
   } catch (error) {
@@ -454,7 +597,6 @@ router.put('/admin/orders/:orderId/status', auth, async (req, res) => {
 // Obtener órdenes por estado (para administradores)
 router.get('/admin/orders/status/:status', auth, async (req, res) => {
   try {
-    // Verificar si el usuario es administrador
     if (req.user.rol !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -463,7 +605,7 @@ router.get('/admin/orders/status/:status', auth, async (req, res) => {
     }
 
     const { status } = req.params;
-    const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+    const validStatuses = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'completed'];
     
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
@@ -494,20 +636,24 @@ router.get('/admin/orders/status/:status', auth, async (req, res) => {
       LEFT JOIN users u ON o.user_id = u.id
       LEFT JOIN order_items oi ON o.id = oi.order_id
       WHERE o.status = $1
-      GROUP BY o.id, u.id
+      GROUP BY o.id, u.id, u.username, u.email, u.nombre
       ORDER BY o.created_at DESC
     `;
 
     const result = await db.query(query, [status]);
     
-    const formattedOrders = result.rows.map(order => {
-      return {
-        ...order,
-        shipping_address: order.shipping_address || {
-          nombre: order.user_nombre || order.username,
-          email: order.user_email
-        }
-      };
+    const formattedOrders = result.rows.map(row => {
+      const order = formatOrderResponse(row);
+      
+      if (!order.shipping_address || Object.keys(order.shipping_address).length === 0) {
+        order.shipping_address = {
+          nombre: order.customer_name || row.user_nombre || row.username,
+          email: order.customer_email || row.user_email,
+          telefono: order.customer_phone || ''
+        };
+      }
+      
+      return order;
     });
 
     res.json({
@@ -524,12 +670,11 @@ router.get('/admin/orders/status/:status', auth, async (req, res) => {
   }
 });
 
-// Eliminar una orden (para administradores) - Solo para órdenes canceladas o pendientes
+// Eliminar una orden (para administradores)
 router.delete('/admin/orders/:orderId', auth, async (req, res) => {
   const client = await db.connect();
   
   try {
-    // Verificar si el usuario es administrador
     if (req.user.rol !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -541,9 +686,8 @@ router.delete('/admin/orders/:orderId', auth, async (req, res) => {
 
     await client.query('BEGIN');
 
-    // Verificar que la orden existe y tiene un estado que permite eliminación
     const checkQuery = `
-      SELECT status FROM orders WHERE id = $1
+      SELECT status, order_number FROM orders WHERE id = $1
     `;
     const checkResult = await client.query(checkQuery, [orderId]);
     
@@ -556,6 +700,7 @@ router.delete('/admin/orders/:orderId', auth, async (req, res) => {
     }
 
     const orderStatus = checkResult.rows[0].status;
+    const orderNumber = checkResult.rows[0].order_number;
     const allowedStatuses = ['pending', 'cancelled'];
     
     if (!allowedStatuses.includes(orderStatus)) {
@@ -575,6 +720,8 @@ router.delete('/admin/orders/:orderId', auth, async (req, res) => {
     const deleteResult = await client.query(deleteOrderQuery, [orderId]);
 
     await client.query('COMMIT');
+
+    console.log(`🗑️ Orden LUCESA eliminada: ${orderNumber}`);
 
     res.json({
       success: true,
@@ -597,7 +744,6 @@ router.delete('/admin/orders/:orderId', auth, async (req, res) => {
 // Obtener detalles completos de una orden (para administradores)
 router.get('/admin/orders/:orderId/details', auth, async (req, res) => {
   try {
-    // Verificar si el usuario es administrador
     if (req.user.rol !== 'admin') {
       return res.status(403).json({
         success: false,
@@ -632,7 +778,7 @@ router.get('/admin/orders/:orderId/details', auth, async (req, res) => {
       LEFT JOIN users u ON o.user_id = u.id
       LEFT JOIN order_items oi ON o.id = oi.order_id
       WHERE o.id = $1
-      GROUP BY o.id, u.id
+      GROUP BY o.id, u.id, u.username, u.email, u.nombre, u.created_at
     `;
 
     const result = await db.query(query, [orderId]);
@@ -644,21 +790,19 @@ router.get('/admin/orders/:orderId/details', auth, async (req, res) => {
       });
     }
 
-    const order = result.rows[0];
+    const row = result.rows[0];
+    const order = formatOrderResponse(row);
     
     // Formatear la respuesta con información completa
     const formattedOrder = {
       ...order,
       customer_info: {
-        user_id: order.user_id,
-        username: order.username,
-        email: order.user_email,
-        nombre: order.user_nombre,
-        member_since: order.user_created_at
-      },
-      shipping_address: order.shipping_address || {
-        nombre: order.user_nombre || order.username,
-        email: order.user_email
+        user_id: row.user_id,
+        username: row.username,
+        email: row.user_email,
+        nombre: row.user_nombre,
+        telefono: order.customer_phone, // Usar customer_phone de la tabla orders
+        member_since: row.user_created_at
       }
     };
 

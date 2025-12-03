@@ -111,6 +111,8 @@ const Checkout = () => {
         precio: item.precioFinal || item.precio,
         cantidad: item.quantity
       })));
+      
+      console.log('🔢 El backend generará el número de orden LUCESA automáticamente');
 
       // ✅ EL TOKEN SE ENVÍA AUTOMÁTICAMENTE DESDE EL SERVICE
       const result = await paymentService.createCheckout(
@@ -121,11 +123,18 @@ const Checkout = () => {
 
       console.log('✅ Pago creado exitosamente:', result);
       
-      // Redirigir al checkout de Mercado Pago
-      if (result.payment_url) {
-        window.location.href = result.payment_url;
+      if (result.order_number) {
+        console.log(`🔢 Número de orden LUCESA recibido del backend: ${result.order_number}`);
+        
+        // ✅ Redirigir al checkout de Mercado Pago con el número LUCESA
+        if (result.payment_url) {
+          console.log(`🔗 Redirigiendo a Mercado Pago para orden ${result.order_number}`);
+          window.location.href = result.payment_url;
+        } else {
+          throw new Error('No se recibió URL de pago');
+        }
       } else {
-        throw new Error('No se recibió URL de pago');
+        throw new Error('No se recibió número de orden del backend');
       }
 
     } catch (error) {

@@ -396,14 +396,14 @@ const ProductCard = ({ product, onQuickView }) => {
                 </div>
 
                 {/* Información de debug */}
-                {process.env.NODE_ENV === 'development' && (
+                {/* {process.env.NODE_ENV === 'development' && (
                     <div className="debug-info-pcard">
                         <strong>DEBUG:</strong> 
                         ID: {normalizedProductPcard.id} | 
                         Favorito: {productIsFavorite ? 'SÍ' : 'NO'} | 
                         Stock: {normalizedProductPcard.existencia}
                     </div>
-                )}
+                )} */}
 
                 {/* Mensaje de error */}
                 {favoriteError && (

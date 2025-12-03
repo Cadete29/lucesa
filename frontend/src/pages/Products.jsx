@@ -308,10 +308,10 @@ const Products = () => {
 
     if (loading) {
         return (
-            <div className="products-page">
-                <div className="products-container">
-                    <div className="products-loading-products">
-                        <div className="products-loading-spinner"></div>
+            <div className="lucesa-products-page">
+                <div className="lucesa-products-container">
+                    <div className="lucesa-products-loading-products">
+                        <div className="lucesa-products-loading-spinner"></div>
                         <p>Cargando productos...</p>
                     </div>
                 </div>
@@ -321,13 +321,13 @@ const Products = () => {
 
     if (error) {
         return (
-            <div className="products-page">
-                <div className="products-container">
-                    <div className="products-error-products">
-                        <div className="products-error-icon">⚠️</div>
+            <div className="lucesa-products-page">
+                <div className="lucesa-products-container">
+                    <div className="lucesa-products-error-products">
+                        <div className="lucesa-products-error-icon">⚠️</div>
                         <h3>Error al cargar productos</h3>
                         <p>{error.message || 'Ha ocurrido un error'}</p>
-                        <button onClick={() => window.location.reload()} className="products-btn-retry">
+                        <button onClick={() => window.location.reload()} className="lucesa-products-btn-retry">
                             Reintentar
                         </button>
                     </div>
@@ -337,11 +337,11 @@ const Products = () => {
     }
 
     return (
-        <div className="products-page">
-            <div className="products-container">
-                <div className="products-header">
-                    <div className="products-header-top">
-                        <button onClick={handleGoBack} className="products-back-button">← Volver</button>
+        <div className="lucesa-products-page">
+            <div className="lucesa-products-container">
+                <div className="lucesa-products-header">
+                    <div className="lucesa-products-header-top">
+                        <button onClick={handleGoBack} className="lucesa-products-back-button">← Volver</button>
                         <h1>
                             {isModoPromociones ? (
                                 <>🎯 Ofertas Especiales</>
@@ -354,24 +354,24 @@ const Products = () => {
                         
                         {/* ✅ BADGE DE MODO PROMOCIONES */}
                         {isModoPromociones && (
-                            <div className="products-promociones-badge">
-                                <span className="products-badge-icon">🔥</span>
+                            <div className="lucesa-products-promociones-badge">
+                                <span className="lucesa-products-badge-icon">🔥</span>
                                 <span>Productos en promoción</span>
                             </div>
                         )}
                     </div>
                     
-                    <div className="products-search">
-                        <div className="products-search-box">
+                    <div className="lucesa-products-search">
+                        <div className="lucesa-products-search-box">
                             <input
                                 type="text"
                                 placeholder="Buscar productos..."
                                 value={searchTerm}
                                 onChange={handleSearch}
-                                className="products-search-input"
+                                className="lucesa-products-search-input"
                             />
                             {searchTerm && (
-                                <button onClick={handleClearSearch} className="products-search-clear">×</button>
+                                <button onClick={handleClearSearch} className="lucesa-products-search-clear">×</button>
                             )}
                         </div>
                         
@@ -379,53 +379,53 @@ const Products = () => {
                         {isModoPromociones && (
                             <button 
                                 onClick={handleExitPromociones}
-                                className="products-btn-exit-promociones"
+                                className="lucesa-products-btn-exit-promociones"
                             >
                                 🗙 Ver todos los productos
                             </button>
                         )}
                     </div>
 
-                    <div className="products-count">
+                    <div className="lucesa-products-count">
                         <span>Mostrando {productosPaginados.length} de {filteredProducts.length} productos disponibles</span>
                         {isModoPromociones ? (
-                            <span className="products-promociones-indicator">en oferta especial</span>
+                            <span className="lucesa-products-promociones-indicator">en oferta especial</span>
                         ) : selectedCategory !== 'todos' && (
-                            <span className="products-category-indicator">en {getCategoryDisplayName(selectedCategory)}</span>
+                            <span className="lucesa-products-category-indicator">en {getCategoryDisplayName(selectedCategory)}</span>
                         )}
                     </div>
                 </div>
 
-                <div className="products-controls">
+                <div className="lucesa-products-controls">
                     {/* ✅ NAVEGACIÓN DE CATEGORÍAS COMPLETA */}
-                    <div className="products-categories-navigation">
-                        <div className="products-categories-header">
+                    <div className="lucesa-products-categories-navigation">
+                        <div className="lucesa-products-categories-header">
                             <h3>🧭 Navegación</h3>
                         </div>
-                        <div className="products-categories-actions">
+                        <div className="lucesa-products-categories-actions">
                             <button 
                                 onClick={() => handleCategoryChange('todos')}
-                                className={`products-category-nav-btn ${selectedCategory === 'todos' ? 'products-category-nav-active' : ''}`}
+                                className={`lucesa-products-category-nav-btn ${selectedCategory === 'todos' ? 'lucesa-products-category-nav-active' : ''}`}
                             >
                                 📦 Todos
                             </button>
                             <Link 
                                 to="/categories" 
-                                className="products-category-nav-btn products-browse-categories"
+                                className="lucesa-products-category-nav-btn lucesa-products-browse-categories"
                             >
                                 🗂️ Ver Categorías
                             </Link>
                         </div>
                     </div>
 
-                    <div className="products-sort-filter">
-                        <div className="products-sort-filter-container">
+                    <div className="lucesa-products-sort-filter">
+                        <div className="lucesa-products-sort-filter-container">
                             <label htmlFor="sort">↕️ Ordenar por:</label>
                             <select 
                                 id="sort"
                                 value={sortBy} 
                                 onChange={(e) => setSortBy(e.target.value)}
-                                className="products-sort-select"
+                                className="lucesa-products-sort-select"
                             >
                                 <option value="nombre">Nombre A-Z</option>
                                 <option value="precio">Precio: Menor a Mayor</option>
@@ -437,8 +437,8 @@ const Products = () => {
                         
                         {/* ✅ CONTADOR DE DESCUENTOS EN MODO PROMOCIONES */}
                         {isModoPromociones && (
-                            <div className="products-promociones-stats">
-                                <span className="products-stats-icon">💰</span>
+                            <div className="lucesa-products-promociones-stats">
+                                <span className="lucesa-products-stats-icon">💰</span>
                                 <span>
                                     {filteredProducts.filter(p => 
                                         p.precioPromocion && p.precioPromocion < p.precio
@@ -449,10 +449,10 @@ const Products = () => {
                     </div>
                 </div>
 
-                <div className="products-grid">
+                <div className="lucesa-products-grid">
                     {searchLoading ? (
-                        <div className="products-loading-search">
-                            <div className="products-loading-spinner"></div>
+                        <div className="lucesa-products-loading-search">
+                            <div className="lucesa-products-loading-spinner"></div>
                             <p>Buscando productos...</p>
                         </div>
                     ) : productosPaginados.length > 0 ? (
@@ -464,8 +464,8 @@ const Products = () => {
                             />
                         ))
                     ) : (
-                        <div className="products-no-products">
-                            <div className="products-no-products-icon">
+                        <div className="lucesa-products-no-products">
+                            <div className="lucesa-products-no-products-icon">
                                 {isModoPromociones ? '💰' : '📦'}
                             </div>
                             <h3>
@@ -480,21 +480,21 @@ const Products = () => {
                                     : 'No hay productos disponibles en esta categoría o búsqueda.'
                                 }
                             </p>
-                            <div className="products-no-products-actions">
+                            <div className="lucesa-products-no-products-actions">
                                 {isModoPromociones ? (
-                                    <button onClick={handleExitPromociones} className="products-btn-view-all">
+                                    <button onClick={handleExitPromociones} className="lucesa-products-btn-view-all">
                                         ← Ver todos los productos
                                     </button>
                                 ) : searchTerm ? (
-                                    <button onClick={handleClearSearch} className="products-btn-clear-search">
+                                    <button onClick={handleClearSearch} className="lucesa-products-btn-clear-search">
                                         🗙 Limpiar búsqueda
                                     </button>
                                 ) : (
-                                    <Link to="/categories" className="products-btn-browse-categories">
+                                    <Link to="/categories" className="lucesa-products-btn-browse-categories">
                                         🗂️ Explorar Categorías
                                     </Link>
                                 )}
-                                <button onClick={handleGoBack} className="products-btn-back">
+                                <button onClick={handleGoBack} className="lucesa-products-btn-back">
                                     ← Volver Atrás
                                 </button>
                             </div>
@@ -504,11 +504,11 @@ const Products = () => {
 
                 {/* ✅ PAGINACIÓN CORREGIDA - Mostrar solo si hay productos */}
                 {totalPages > 1 && filteredProducts.length > 0 && (
-                    <div className="products-pagination">
+                    <div className="lucesa-products-pagination">
                         <button 
                             disabled={currentPage === 1}
                             onClick={() => handlePageChange(currentPage - 1)}
-                            className="products-pagination-btn"
+                            className="lucesa-products-pagination-btn"
                         >
                             ← Anterior
                         </button>
@@ -530,7 +530,7 @@ const Products = () => {
                             return (
                                 <button
                                     key={pageNumber}
-                                    className={`products-pagination-btn ${currentPage === pageNumber ? 'products-pagination-active' : ''}`}
+                                    className={`lucesa-products-pagination-btn ${currentPage === pageNumber ? 'lucesa-products-pagination-active' : ''}`}
                                     onClick={() => handlePageChange(pageNumber)}
                                 >
                                     {pageNumber}
@@ -538,12 +538,12 @@ const Products = () => {
                             );
                         })}
 
-                        <span className="products-pagination-ellipsis">...</span>
+                        <span className="lucesa-products-pagination-ellipsis">...</span>
 
                         <button 
                             disabled={currentPage === totalPages}
                             onClick={() => handlePageChange(currentPage + 1)}
-                            className="products-pagination-btn"
+                            className="lucesa-products-pagination-btn"
                         >
                             Siguiente →
                         </button>

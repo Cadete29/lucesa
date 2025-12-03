@@ -1,24 +1,24 @@
 /* Products.css - ESTILOS COMPLETOS CON TODAS LAS FUNCIONALIDADES */
-.products-page {
+.lucesa-products-page {
     padding: 5rem 0 2rem 0;
     min-height: 100vh;
     background: linear-gradient(135deg, #0f2642 0%, #16395C 100%);
 }
 
-.products-container {
+.lucesa-products-container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 1.5rem;
 }
 
 /* Header Styles */
-.products-header {
+.lucesa-products-header {
     text-align: center;
     margin-bottom: 3rem;
     padding-top: 3rem;
 }
 
-.products-header-top {
+.lucesa-products-header-top {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -26,7 +26,7 @@
     position: relative;
 }
 
-.products-back-button {
+.lucesa-products-back-button {
     position: absolute;
     left: 0;
     background: rgba(255, 255, 255, 0.1);
@@ -46,13 +46,13 @@
     font-family: inherit;
 }
 
-.products-back-button:hover {
+.lucesa-products-back-button:hover {
     background: rgba(72, 149, 207, 0.2);
     border-color: #4895CF;
     transform: translateX(-5px);
 }
 
-.products-header h1 {
+.lucesa-products-header h1 {
     font-size: 2.5rem;
     font-weight: 700;
     color: #ffffff;
@@ -61,7 +61,7 @@
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-.products-header h1::after {
+.lucesa-products-header h1::after {
     content: '';
     position: absolute;
     bottom: -15px;
@@ -73,7 +73,7 @@
     border-radius: 2px;
 }
 
-.products-promociones-badge {
+.lucesa-products-promociones-badge {
     background: linear-gradient(135deg, #ff6b6b, #ee5a24);
     padding: 0.75rem 1.5rem;
     border-radius: 25px;
@@ -87,12 +87,12 @@
     margin-top: 1rem;
 }
 
-.products-badge-icon {
+.lucesa-products-badge-icon {
     font-size: 1.2em;
 }
 
 /* Search Styles */
-.products-search {
+.lucesa-products-search {
     max-width: 600px;
     margin: 0 auto 2rem;
     display: flex;
@@ -102,7 +102,7 @@
     justify-content: center;
 }
 
-.products-search-box {
+.lucesa-products-search-box {
     position: relative;
     display: flex;
     align-items: center;
@@ -110,7 +110,7 @@
     min-width: 300px;
 }
 
-.products-search-input {
+.lucesa-products-search-input {
     width: 100%;
     padding: 1rem 3rem 1rem 1.5rem;
     border: 2px solid rgba(255, 255, 255, 0.1);
@@ -123,18 +123,18 @@
     font-family: inherit;
 }
 
-.products-search-input:focus {
+.lucesa-products-search-input:focus {
     outline: none;
     border-color: #4895CF;
     box-shadow: 0 0 0 3px rgba(72, 149, 207, 0.2);
     background: rgba(255, 255, 255, 0.08);
 }
 
-.products-search-input::placeholder {
+.lucesa-products-search-input::placeholder {
     color: #94a3b8;
 }
 
-.products-search-clear {
+.lucesa-products-search-clear {
     position: absolute;
     right: 1rem;
     background: none;
@@ -153,12 +153,12 @@
     font-family: inherit;
 }
 
-.products-search-clear:hover {
+.lucesa-products-search-clear:hover {
     background: rgba(255, 255, 255, 0.1);
     color: white;
 }
 
-.products-btn-exit-promociones {
+.lucesa-products-btn-exit-promociones {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     color: white;
@@ -176,14 +176,14 @@
     font-family: inherit;
 }
 
-.products-btn-exit-promociones:hover {
+.lucesa-products-btn-exit-promociones:hover {
     background: rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(255, 255, 255, 0.1);
 }
 
 /* Products Count */
-.products-count {
+.lucesa-products-count {
     text-align: center;
     color: #94a3b8;
     font-size: 0.95rem;
@@ -195,15 +195,15 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.products-promociones-indicator,
-.products-category-indicator {
+.lucesa-products-promociones-indicator,
+.lucesa-products-category-indicator {
     color: #4895CF;
     font-weight: 500;
     margin-left: 0.5rem;
 }
 
 /* Controls - Navegación Mejorada */
-.products-controls {
+.lucesa-products-controls {
     display: grid;
     grid-template-columns: 320px 1fr;
     gap: 2rem;
@@ -217,19 +217,19 @@
 }
 
 /* Navegación - Estilo Mejorado */
-.products-categories-navigation {
+.lucesa-products-categories-navigation {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
 }
 
-.products-categories-header {
+.lucesa-products-categories-header {
     text-align: center;
     padding-bottom: 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.products-categories-header h3 {
+.lucesa-products-categories-header h3 {
     font-size: 1.3rem;
     font-weight: 700;
     color: #ffffff;
@@ -241,14 +241,14 @@
 }
 
 /* BOTONES EN LÍNEA */
-.products-categories-actions {
+.lucesa-products-categories-actions {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
 }
 
 /* Botones de Navegación Mejorados */
-.products-category-nav-btn {
+.lucesa-products-category-nav-btn {
     flex: 1;
     min-width: 140px;
     padding: 1rem 1.25rem;
@@ -272,7 +272,7 @@
     font-family: inherit;
 }
 
-.products-category-nav-btn::before {
+.lucesa-products-category-nav-btn::before {
     content: '';
     position: absolute;
     top: 0;
@@ -283,11 +283,11 @@
     transition: left 0.6s ease;
 }
 
-.products-category-nav-btn:hover::before {
+.lucesa-products-category-nav-btn:hover::before {
     left: 100%;
 }
 
-.products-category-nav-btn:hover {
+.lucesa-products-category-nav-btn:hover {
     border-color: #4895CF;
     color: #4895CF;
     transform: translateY(-3px);
@@ -295,7 +295,7 @@
     box-shadow: 0 8px 25px rgba(72, 149, 207, 0.25);
 }
 
-.products-category-nav-active {
+.lucesa-products-category-nav-active {
     background: linear-gradient(135deg, #4895CF, #7CCBDD);
     color: white;
     border-color: #4895CF;
@@ -303,18 +303,18 @@
     transform: translateY(-2px);
 }
 
-.products-category-nav-active::before {
+.lucesa-products-category-nav-active::before {
     display: none;
 }
 
-.products-browse-categories {
+.lucesa-products-browse-categories {
     background: linear-gradient(135deg, #4895CF, #7CCBDD);
     color: white;
     border: none;
     box-shadow: 0 4px 15px rgba(72, 149, 207, 0.3);
 }
 
-.products-browse-categories:hover {
+.lucesa-products-browse-categories:hover {
     background: linear-gradient(135deg, #2C5F8E, #4895CF);
     color: white;
     border: none;
@@ -323,14 +323,14 @@
 }
 
 /* Filtro de Ordenamiento Mejorado */
-.products-sort-filter {
+.lucesa-products-sort-filter {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
 }
 
-.products-sort-filter-container {
+.lucesa-products-sort-filter-container {
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -340,7 +340,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.products-sort-filter label {
+.lucesa-products-sort-filter label {
     font-weight: 600;
     color: #ffffff;
     white-space: nowrap;
@@ -349,7 +349,7 @@
     gap: 0.5rem;
 }
 
-.products-sort-select {
+.lucesa-products-sort-select {
     padding: 0.75rem 1rem;
     border: 2px solid rgba(255, 255, 255, 0.15);
     border-radius: 10px;
@@ -364,20 +364,20 @@
     font-family: inherit;
 }
 
-.products-sort-select:focus {
+.lucesa-products-sort-select:focus {
     outline: none;
     border-color: #4895CF;
     box-shadow: 0 0 0 3px rgba(72, 149, 207, 0.2);
     background: rgba(255, 255, 255, 0.15);
 }
 
-.products-sort-select option {
+.lucesa-products-sort-select option {
     background: #1e293b;
     color: white;
     padding: 0.5rem;
 }
 
-.products-promociones-stats {
+.lucesa-products-promociones-stats {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -389,13 +389,13 @@
     border: 1px solid rgba(255, 215, 0, 0.2);
 }
 
-.products-stats-icon {
+.lucesa-products-stats-icon {
     font-size: 1.2em;
 }
 
 /* Loading States */
-.products-loading-products,
-.products-loading-search {
+.lucesa-products-loading-products,
+.lucesa-products-loading-search {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -406,28 +406,28 @@
     padding-top: 5rem;
 }
 
-.products-loading-spinner {
+.lucesa-products-loading-spinner {
     width: 60px;
     height: 60px;
     border: 4px solid rgba(255, 255, 255, 0.1);
     border-left: 4px solid #4895CF;
     border-radius: 50%;
-    animation: products-spin 1s linear infinite;
+    animation: lucesa-products-spin 1s linear infinite;
 }
 
-@keyframes products-spin {
+@keyframes lucesa-products-spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
-.products-loading-products p,
-.products-loading-search p {
+.lucesa-products-loading-products p,
+.lucesa-products-loading-search p {
     color: #cbd5e1;
     font-size: 1.1rem;
 }
 
 /* Error State */
-.products-error-products {
+.lucesa-products-error-products {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -437,27 +437,27 @@
     padding: 5rem 2rem 2rem 2rem;
 }
 
-.products-error-icon {
+.lucesa-products-error-icon {
     font-size: 4rem;
     margin-bottom: 1.5rem;
-    animation: products-shake 0.5s ease-in-out;
+    animation: lucesa-products-shake 0.5s ease-in-out;
 }
 
-.products-error-products h3 {
+.lucesa-products-error-products h3 {
     color: #f87171;
     margin-bottom: 1rem;
     font-size: 1.5rem;
     font-weight: 700;
 }
 
-.products-error-products p {
+.lucesa-products-error-products p {
     color: #cbd5e1;
     margin-bottom: 2.5rem;
     font-size: 1.1rem;
     line-height: 1.6;
 }
 
-.products-btn-retry {
+.lucesa-products-btn-retry {
     padding: 1rem 2rem;
     border: none;
     border-radius: 12px;
@@ -474,20 +474,20 @@
     font-family: inherit;
 }
 
-.products-btn-retry:hover {
+.lucesa-products-btn-retry:hover {
     background: linear-gradient(135deg, #2C5F8E, #16395C);
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(72, 149, 207, 0.4);
 }
 
-@keyframes products-shake {
+@keyframes lucesa-products-shake {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-5px); }
     75% { transform: translateX(5px); }
 }
 
 /* Products Grid */
-.products-grid {
+.lucesa-products-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1.5rem;
@@ -495,7 +495,7 @@
 }
 
 /* No Products State */
-.products-no-products {
+.lucesa-products-no-products {
     grid-column: 1 / -1;
     display: flex;
     flex-direction: column;
@@ -510,18 +510,18 @@
     border: 1px solid rgba(72, 149, 207, 0.2);
 }
 
-.products-no-products-icon {
+.lucesa-products-no-products-icon {
     font-size: 4rem;
     margin-bottom: 1.5rem;
 }
 
-.products-no-products h3 {
+.lucesa-products-no-products h3 {
     font-size: 1.5rem;
     color: #ffffff;
     margin-bottom: 1rem;
 }
 
-.products-no-products p {
+.lucesa-products-no-products p {
     color: #cbd5e1;
     font-size: 1.1rem;
     margin-bottom: 2rem;
@@ -529,17 +529,17 @@
     line-height: 1.6;
 }
 
-.products-no-products-actions {
+.lucesa-products-no-products-actions {
     display: flex;
     gap: 1rem;
     flex-wrap: wrap;
     justify-content: center;
 }
 
-.products-btn-clear-search,
-.products-btn-view-all,
-.products-btn-browse-categories,
-.products-btn-back {
+.lucesa-products-btn-clear-search,
+.lucesa-products-btn-view-all,
+.lucesa-products-btn-browse-categories,
+.lucesa-products-btn-back {
     padding: 0.75rem 1.5rem;
     border: none;
     border-radius: 12px;
@@ -554,56 +554,56 @@
     font-family: inherit;
 }
 
-.products-btn-clear-search {
+.lucesa-products-btn-clear-search {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.products-btn-clear-search:hover {
+.lucesa-products-btn-clear-search:hover {
     background: rgba(255, 255, 255, 0.2);
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(255, 255, 255, 0.1);
 }
 
-.products-btn-view-all {
+.lucesa-products-btn-view-all {
     background: linear-gradient(135deg, #4895CF, #7CCBDD);
     color: white;
 }
 
-.products-btn-view-all:hover {
+.lucesa-products-btn-view-all:hover {
     background: linear-gradient(135deg, #2C5F8E, #4895CF);
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(72, 149, 207, 0.4);
 }
 
-.products-btn-browse-categories {
+.lucesa-products-btn-browse-categories {
     background: linear-gradient(135deg, #48bb78, #38a169);
     color: white;
 }
 
-.products-btn-browse-categories:hover {
+.lucesa-products-btn-browse-categories:hover {
     background: linear-gradient(135deg, #38a169, #2f855a);
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
 }
 
-.products-btn-back {
+.lucesa-products-btn-back {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.products-btn-back:hover {
+.lucesa-products-btn-back:hover {
     background: rgba(255, 255, 255, 0.2);
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(255, 255, 255, 0.1);
 }
 
 /* Pagination */
-.products-pagination {
+.lucesa-products-pagination {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -612,7 +612,7 @@
     flex-wrap: wrap;
 }
 
-.products-pagination-btn {
+.lucesa-products-pagination-btn {
     padding: 0.75rem 1rem;
     border: 2px solid rgba(255, 255, 255, 0.1);
     background: rgba(255, 255, 255, 0.05);
@@ -630,27 +630,27 @@
     font-family: inherit;
 }
 
-.products-pagination-btn:hover:not(:disabled) {
+.lucesa-products-pagination-btn:hover:not(:disabled) {
     border-color: #4895CF;
     color: #4895CF;
     transform: translateY(-2px);
     background: rgba(72, 149, 207, 0.1);
 }
 
-.products-pagination-active {
+.lucesa-products-pagination-active {
     background: linear-gradient(135deg, #4895CF, #7CCBDD);
     color: white;
     border-color: #4895CF;
     box-shadow: 0 4px 15px rgba(72, 149, 207, 0.3);
 }
 
-.products-pagination-btn:disabled {
+.lucesa-products-pagination-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     transform: none;
 }
 
-.products-pagination-ellipsis {
+.lucesa-products-pagination-ellipsis {
     padding: 0.75rem 0.5rem;
     color: #94a3b8;
     font-weight: 500;
@@ -658,166 +658,166 @@
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-    .products-controls {
+    .lucesa-products-controls {
         grid-template-columns: 1fr;
         gap: 1.5rem;
     }
     
-    .products-sort-filter {
+    .lucesa-products-sort-filter {
         justify-content: flex-start;
     }
     
-    .products-grid {
+    .lucesa-products-grid {
         grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     }
 }
 
 @media (max-width: 768px) {
-    .products-page {
+    .lucesa-products-page {
         padding: 6rem 0 1.5rem 0;
     }
     
-    .products-container {
+    .lucesa-products-container {
         padding: 0 1rem;
     }
     
-    .products-header {
+    .lucesa-products-header {
         padding-top: 3rem;
     }
     
-    .products-header-top {
+    .lucesa-products-header-top {
         flex-direction: column;
         gap: 1rem;
         text-align: center;
     }
     
-    .products-back-button {
+    .lucesa-products-back-button {
         position: static;
         align-self: flex-start;
         margin-bottom: 1rem;
     }
     
-    .products-header h1 {
+    .lucesa-products-header h1 {
         font-size: 2rem;
         margin-bottom: 1.5rem;
     }
     
-    .products-controls {
+    .lucesa-products-controls {
         padding: 1.25rem;
     }
     
-    .products-categories-header h3 {
+    .lucesa-products-categories-header h3 {
         font-size: 1.2rem;
     }
     
-    .products-categories-actions {
+    .lucesa-products-categories-actions {
         gap: 0.75rem;
     }
     
-    .products-category-nav-btn {
+    .lucesa-products-category-nav-btn {
         padding: 0.875rem 1rem;
         font-size: 0.95rem;
         min-width: 120px;
     }
     
-    .products-sort-filter {
+    .lucesa-products-sort-filter {
         flex-direction: column;
         align-items: stretch;
         gap: 1rem;
     }
     
-    .products-sort-filter-container {
+    .lucesa-products-sort-filter-container {
         justify-content: space-between;
     }
     
-    .products-sort-select {
+    .lucesa-products-sort-select {
         min-width: 100%;
     }
     
-    .products-grid {
+    .lucesa-products-grid {
         grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: 1rem;
     }
     
-    .products-no-products-actions {
+    .lucesa-products-no-products-actions {
         flex-direction: column;
         align-items: center;
     }
 }
 
 @media (max-width: 640px) {
-    .products-categories-actions {
+    .lucesa-products-categories-actions {
         flex-direction: column;
         gap: 0.75rem;
     }
     
-    .products-category-nav-btn {
+    .lucesa-products-category-nav-btn {
         min-width: 100%;
     }
     
-    .products-sort-filter-container {
+    .lucesa-products-sort-filter-container {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.75rem;
     }
     
-    .products-sort-filter label {
+    .lucesa-products-sort-filter label {
         align-self: center;
     }
 }
 
 @media (max-width: 480px) {
-    .products-page {
+    .lucesa-products-page {
         padding: 8rem 0 1rem 0;
     }
     
-    .products-header {
+    .lucesa-products-header {
         padding-top: 4rem;
     }
     
-    .products-header h1 {
+    .lucesa-products-header h1 {
         font-size: 1.8rem;
         margin-bottom: 1rem;
     }
     
-    .products-controls {
+    .lucesa-products-controls {
         padding: 1rem;
     }
     
-    .products-categories-header h3 {
+    .lucesa-products-categories-header h3 {
         font-size: 1.1rem;
     }
     
-    .products-category-nav-btn {
+    .lucesa-products-category-nav-btn {
         padding: 0.7rem 0.8rem;
         font-size: 0.85rem;
         border-radius: 10px;
     }
     
-    .products-grid {
+    .lucesa-products-grid {
         grid-template-columns: 1fr;
         gap: 0.75rem;
     }
     
-    .products-no-products {
+    .lucesa-products-no-products {
         padding: 2rem 1rem;
     }
     
-    .products-no-products-icon {
+    .lucesa-products-no-products-icon {
         font-size: 3rem;
     }
     
-    .products-no-products h3 {
+    .lucesa-products-no-products h3 {
         font-size: 1.25rem;
     }
     
-    .products-no-products p {
+    .lucesa-products-no-products p {
         font-size: 1rem;
     }
 }
 
 /* Animations */
-@keyframes products-fadeInUp {
+@keyframes lucesa-products-fadeInUp {
     from {
         opacity: 0;
         transform: translateY(30px);
@@ -828,47 +828,47 @@
     }
 }
 
-.products-grid > * {
-    animation: products-fadeInUp 0.6s ease-out;
+.lucesa-products-grid > * {
+    animation: lucesa-products-fadeInUp 0.6s ease-out;
 }
 
-.products-category-nav-btn {
-    animation: products-fadeInUp 0.5s ease-out;
+.lucesa-products-category-nav-btn {
+    animation: lucesa-products-fadeInUp 0.5s ease-out;
 }
 
 /* Focus States for Accessibility */
-.products-btn-view-all:focus,
-.products-btn-retry:focus,
-.products-btn-clear-search:focus,
-.products-btn-browse-categories:focus,
-.products-btn-back:focus,
-.products-pagination-btn:focus,
-.products-category-nav-btn:focus,
-.products-sort-select:focus,
-.products-search-input:focus,
-.products-back-button:focus,
-.products-btn-exit-promociones:focus {
+.lucesa-products-btn-view-all:focus,
+.lucesa-products-btn-retry:focus,
+.lucesa-products-btn-clear-search:focus,
+.lucesa-products-btn-browse-categories:focus,
+.lucesa-products-btn-back:focus,
+.lucesa-products-pagination-btn:focus,
+.lucesa-products-category-nav-btn:focus,
+.lucesa-products-sort-select:focus,
+.lucesa-products-search-input:focus,
+.lucesa-products-back-button:focus,
+.lucesa-products-btn-exit-promociones:focus {
     outline: 3px solid #4895CF;
     outline-offset: 2px;
 }
 
 /* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
-    .products-grid > *,
-    .products-category-nav-btn,
-    .products-btn-view-all,
-    .products-btn-retry,
-    .products-btn-clear-search,
-    .products-btn-browse-categories,
-    .products-btn-back,
-    .products-pagination-btn,
-    .products-back-button,
-    .products-btn-exit-promociones {
+    .lucesa-products-grid > *,
+    .lucesa-products-category-nav-btn,
+    .lucesa-products-btn-view-all,
+    .lucesa-products-btn-retry,
+    .lucesa-products-btn-clear-search,
+    .lucesa-products-btn-browse-categories,
+    .lucesa-products-btn-back,
+    .lucesa-products-pagination-btn,
+    .lucesa-products-back-button,
+    .lucesa-products-btn-exit-promociones {
         transition: none;
         animation: none;
     }
     
-    .products-category-nav-btn::before {
+    .lucesa-products-category-nav-btn::before {
         display: none;
     }
 }

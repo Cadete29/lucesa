@@ -5,240 +5,269 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * Obtiene el perfil del usuario autenticado
+ * Obtener perfil del usuario autenticado
  */
 const getMyProfile = async (req, res) => {
     try {
-        const user = await userModel.findUserById(req.user.id);
+        const userId = req.user.id;
+        console.log('🔍 Obteniendo perfil para usuario ID:', userId);
+        
+        const user = await userModel.findUserById(userId);
+        
         if (!user) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'Usuario no encontrado' 
+            console.log('❌ Usuario no encontrado');
+            return res.status(404).json({
+                success: false,
+                message: 'Usuario no encontrado'
             });
         }
         
-        res.json({
+        console.log('✅ Perfil obtenido exitosamente:', {
+            id: user.id,
+            email: user.email,
+            hasImage: !!user.images_profile
+        });
+        
+        return res.status(200).json({
             success: true,
-            message: 'Perfil obtenido correctamente',
             data: { user }
         });
     } catch (error) {
-        console.error('Error en getMyProfile:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error del servidor' 
+        console.error('❌ Error en getMyProfile:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error al obtener el perfil'
         });
     }
 };
 
 /**
- * Actualiza el perfil del usuario (nombre y foto_perfil)
+ * Actualizar perfil del usuario (nombre, etc.)
  */
 const updateMyProfile = async (req, res) => {
-    const { nombre, images_profile } = req.body;
-
-    console.log('📝 Datos recibidos para actualizar perfil:', { nombre, images_profile });
-
-    // Validar que al menos un campo sea proporcionado
-    if (nombre === undefined && images_profile === undefined) {
-        return res.status(400).json({
-            success: false,
-            message: 'Se requiere al menos un campo para actualizar (nombre o images_profile)'
-        });
-    }
-
     try {
-        const updatedUser = await userModel.updateUserProfile(req.user.id, {
-            nombre,
-            images_profile
-        });
-
-        if (!updatedUser) {
-            return res.status(404).json({
+        const userId = req.user.id;
+        const { nombre, username } = req.body;
+        
+        console.log('📝 Actualizando perfil para usuario ID:', userId, { nombre, username });
+        
+        // Validar que al menos un campo sea proporcionado
+        if (!nombre && !username) {
+            return res.status(400).json({
                 success: false,
-                message: 'Usuario no encontrado'
+                message: 'Debe proporcionar al menos un campo para actualizar'
             });
         }
-
-        res.json({
+        
+        // Verificar si el username ya existe (si se está actualizando)
+        if (username) {
+            const existingUser = await userModel.findUserByUsername(username);
+            if (existingUser && existingUser.id !== userId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El nombre de usuario ya está en uso'
+                });
+            }
+        }
+        
+        const updateData = {};
+        if (nombre !== undefined) updateData.nombre = nombre;
+        if (username !== undefined) updateData.username = username;
+        
+        const updatedUser = await userModel.updateUserProfile(userId, updateData);
+        
+        console.log('✅ Perfil actualizado exitosamente:', {
+            id: updatedUser.id,
+            nombre: updatedUser.nombre,
+            username: updatedUser.username
+        });
+        
+        return res.status(200).json({
             success: true,
-            message: 'Perfil actualizado correctamente',
+            message: 'Perfil actualizado exitosamente',
             data: { user: updatedUser }
         });
     } catch (error) {
-        console.error('Error en updateMyProfile:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error al actualizar perfil: ' + error.message 
+        console.error('❌ Error en updateMyProfile:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error al actualizar el perfil'
         });
     }
 };
 
 /**
- * Elimina la cuenta del usuario autenticado
- */
-const deleteMyAccount = async (req, res) => {
-    try {
-        const deletedUser = await userModel.deleteUser(req.user.id);
-        if (!deletedUser) {
-            return res.status(404).json({
-                success: false,
-                message: 'Usuario no encontrado'
-            });
-        }
-
-        res.json({
-            success: true,
-            message: 'Cuenta eliminada permanentemente'
-        });
-    } catch (error) {
-        console.error('Error en deleteMyAccount:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error al eliminar cuenta' 
-        });
-    }
-};
-
-/**
- * Sube y actualiza la imagen de perfil del usuario
+ * Subir imagen de perfil
  */
 const uploadProfileImage = async (req, res) => {
     try {
-        console.log('📸 Iniciando subida de imagen de perfil...');
-        console.log('👤 Usuario:', req.user.id);
-        console.log('📁 Archivo recibido:', req.file);
-
-        if (!req.file) {
-            return res.status(400).json({
-                success: false,
-                message: 'No se ha proporcionado ninguna imagen'
-            });
-        }
-
         const userId = req.user.id;
         
-        // Obtener información del usuario actual para eliminar la imagen anterior
-        const currentUser = await userModel.findUserById(userId);
-        console.log('👤 Usuario actual:', currentUser);
+        console.log('📤 Subiendo imagen de perfil para usuario ID:', userId);
         
-        // Eliminar imagen anterior si existe
-        if (currentUser.images_profile && currentUser.images_profile.startsWith('/uploads/photoperfil/')) {
-            const oldImagePath = path.join(__dirname, '..', currentUser.images_profile);
-            console.log('🗑️ Intentando eliminar imagen anterior:', oldImagePath);
-            
-            if (fs.existsSync(oldImagePath)) {
-                fs.unlinkSync(oldImagePath);
-                console.log('✅ Imagen anterior eliminada');
-            } else {
-                console.log('ℹ️ Imagen anterior no encontrada en el sistema de archivos');
-            }
-        }
-
-        // Crear la ruta de la nueva imagen
-        const imagePath = `/uploads/photoperfil/${req.file.filename}`;
-        console.log('🖼️ Nueva ruta de imagen:', imagePath);
-        
-        // Actualizar el perfil del usuario con la nueva imagen
-        console.log('💾 Actualizando base de datos...');
-        const updatedUser = await userModel.updateUserProfile(userId, {
-            images_profile: imagePath
-        });
-
-        if (!updatedUser) {
-            // Si falla la actualización, eliminar la imagen subida
-            console.log('❌ Falló la actualización en BD, eliminando archivo subido...');
-            fs.unlinkSync(req.file.path);
-            return res.status(500).json({
+        if (!req.file) {
+            console.log('❌ No se recibió ningún archivo');
+            return res.status(400).json({
                 success: false,
-                message: 'Error al actualizar el perfil en la base de datos'
+                message: 'No se recibió ninguna imagen'
             });
         }
-
-        console.log('✅ Imagen subida y perfil actualizado correctamente');
-        console.log('👤 Usuario actualizado:', updatedUser);
-
-        const imageUrl = `${process.env.BASE_URL || 'http://localhost:4004'}${imagePath}`;
         
-        res.json({
+        console.log('📄 Archivo recibido:', {
+            filename: req.file.filename,
+            originalname: req.file.originalname,
+            size: req.file.size,
+            mimetype: req.file.mimetype
+        });
+        
+        // Construir la ruta relativa para la base de datos
+        const relativePath = `/uploads/photoperfil/${req.file.filename}`;
+        
+        console.log('🖼️ Ruta para BD:', relativePath);
+        
+        // Actualizar el perfil del usuario con la nueva imagen
+        const updateData = {
+            images_profile: relativePath
+        };
+        
+        const updatedUser = await userModel.updateUserProfile(userId, updateData);
+        
+        console.log('✅ Imagen subida exitosamente:', {
+            userId: updatedUser.id,
+            imagePath: updatedUser.images_profile,
+            updatedAt: updatedUser.updated_at
+        });
+        
+        return res.status(200).json({
             success: true,
-            message: 'Imagen de perfil actualizada correctamente',
-            data: { 
+            message: 'Foto de perfil actualizada exitosamente',
+            data: {
                 user: updatedUser,
-                imageUrl: imageUrl
+                fileInfo: {
+                    filename: req.file.filename,
+                    path: relativePath,
+                    size: req.file.size,
+                    mimetype: req.file.mimetype
+                }
             }
         });
-
     } catch (error) {
         console.error('❌ Error en uploadProfileImage:', error);
         
-        // Eliminar archivo subido en caso de error
-        if (req.file && fs.existsSync(req.file.path)) {
-            console.log('🗑️ Eliminando archivo subido debido al error...');
-            fs.unlinkSync(req.file.path);
+        // Si hay un error, eliminar el archivo subido
+        if (req.file) {
+            const filePath = path.join(__dirname, '../uploads/photoperfil', req.file.filename);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                console.log('🗑️ Archivo eliminado por error:', filePath);
+            }
         }
         
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
-            message: 'Error al subir la imagen: ' + error.message
+            message: 'Error al subir la imagen de perfil'
         });
     }
 };
 
 /**
- * Elimina la imagen de perfil del usuario
+ * Eliminar imagen de perfil
  */
 const removeProfileImage = async (req, res) => {
     try {
         const userId = req.user.id;
-        console.log('🗑️ Eliminando imagen de perfil para usuario:', userId);
         
-        // Obtener información del usuario actual
+        console.log('🗑️ Eliminando imagen de perfil para usuario ID:', userId);
+        
+        // Obtener el usuario actual para ver si tiene imagen
         const currentUser = await userModel.findUserById(userId);
-        console.log('👤 Usuario actual:', currentUser);
         
-        // Eliminar imagen del sistema de archivos si existe
-        if (currentUser.images_profile && currentUser.images_profile.startsWith('/uploads/photoperfil/')) {
-            const imagePath = path.join(__dirname, '..', currentUser.images_profile);
-            console.log('📁 Ruta de imagen a eliminar:', imagePath);
-            
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
-                console.log('✅ Imagen eliminada del sistema de archivos');
-            } else {
-                console.log('ℹ️ Imagen no encontrada en el sistema de archivos');
-            }
-        } else {
-            console.log('ℹ️ No hay imagen de perfil para eliminar');
-        }
-
-        // Actualizar el perfil del usuario eliminando la imagen
-        console.log('💾 Actualizando base de datos...');
-        const updatedUser = await userModel.updateUserProfile(userId, {
-            images_profile: null
-        });
-
-        if (!updatedUser) {
-            return res.status(500).json({
+        if (!currentUser.images_profile) {
+            console.log('ℹ️ El usuario no tiene imagen de perfil');
+            return res.status(400).json({
                 success: false,
-                message: 'Error al actualizar el perfil en la base de datos'
+                message: 'No tienes una imagen de perfil para eliminar'
             });
         }
-
-        console.log('✅ Imagen eliminada correctamente');
-        console.log('👤 Usuario actualizado:', updatedUser);
-
-        res.json({
-            success: true,
-            message: 'Imagen de perfil eliminada correctamente',
-            data: { user: updatedUser }
+        
+        // Eliminar el archivo físico si existe
+        const imagePath = path.join(__dirname, '..', currentUser.images_profile);
+        console.log('🔍 Buscando archivo en:', imagePath);
+        
+        if (fs.existsSync(imagePath)) {
+            fs.unlinkSync(imagePath);
+            console.log('✅ Archivo físico eliminado:', imagePath);
+        } else {
+            console.log('⚠️ Archivo no encontrado en el sistema de archivos:', imagePath);
+        }
+        
+        // Actualizar el perfil del usuario para eliminar la referencia a la imagen
+        const updateData = {
+            images_profile: null
+        };
+        
+        const updatedUser = await userModel.updateUserProfile(userId, updateData);
+        
+        console.log('✅ Imagen eliminada exitosamente de la BD:', {
+            userId: updatedUser.id,
+            hasImage: !!updatedUser.images_profile
         });
-
+        
+        return res.status(200).json({
+            success: true,
+            message: 'Foto de perfil eliminada exitosamente',
+            data: {
+                user: updatedUser
+            }
+        });
     } catch (error) {
         console.error('❌ Error en removeProfileImage:', error);
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
-            message: 'Error al eliminar la imagen: ' + error.message
+            message: 'Error al eliminar la imagen de perfil'
+        });
+    }
+};
+
+/**
+ * Eliminar cuenta de usuario
+ */
+const deleteMyAccount = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        console.log('🗑️ Eliminando cuenta para usuario ID:', userId);
+        
+        // Obtener usuario para ver si tiene imagen que eliminar
+        const user = await userModel.findUserById(userId);
+        
+        // Eliminar imagen de perfil si existe
+        if (user.images_profile) {
+            const imagePath = path.join(__dirname, '..', user.images_profile);
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+                console.log('🗑️ Imagen de perfil eliminada:', imagePath);
+            }
+        }
+        
+        // Eliminar usuario de la base de datos
+        const deletedUser = await userModel.deleteUser(userId);
+        
+        console.log('✅ Cuenta eliminada exitosamente:', {
+            id: deletedUser.id,
+            email: deletedUser.email
+        });
+        
+        return res.status(200).json({
+            success: true,
+            message: 'Cuenta eliminada exitosamente',
+            data: { user: deletedUser }
+        });
+    } catch (error) {
+        console.error('❌ Error en deleteMyAccount:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error al eliminar la cuenta'
         });
     }
 };
@@ -246,7 +275,7 @@ const removeProfileImage = async (req, res) => {
 module.exports = {
     getMyProfile,
     updateMyProfile,
-    deleteMyAccount,
     uploadProfileImage,
-    removeProfileImage
+    removeProfileImage,
+    deleteMyAccount
 };

@@ -10,19 +10,24 @@ const IMAGE_BASE_URL = process.env.NODE_ENV === 'production'
 const OrderConfirmation = () => {
   const location = useLocation();
   const { user, saveOrderToHistory } = useAuth();
-  const { orderId, total, cartItems, subtotal, tax, shipping } = location.state || {};
+  
+  // ✅ Recibir order_number (LUCESA) desde el backend
+  const { order_number, orderId, total, cartItems, subtotal, tax, shipping } = location.state || {};
+  
+  // ✅ Usar order_number del backend como prioridad
+  const displayOrderNumber = order_number || orderId;
   
   const [orderSaved, setOrderSaved] = useState(false);
 
   useEffect(() => {
     const saveOrder = async () => {
-      if (!orderId || orderSaved || !user) {
+      if (!displayOrderNumber || orderSaved || !user) {
         return;
       }
 
       try {
         const orderData = {
-          orderId,
+          order_number: displayOrderNumber, // ✅ Usar número LUCESA
           total,
           cartItems: cartItems || [],
           subtotal,
@@ -44,14 +49,14 @@ const OrderConfirmation = () => {
     };
 
     saveOrder();
-  }, [orderId, user, saveOrderToHistory, orderSaved, total, cartItems, subtotal, tax, shipping]);
+  }, [displayOrderNumber, user, saveOrderToHistory, orderSaved, total, cartItems, subtotal, tax, shipping]);
 
   const safeSubtotal = subtotal ? parseFloat(subtotal) : 0;
   const safeTax = tax ? parseFloat(tax) : 0;
   const safeShipping = shipping ? parseFloat(shipping) : 0;
   const safeTotal = total ? parseFloat(total) : (safeSubtotal + safeTax + safeShipping);
 
-  if (!orderId) {
+  if (!displayOrderNumber) {
     return (
       <div className="oc-page">
         <div className="oc-container">
@@ -92,7 +97,14 @@ const OrderConfirmation = () => {
           <div className="oc-header">
             <div className="oc-success-icon">✅</div>
             <h1 className="oc-title">¡Pedido Confirmado!</h1>
-            <p className="oc-order-number">Número de orden: {orderId}</p>
+            {/* ✅ Mostrar el número LUCESA del backend */}
+            <p className="oc-order-number">Número de orden: {displayOrderNumber}</p>
+            {displayOrderNumber.startsWith('LUCESA-') && (
+              <div className="oc-lucesa-badge">
+                <span className="oc-lucesa-icon">🏭</span>
+                <span className="oc-lucesa-text">Orden LUCESA</span>
+              </div>
+            )}
           </div>
 
           <div className="oc-details">
@@ -185,6 +197,10 @@ const OrderConfirmation = () => {
               <h3 className="oc-section-title">Información del Pedido</h3>
               <div className="oc-detail-grid">
                 <div className="oc-detail-row">
+                  <span className="oc-detail-label">Número de orden:</span>
+                  <span className="oc-detail-value oc-order-number-highlight">{displayOrderNumber}</span>
+                </div>
+                <div className="oc-detail-row">
                   <span className="oc-detail-label">Fecha de pedido:</span>
                   <span className="oc-detail-value">{new Date().toLocaleDateString('es-MX')}</span>
                 </div>
@@ -198,7 +214,7 @@ const OrderConfirmation = () => {
                 </div>
                 <div className="oc-detail-row">
                   <span className="oc-detail-label">Método de pago:</span>
-                  <span className="oc-detail-value">Tarjeta de crédito/débito</span>
+                  <span className="oc-detail-value">Mercado Pago</span>
                 </div>
                 {safeShipping === 0 && (
                   <div className="oc-detail-row">
@@ -224,7 +240,7 @@ const OrderConfirmation = () => {
                   <span className="oc-step-number">2</span>
                   <div className="oc-step-content">
                     <strong className="oc-step-title">Envío</strong>
-                    <p className="oc-step-desc">Recibirás un email con tu ticket, guardalo para cualquier aclaracion o duda</p>
+                    <p className="oc-step-desc">Recibirás un email con tu ticket, guárdalo para cualquier aclaración o duda</p>
                     <span className="oc-step-time">3-5 días hábiles</span>
                   </div>
                 </div>
@@ -237,10 +253,10 @@ const OrderConfirmation = () => {
                   </div>
                 </div>
                 <div className="oc-step-item">
-                  <span className="oc-step-number">5</span>
+                  <span className="oc-step-number">4</span>
                   <div className="oc-step-content">
-                    <strong className="oc-step-title">Recomiendanos</strong>
-                    <p className="oc-step-desc">Muchas Gracias Por tu Compra!!!</p>
+                    <strong className="oc-step-title">Recomiéndanos</strong>
+                    <p className="oc-step-desc">¡Muchas gracias por tu compra!</p>
                     <span className="oc-step-time">Regresa pronto</span>
                   </div>
                 </div>
@@ -266,7 +282,7 @@ const OrderConfirmation = () => {
           <div className="oc-support">
             <p className="oc-support-text">¿Tienes preguntas sobre tu pedido?</p>
             <div className="oc-support-contacts">
-              <a href="mailto:soporte@lucesa.com" className="oc-support-link">
+              <a href="mailto:luis.lucio@lucesademexico.com" className="oc-support-link">
                 📧 luis.lucio@lucesademexico.com
               </a>
               <a href="tel:+525555555555" className="oc-support-link">
@@ -275,6 +291,14 @@ const OrderConfirmation = () => {
               <span className="oc-support-hours">
                 🕒 Horario: Lunes a Viernes 9:00 - 18:00
               </span>
+            </div>
+            <div className="oc-order-reference">
+              <p className="oc-reference-text">
+                <strong>Referencia:</strong> {displayOrderNumber}
+              </p>
+              <p className="oc-reference-note">
+                Por favor, menciona tu número de orden LUCESA en cualquier comunicación
+              </p>
             </div>
           </div>
         </div>
