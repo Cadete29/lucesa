@@ -1,3 +1,4 @@
+// App.js - VERSIÓN CORREGIDA
 import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { SearchProvider } from './context/SearchContext'
@@ -23,6 +24,11 @@ import UserProfile from './components/Profile/UserProfile';
 import PagoExito from './pages/PagoExitoso';
 import PagoError from './pages/PagoError';
 import PagoPendiente from './pages/PagoPendiente';
+import PrivacyPolicy from './components/Footer/PrivacyPolicy';
+import TermsOfService from './components/Footer/TermsOfService';
+import CookiePolicy from './components/Footer/CookiePolicy';
+import FyQ from './components/Footer/Fya'
+import WhatsappButton from './components/WhatsappButton/WhatsappButton'; // ✅ Solo esta línea
 import './App.css'
 
 function App() {
@@ -59,9 +65,14 @@ function App() {
                   <Route path="/pago/exito" element={<PagoExito />} />
                   <Route path="/pago/error" element={<PagoError />} />
                   <Route path="/pago/pendiente" element={<PagoPendiente />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/terms-of-service" element={<TermsOfService />} />
+                  <Route path="/cookie-policy" element={<CookiePolicy />} />
+                  <Route path="/faq" element={<FyQ />} />
                 </Routes>
               </main>
               <Footer />
+              <WhatsappButton />
             </div>
           </FavoritesProvider>
         </SearchProvider>

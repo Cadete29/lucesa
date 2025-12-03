@@ -1,9 +1,19 @@
-/* Banner.css - Completamente corregido */
+/* Banner.css - COMPLETO CON TEXTO REPETIDO */
+
+/* Variables CSS para mejor control */
+:root {
+  --banner-height-desktop: 75vh;
+  --banner-height-tablet: 60vh;
+  --banner-height-mobile: 50vh;
+  --banner-min-height-desktop: 550px;
+  --banner-min-height-tablet: 420px;
+  --banner-min-height-mobile: 350px;
+}
 
 .banner-bnr {
   position: relative;
-  height: 80vh;
-  min-height: 600px;
+  height: var(--banner-height-desktop);
+  min-height: var(--banner-min-height-desktop);
   margin-top: 70px;
   display: flex;
   align-items: center;
@@ -29,12 +39,11 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  will-change: transform;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .banner-background-bnr {
-    animation: zoomEffectBnr 20s ease-in-out infinite;
+    animation: zoomEffectBnr 25s ease-in-out infinite;
   }
 }
 
@@ -69,22 +78,25 @@
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 2rem;
 }
 
 .banner-content-bnr {
-  max-width: 600px;
+  max-width: 650px;
+  width: 100%;
 }
 
 .banner-text-bnr {
   color: #ffffff;
+  padding: 1rem;
 }
 
+/* Título responsivo */
 .banner-title-bnr {
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(1.8rem, 4vw, 3.2rem);
   font-weight: 800;
-  line-height: 1.1;
-  margin-bottom: 1.5rem;
+  line-height: 1.15;
+  margin-bottom: 1rem;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
@@ -108,63 +120,71 @@
   border-radius: 2px;
 }
 
+/* Descripción responsiva */
 .banner-description-bnr {
-  font-size: clamp(1rem, 2.5vw, 1.3rem);
-  line-height: 1.6;
-  margin-bottom: 2.5rem;
+  font-size: clamp(0.9rem, 1.8vw, 1.2rem);
+  line-height: 1.4;
+  margin-bottom: 1.5rem;
   opacity: 0.95;
   text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
+/* Botones responsivos */
 .banner-buttons-bnr {
   display: flex;
-  gap: 1.2rem;
-  margin-bottom: 3rem;
+  gap: 1rem;
+  margin-bottom: 2rem;
   flex-wrap: wrap;
 }
 
 .cta-button-bnr {
   position: relative;
-  padding: 1.2rem 2.5rem;
+  padding: clamp(0.9rem, 2vw, 1.2rem) clamp(1.2rem, 2.5vw, 2.5rem);
   border: none;
   border-radius: 8px;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: clamp(0.85rem, 1.3vw, 1rem);
   cursor: pointer;
   transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 160px;
+  min-width: min(140px, 100%);
+  max-width: 100%;
   text-decoration: none;
   overflow: hidden;
-  font-family: inherit;
+  flex: 1;
 }
 
 .button-content-bnr {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: clamp(0.4rem, 1vw, 0.8rem);
   position: relative;
   z-index: 2;
+  flex-wrap: nowrap;
 }
 
 .button-icon-bnr {
-  font-size: 1.2rem;
+  font-size: clamp(0.9rem, 1.5vw, 1.2rem);
   transition: transform 0.3s ease;
+  flex-shrink: 0;
 }
 
 .button-text-bnr {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: clamp(0.8rem, 1.2vw, 0.95rem);
   transition: transform 0.3s ease;
+  white-space: nowrap;
 }
 
 .button-arrow-bnr {
-  font-size: 1.1rem;
+  font-size: clamp(0.9rem, 1.5vw, 1.1rem);
   transition: transform 0.3s ease;
+  flex-shrink: 0;
 }
 
+/* Botón primario */
 .cta-button-bnr.primary-bnr {
   background: linear-gradient(135deg, #4895CF, #2C5F8E);
   color: #ffffff;
@@ -187,6 +207,7 @@
   transform: translateX(3px);
 }
 
+/* Botón secundario */
 .cta-button-bnr.secondary-bnr {
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
@@ -225,35 +246,30 @@
   left: 100%;
 }
 
+/* Features responsivos */
 .banner-features-bnr {
-  display: flex;
-  gap: 2rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.8rem;
+  width: 100%;
 }
 
 .feature-bnr {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  background: #2C5F8E !important;
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  border: 2px solid #4895CF !important;
+  gap: 0.6rem;
+  background: #2C5F8E;
+  padding: clamp(0.6rem, 1.5vw, 1rem) clamp(0.8rem, 1.5vw, 1.5rem);
+  border-radius: 8px;
+  border: 2px solid #4895CF;
   transition: all 0.3s ease;
-  min-width: 160px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
-}
-
-.feature-bnr:hover {
-  background: #4895CF !important;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(72, 149, 207, 0.6) !important;
-  border-color: #7CCBDD !important;
+  min-height: 50px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .feature-icon-bnr {
-  width: 24px;
-  height: 24px;
+  width: clamp(18px, 3vw, 24px);
+  height: clamp(18px, 3vw, 24px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -263,35 +279,40 @@
 .feature-icon-bnr svg {
   width: 100%;
   height: 100%;
-  stroke: #7CCBDD !important;
+  stroke: #7CCBDD;
   stroke-width: 2;
-  fill: none !important;
-  transition: all 0.3s ease;
+  fill: none;
+}
+
+.feature-bnr:hover {
+  background: #4895CF;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(72, 149, 207, 0.6);
+  border-color: #7CCBDD;
 }
 
 .feature-bnr:hover .feature-icon-bnr svg {
-  stroke: #ffffff !important;
+  stroke: #ffffff;
   transform: scale(1.1);
 }
 
-.feature-bnr span:last-child {
+.feature-text-bnr {
   font-weight: 600;
-  font-size: 0.95rem;
-  color: white !important;
+  font-size: clamp(0.75rem, 1.5vw, 0.95rem);
+  color: white;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .feature-bnr * {
   background: transparent !important;
 }
 
+/* Animaciones de fondo */
 @keyframes zoomEffectBnr {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
 .banner-background-bnr::before {
@@ -321,55 +342,74 @@
   }
 }
 
-/* Estilos para el banner de Precios Mayoristas - TEXTO CONTINUO */
+/* =========================================== */
+/* BANNER DE PRECIOS MAYORISTAS - TEXTO REPETIDO */
+/* =========================================== */
+
 .wholesale-banner-bnr {
   position: relative;
   width: 100%;
-  height: 50px;
+  height: clamp(35px, 5vw, 45px);
   background: linear-gradient(135deg, #FF6B35, #FF8E53);
   border-radius: 8px;
-  margin-bottom: 1.5rem;
+  margin-bottom: clamp(1rem, 2vw, 1.5rem);
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
   border: 2px solid rgba(255, 255, 255, 0.2);
-}
-
-.wholesale-text-container-bnr {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
   display: flex;
   align-items: center;
-  animation: scrollTextBnr 10s linear infinite;
-  white-space: nowrap;
-  padding-right: 2rem; /* Espacio entre repeticiones */
+  justify-content: flex-start;
 }
 
+/* Contenedor del texto con múltiples repeticiones */
+.wholesale-text-container-bnr {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  position: relative;
+  animation: scrollTextBnr 5s linear infinite;
+  white-space: nowrap;
+  padding: 0 1rem;
+}
+
+/* Texto con múltiples repeticiones */
 .wholesale-text-bnr {
-  font-size: 1.3rem;
+  display: inline-block;
+  font-size: clamp(0.95rem, 2vw, 1.2rem);
   font-weight: 800;
   color: #ffffff;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-  padding: 0 1rem;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   background: linear-gradient(135deg, #ffffff, #ffe0d0);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  position: relative;
-  display: inline-block;
-  white-space: nowrap;
+  padding: 0 0.5rem;
 }
 
-/* Crear múltiples copias del texto para efecto continuo */
-.wholesale-text-bnr::before,
-.wholesale-text-bnr::after {
-  content: "💰 Precios Mayoristas 💰 ";
-  margin: 0 0.5rem;
+/* Versión estática para móviles */
+.wholesale-banner-bnr.static {
+  animation: pulseBackgroundBnr 3s ease-in-out infinite;
+  justify-content: center;
 }
 
-/* Animación de desplazamiento continuo */
+.wholesale-banner-bnr.static .wholesale-text-container-bnr {
+  animation: none;
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+}
+
+.wholesale-banner-bnr.static .wholesale-text-bnr {
+  animation: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: normal;
+}
+
+/* Animación de texto desplazante CON REPETICIONES */
 @keyframes scrollTextBnr {
   0% {
     transform: translateX(0);
@@ -379,122 +419,492 @@
   }
 }
 
-/* Efectos hover para el banner */
+/* Animación de pulso para versión estática */
+@keyframes pulseBackgroundBnr {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+  }
+  50% {
+    box-shadow: 0 6px 25px rgba(255, 107, 53, 0.5);
+  }
+}
+
+/* Efecto hover */
 .wholesale-banner-bnr:hover {
-  background: linear-gradient(135deg, #FF8E53, #FF6B35);
-  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
 }
 
 .wholesale-banner-bnr:hover .wholesale-text-container-bnr {
-  animation-duration: 8s; /* Acelera un poco al hacer hover */
+  animation-duration: 15s; /* Más rápido al hacer hover */
 }
 
-@media (max-width: 1024px) {
+/* =========================================== */
+/* MEDIA QUERIES ESPECÍFICAS */
+/* =========================================== */
+
+/* Laptops pequeñas (1024px a 1366px) */
+@media (max-width: 1366px) {
   .banner-bnr {
-    height: 70vh;
-    min-height: 500px;
+    height: 65vh;
+    min-height: 480px;
+  }
+  
+  .banner-container-bnr {
+    max-width: 1100px;
+    padding: 0 1.5rem;
+  }
+  
+  .banner-title-bnr {
+    font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+  }
+  
+  .banner-description-bnr {
+    font-size: clamp(0.85rem, 1.6vw, 1.1rem);
+  }
+  
+  .banner-buttons-bnr {
+    gap: 0.8rem;
+  }
+  
+  .cta-button-bnr {
+    padding: 0.8rem 1.8rem;
+    font-size: 0.9rem;
+    min-width: 135px;
   }
   
   .banner-features-bnr {
-    gap: 1.5rem;
+    gap: 0.7rem;
+  }
+  
+  .feature-bnr {
+    min-width: 125px;
+    padding: 0.7rem 1rem;
+  }
+  
+  .feature-text-bnr {
+    font-size: 0.8rem;
+  }
+  
+  /* Banner mayorista ajustado */
+  .wholesale-text-bnr {
+    font-size: clamp(0.9rem, 1.8vw, 1.1rem);
   }
 }
 
+/* Tablets (768px a 1024px) */
+@media (max-width: 1024px) {
+  .banner-bnr {
+    height: var(--banner-height-tablet);
+    min-height: var(--banner-min-height-tablet);
+    margin-top: 60px;
+  }
+  
+  .banner-container-bnr {
+    padding: 0 1.5rem;
+  }
+  
+  .banner-content-bnr {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .banner-text-bnr {
+    text-align: center;
+    padding: 0.5rem;
+  }
+  
+  .banner-title-bnr {
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    margin-bottom: 0.8rem;
+  }
+  
+  .banner-description-bnr {
+    font-size: clamp(0.85rem, 1.5vw, 1rem);
+    margin-bottom: 1.2rem;
+  }
+  
+  .banner-buttons-bnr {
+    justify-content: center;
+    gap: 0.8rem;
+    margin-bottom: 1.8rem;
+  }
+  
+  .cta-button-bnr {
+    flex: 0 1 auto;
+    min-width: 155px;
+    padding: 0.8rem 1.5rem;
+    font-size: 0.88rem;
+  }
+  
+  .banner-features-bnr {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+  }
+  
+  .feature-bnr {
+    flex-direction: column;
+    text-align: center;
+    padding: 0.6rem;
+    gap: 0.4rem;
+    min-height: auto;
+  }
+  
+  .feature-text-bnr {
+    font-size: 0.75rem;
+    white-space: normal;
+    line-height: 1.1;
+  }
+  
+  /* Banner mayorista en tablet - comienza versión estática */
+  .wholesale-banner-bnr {
+    height: 32px;
+    margin-bottom: 1rem;
+  }
+  
+  .wholesale-text-bnr {
+    font-size: 0.9rem;
+    padding: 0 0.8rem;
+  }
+}
+
+/* Tablets pequeñas (600px a 768px) */
 @media (max-width: 768px) {
   .banner-bnr {
-    height: 60vh;
-    min-height: 400px;
-    text-align: center;
+    height: 50vh;
+    min-height: 380px;
   }
   
   .banner-container-bnr {
     padding: 0 1rem;
   }
   
-  .banner-buttons-bnr {
-    justify-content: center;
-    gap: 1rem;
-  }
-  
-  .cta-button-bnr {
-    padding: 1.1rem 2rem;
-    min-width: 150px;
-    font-size: 0.9rem;
-  }
-  
-  .banner-features-bnr {
-    justify-content: center;
-    gap: 1rem;
-  }
-  
-  .feature-bnr {
-    padding: 0.8rem 1.2rem;
-    min-width: 140px;
-  }
-  
-  /* Ajustes responsive para el banner mayorista */
-  .wholesale-banner-bnr {
-    height: 40px;
-    margin-bottom: 1rem;
-  }
-  
-  .wholesale-text-bnr {
-    font-size: 1.1rem;
-    padding: 0 0.8rem;
-  }
-  
-  @keyframes scrollTextBnr {
-    0% {
-      transform: translateX(0);
-    }
-    100% {
-      transform: translateX(-50%);
-    }
-  }
-}
-
-@media (max-width: 480px) {
-  .banner-bnr {
-    height: 70vh;
-    min-height: 450px;
+  .banner-title-bnr {
+    font-size: 1.6rem;
+    margin-bottom: 0.6rem;
+    line-height: 1.1;
   }
   
   .banner-description-bnr {
-    margin-bottom: 2rem;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    line-height: 1.3;
   }
   
   .banner-buttons-bnr {
     flex-direction: column;
     align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
   }
   
   .cta-button-bnr {
     width: 100%;
-    max-width: 260px;
-    padding: 1.2rem 2rem;
+    max-width: 240px;
+    padding: 0.75rem 1.2rem;
+    font-size: 0.85rem;
+  }
+  
+  .button-content-bnr {
+    gap: 0.4rem;
   }
   
   .banner-features-bnr {
-    flex-direction: column;
-    align-items: center;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
   }
   
   .feature-bnr {
-    width: 100%;
-    max-width: 200px;
-    justify-content: flex-start;
+    padding: 0.5rem 0.6rem;
+    min-height: 55px;
+    gap: 0.3rem;
   }
   
-  /* Ajustes responsive para el banner mayorista */
+  .feature-text-bnr {
+    font-size: 0.7rem;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.1;
+  }
+  
   .wholesale-banner-bnr {
-    height: 35px;
+    height: 30px;
+    margin-bottom: 0.8rem;
   }
   
   .wholesale-text-bnr {
-    font-size: 1rem;
-    padding: 0 0.5rem;
+    font-size: 0.85rem;
+    gap: 0.4rem;
+  }
+  
+  /* En móviles, banner estático con emojis */
+  .wholesale-banner-bnr.static .wholesale-text-bnr {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  
+  .wholesale-banner-bnr.static .wholesale-text-bnr::before {
+    content: "💰";
+    font-size: 1.1em;
+  }
+  
+  .wholesale-banner-bnr.static .wholesale-text-bnr::after {
+    content: "💰";
+    font-size: 1.1em;
+  }
+}
+
+/* Móviles medianos (480px a 600px) */
+@media (max-width: 600px) {
+  .banner-bnr {
+    height: 48vh;
+    min-height: 340px;
+  }
+  
+  .banner-container-bnr {
+    padding: 0 0.8rem;
+  }
+  
+  .banner-title-bnr {
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .banner-description-bnr {
+    font-size: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .banner-buttons-bnr {
+    gap: 0.5rem;
+    margin-bottom: 1.2rem;
+  }
+  
+  .cta-button-bnr {
+    max-width: 220px;
+    padding: 0.7rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .button-content-bnr {
+    gap: 0.3rem;
+  }
+  
+  .button-icon-bnr {
+    font-size: 0.9rem;
+  }
+  
+  .button-text-bnr {
+    font-size: 0.78rem;
+  }
+  
+  .banner-features-bnr {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+    max-width: 240px;
+    margin: 0 auto;
+  }
+  
+  .feature-bnr {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 0.5rem 0.8rem;
+    min-height: 45px;
+  }
+  
+  .feature-text-bnr {
+    font-size: 0.75rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+  
+  .wholesale-banner-bnr {
+    height: 28px;
+    margin-bottom: 0.7rem;
+  }
+  
+  .wholesale-text-bnr {
+    font-size: 0.8rem;
+    padding: 0 0.4rem;
+  }
+}
+
+/* Móviles pequeños (hasta 480px) */
+@media (max-width: 480px) {
+  .banner-bnr {
+    height: 45vh;
+    min-height: 320px;
+    margin-top: 55px;
+  }
+  
+  .banner-title-bnr {
+    font-size: 1.3rem;
+    line-height: 1.1;
+    margin-bottom: 0.4rem;
+  }
+  
+  .banner-description-bnr {
+    font-size: 0.75rem;
+    line-height: 1.2;
+    margin-bottom: 0.8rem;
+  }
+  
+  .banner-buttons-bnr {
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+  }
+  
+  .cta-button-bnr {
+    max-width: 200px;
+    padding: 0.65rem 0.9rem;
+    font-size: 0.78rem;
+  }
+  
+  .button-content-bnr {
+    gap: 0.25rem;
+  }
+  
+  .button-icon-bnr {
+    font-size: 0.85rem;
+  }
+  
+  .button-text-bnr {
+    font-size: 0.75rem;
+  }
+  
+  .button-arrow-bnr {
+    font-size: 0.85rem;
+  }
+  
+  .banner-features-bnr {
+    max-width: 220px;
+    gap: 0.3rem;
+  }
+  
+  .feature-bnr {
+    padding: 0.45rem 0.7rem;
+    min-height: 40px;
+    gap: 0.25rem;
+  }
+  
+  .feature-icon-bnr {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .feature-text-bnr {
+    font-size: 0.7rem;
+  }
+  
+  .wholesale-banner-bnr {
+    height: 26px;
+    margin-bottom: 0.6rem;
+  }
+  
+  .wholesale-text-bnr {
+    font-size: 0.75rem;
+    letter-spacing: 0.2px;
+    gap: 0.3rem;
+  }
+}
+
+/* Móviles muy pequeños (hasta 360px) */
+@media (max-width: 360px) {
+  .banner-bnr {
+    height: 42vh;
+    min-height: 300px;
+  }
+  
+  .banner-title-bnr {
+    font-size: 1.2rem;
+    margin-bottom: 0.3rem;
+  }
+  
+  .banner-description-bnr {
+    font-size: 0.7rem;
+    margin-bottom: 0.7rem;
+  }
+  
+  .cta-button-bnr {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.75rem;
+    max-width: 180px;
+  }
+  
+  .button-text-bnr {
+    font-size: 0.7rem;
+  }
+  
+  .feature-bnr {
+    padding: 0.4rem 0.6rem;
+  }
+  
+  .feature-text-bnr {
+    font-size: 0.65rem;
+  }
+  
+  .wholesale-banner-bnr {
+    height: 24px;
+  }
+  
+  .wholesale-text-bnr {
+    font-size: 0.7rem;
+  }
+}
+
+/* Orientación landscape en móviles */
+@media (max-height: 500px) and (orientation: landscape) {
+  .banner-bnr {
+    height: 90vh;
+    min-height: 300px;
+    margin-top: 55px;
+  }
+  
+  .banner-container-bnr {
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+  }
+  
+  .banner-title-bnr {
+    font-size: 1.4rem;
+    margin-bottom: 0.3rem;
+  }
+  
+  .banner-description-bnr {
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .banner-buttons-bnr {
+    margin-bottom: 0.8rem;
+    flex-direction: row;
+    gap: 0.4rem;
+  }
+  
+  .cta-button-bnr {
+    padding: 0.5rem 0.8rem;
+    min-width: 120px;
+  }
+  
+  .banner-features-bnr {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.3rem;
+  }
+  
+  .feature-bnr {
+    padding: 0.3rem 0.5rem;
+    min-height: 35px;
+  }
+  
+  .feature-text-bnr {
+    font-size: 0.65rem;
+  }
+  
+  .wholesale-banner-bnr {
+    height: 26px;
+    margin-bottom: 0.5rem;
   }
 }
 
@@ -506,47 +916,29 @@
     transition-duration: 0.01ms !important;
   }
   
-  .banner-background-bnr {
+  .banner-background-bnr,
+  .banner-background-bnr::before,
+  .wholesale-text-container-bnr {
     animation: none !important;
   }
   
-  .banner-background-bnr::before {
-    animation: none !important;
-  }
-  
-  .feature-bnr:hover {
-    transform: none;
-  }
-  
+  .feature-bnr:hover,
   .cta-button-bnr:hover {
     transform: none;
   }
   
-  .cta-button-bnr::before {
-    display: none;
-  }
-  
-  /* Reducción de movimiento para el banner mayorista */
-  .wholesale-text-container-bnr {
-    animation: none;
-    justify-content: center;
-    position: static;
-  }
-  
   .wholesale-banner-bnr {
-    height: auto;
-    min-height: 45px;
-    display: flex;
-    align-items: center;
+    animation: none;
+  }
+  
+  .wholesale-text-container-bnr {
+    position: static;
     justify-content: center;
+    width: 100%;
   }
   
   .wholesale-text-bnr {
     animation: none;
-    padding: 0.5rem 1rem;
-  }
-  
-  .wholesale-banner-bnr:hover {
-    transform: none;
+    white-space: normal;
   }
 }

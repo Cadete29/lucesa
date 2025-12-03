@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Banner.css";
 
 const Banner = () => {
     const bannerRefBnr = useRef(null);
     const navigate = useNavigate();
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -13,7 +14,18 @@ const Banner = () => {
             }
         }, 100);
 
-        return () => clearTimeout(timer);
+        // Detectar tamaño de pantalla
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('resize', checkMobile);
+        };
     }, []);
 
     const handleCatalogClickBnr = () => {
@@ -37,10 +49,13 @@ const Banner = () => {
             <div className="banner-container-bnr">
                 <div className="banner-content-bnr">
                     <div className="banner-text-bnr">
-                        {/* Nuevo banner animado para Precios Mayoristas */}
-                        <div className="wholesale-banner-bnr">
+                        {/* Banner de Precios Mayoristas - CON TEXTO REPETIDO */}
+                        <div className={`wholesale-banner-bnr ${isMobile ? 'static' : ''}`}>
                             <div className="wholesale-text-container-bnr">
-                                <span className="wholesale-text-bnr">Precios Mayoristas</span>
+                                {/* Texto repetido múltiples veces para efecto continuo */}
+                                <span className="wholesale-text-bnr">
+                                    {isMobile ? "💰 Precios Mayoristas 💰" : "💰 Precios Mayoristas 💰".repeat(4)}
+                                </span>
                             </div>
                         </div>
                         
@@ -84,7 +99,7 @@ const Banner = () => {
                                         <path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1v1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1h6" />
                                     </svg>
                                 </div>
-                                <span>Envío Gratis</span>
+                                <span className="feature-text-bnr">Envío Gratis</span>
                             </div>
                             <div className="feature-bnr">
                                 <div className="feature-icon-bnr" aria-hidden="true">
@@ -92,7 +107,7 @@ const Banner = () => {
                                         <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                     </svg>
                                 </div>
-                                <span>Garantía 30 Días</span>
+                                <span className="feature-text-bnr">Garantía 30 Días</span>
                             </div>
                             <div className="feature-bnr">
                                 <div className="feature-icon-bnr" aria-hidden="true">
@@ -100,7 +115,7 @@ const Banner = () => {
                                         <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                     </svg>
                                 </div>
-                                <span>Pago Seguro</span>
+                                <span className="feature-text-bnr">Pago Seguro</span>
                             </div>
                         </div>
                     </div>

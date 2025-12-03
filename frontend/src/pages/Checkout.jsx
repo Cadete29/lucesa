@@ -405,8 +405,8 @@ const Checkout = () => {
                         onChange={handleInputChange}
                         required
                       />
-                      Acepto los <a href="/terms" target="_blank" rel="noopener noreferrer">términos y condiciones</a> y la{' '}
-                      <a href="/privacy" target="_blank" rel="noopener noreferrer">política de privacidad</a>
+                      Acepto los <a href="/terms-of-service" target="_blank" rel="noopener noreferrer">términos y condiciones</a> y la{' '}
+                      <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">política de privacidad</a>
                     </label>
                   </div>
 
