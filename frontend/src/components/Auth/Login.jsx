@@ -172,14 +172,14 @@ const Login = () => {
             </form>
 
             {/* Separador para login social */}
-            <div className="auth-separator-corrected">
+            {/* <div className="auth-separator-corrected">
               <div className="separator-line"></div>
               <div className="separator-text">o continúa con</div>
               <div className="separator-line"></div>
-            </div>
+            </div> */}
 
             {/* Botones de redes sociales */}
-            <div className="social-buttons-compact">
+            {/* <div className="social-buttons-compact">
               <button
                 type="button"
                 onClick={() => handleSocialLogin('google')}
@@ -206,7 +206,7 @@ const Login = () => {
                 </svg>
                 Facebook
               </button>
-            </div>
+            </div> */}
 
             {/* Enlace a registro */}
             <div className="auth-footer">

@@ -23,8 +23,8 @@ class FTPService {
       logs: './data/logs'
     };
     
-    this.downloadInterval = null; // Inicializar la variable para el intervalo
-    this.isShuttingDown = false; // Bandera de estado
+    this.downloadInterval = null;
+    this.isShuttingDown = false;
     
     this.createDirectories();
   }
@@ -127,7 +127,7 @@ class FTPService {
       const parser = new xml2js.Parser({
         explicitArray: false,
         mergeAttrs: false,
-        explicitRoot: true,
+        explicitRoot: false,
         trim: true,
         normalize: true,
         ignoreAttrs: false,
@@ -162,43 +162,52 @@ class FTPService {
     try {
       let productos = [];
       
-      if (xmlData.articulo && xmlData.articulo.producto) {
-        const productosData = xmlData.articulo.producto;
-        productos = Array.isArray(productosData) ? productosData : [productosData];
+      if (xmlData.productos && xmlData.productos.producto) {
+        productos = Array.isArray(xmlData.productos.producto) 
+          ? xmlData.productos.producto 
+          : [xmlData.productos.producto];
+      } else if (xmlData.producto) {
+        productos = Array.isArray(xmlData.producto) 
+          ? xmlData.producto 
+          : [xmlData.producto];
       }
 
-      return productos.map((producto, index) => ({
-        id: `xml_${index + 1}`,
-        codigo: this.extraerValor(producto, ['clave', 'codigo', 'sku']),
-        nombre: this.extraerValor(producto, ['nombre', 'descripcion']),
-        descripcion: this.extraerValor(producto, ['descripcion_corta', 'descripcion']),
-        precio: this.parsePrecio(this.extraerValor(producto, ['precio'])),
-        precioPromocion: this.parsePrecio(this.extraerValor(producto, ['promo'])),
-        marca: this.extraerValor(producto, ['marca']),
-        categoria: this.extraerValor(producto, ['categoria']),
-        subcategoria: this.extraerValor(producto, ['subcategoria']),
-        imagen: this.extraerValor(producto, ['imagen']),
-        existenciaTotal: this.calcularExistenciaTotal(producto.existencia),
-        ultimaActualizacion: new Date().toISOString(),
-        fuente: 'XML'
-      }));
+      return productos.map((producto, index) => {
+        const precio = this.parsePrecio(producto.precio);
+        const tipoCambio = this.parsePrecio(producto.tipo_cambio);
+        
+        return {
+          id: `xml_${index + 1}`,
+          codigo: producto.clave || '',
+          no_parte: producto.no_parte || '',
+          nombre: producto.nombre || '',
+          modelo: producto.modelo || '',
+          marca: producto.marca || '',
+          categoria: producto.categoria || '',
+          subcategoria: producto.subcategoria || '',
+          imagen: producto.imagen || '',
+          imagenFecha: producto.imagenFecha || '',
+          descripcion_corta: producto.descripcion_corta || '',
+          upc: producto.upc || '',
+          ean: producto.ean || '',
+          status: producto.status || '',
+          sustituto: producto.sustituto || '',
+          precio: precio,
+          moneda: producto.moneda || 'USD',
+          tipo_cambio: tipoCambio,
+          precioMXN: precio * tipoCambio, // Precio calculado en pesos
+          existenciaTotal: this.calcularExistenciaTotalXML(producto.existencia),
+          almacenes: this.extraerAlmacenesXML(producto.existencia),
+          especificaciones: this.extraerEspecificacionesXML(producto.especificacion),
+          ultimaActualizacion: new Date().toISOString(),
+          fuente: 'XML'
+        };
+      });
 
     } catch (error) {
       logger.error('❌ Error transformando XML:', error);
       return [];
     }
-  }
-
-  extraerValor(producto, camposPosibles) {
-    for (const campo of camposPosibles) {
-      if (producto[campo] !== undefined && producto[campo] !== null && producto[campo] !== '') {
-        if (typeof producto[campo] === 'object' && producto[campo]._text !== undefined) {
-          return producto[campo]._text;
-        }
-        return producto[campo];
-      }
-    }
-    return '';
   }
 
   parsePrecio(precioStr) {
@@ -207,7 +216,7 @@ class FTPService {
     return isNaN(precio) ? 0 : precio;
   }
 
-  calcularExistenciaTotal(existenciaData) {
+  calcularExistenciaTotalXML(existenciaData) {
     if (!existenciaData) return 0;
     
     try {
@@ -217,8 +226,13 @@ class FTPService {
         const almacenes = Object.keys(existenciaData);
         for (const almacen of almacenes) {
           if (almacen !== '_attributes' && almacen !== '_text') {
-            const cantidad = this.parsePrecio(existenciaData[almacen]);
-            total += cantidad;
+            let cantidad = existenciaData[almacen];
+            
+            if (cantidad && typeof cantidad === 'object' && cantidad._text !== undefined) {
+              cantidad = cantidad._text;
+            }
+            
+            total += this.parsePrecio(cantidad);
           }
         }
       } else {
@@ -227,47 +241,205 @@ class FTPService {
       
       return total;
     } catch (error) {
+      logger.error('Error calculando existencia XML:', error);
       return 0;
+    }
+  }
+
+  extraerAlmacenesXML(existenciaData) {
+    if (!existenciaData || typeof existenciaData !== 'object') return {};
+    
+    const almacenes = {};
+    
+    try {
+      Object.keys(existenciaData).forEach(almacen => {
+        if (almacen !== '_attributes' && almacen !== '_text') {
+          let cantidad = existenciaData[almacen];
+          
+          if (cantidad && typeof cantidad === 'object' && cantidad._text !== undefined) {
+            cantidad = cantidad._text;
+          }
+          
+          almacenes[almacen] = this.parsePrecio(cantidad);
+        }
+      });
+    } catch (error) {
+      logger.error('Error extrayendo almacenes XML:', error);
+    }
+    
+    return almacenes;
+  }
+
+  extraerEspecificacionesXML(especificacionData) {
+    if (!especificacionData) return [];
+    
+    try {
+      const especificaciones = [];
+      
+      if (typeof especificacionData === 'object') {
+        Object.keys(especificacionData).forEach(key => {
+          if (key.startsWith('caracteristica')) {
+            const caracteristica = especificacionData[key];
+            if (caracteristica && caracteristica.tipo && caracteristica.valor) {
+              especificaciones.push({
+                tipo: caracteristica.tipo._text || caracteristica.tipo,
+                valor: caracteristica.valor._text || caracteristica.valor
+              });
+            }
+          }
+        });
+      }
+      
+      return especificaciones;
+    } catch (error) {
+      logger.error('Error extrayendo especificaciones XML:', error);
+      return [];
     }
   }
 
   async processJSONFile(filePath) {
     try {
-      // Usar el nuevo JSONProcessor
-      const productosProcesados = await jsonProcessor.processJSONFile(filePath);
-      return productosProcesados;
+      logger.info('🔨 Procesando archivo JSON...');
+      const jsonData = fs.readFileSync(filePath, 'utf8');
+      
+      logger.info(`📊 Archivo JSON - Tamaño: ${(fs.statSync(filePath).size / 1024 / 1024).toFixed(2)} MB`);
+
+      let productosData;
+      try {
+        productosData = JSON.parse(jsonData);
+      } catch (parseError) {
+        const lines = jsonData.split('\n').filter(line => line.trim());
+        productosData = lines.map(line => {
+          try {
+            return JSON.parse(line);
+          } catch (e) {
+            return null;
+          }
+        }).filter(item => item !== null);
+      }
+
+      const productos = this.transformJSONData(productosData);
+      
+      const outputPath = path.join(this.dirs.processed, 'existencias_processed.json');
+      const outputData = {
+        productos: productos,
+        metadata: {
+          total: productos.length,
+          timestamp: new Date().toISOString(),
+          source: 'JSON'
+        }
+      };
+      
+      fs.writeFileSync(outputPath, JSON.stringify(outputData, null, 2));
+      logger.info(`✅ JSON procesado: ${productos.length} productos`);
+      
+      return productos;
+
     } catch (error) {
       logger.error('❌ Error procesando JSON:', error);
       return [];
     }
   }
 
+  transformJSONData(jsonData) {
+    try {
+      let productosArray = [];
+      
+      if (Array.isArray(jsonData)) {
+        productosArray = jsonData;
+      } else if (typeof jsonData === 'object') {
+        if (jsonData.productos) {
+          productosArray = Array.isArray(jsonData.productos) 
+            ? jsonData.productos 
+            : [jsonData.productos];
+        } else {
+          productosArray = [jsonData];
+        }
+      }
+
+      return productosArray.map((producto, index) => {
+        const precio = this.parsePrecio(producto.precio);
+        const tipoCambio = this.parsePrecio(producto.tipoCambio);
+        
+        return {
+          id: `json_${index + 1}`,
+          codigo: producto.clave || '',
+          numParte: producto.numParte || '',
+          nombre: producto.nombre || '',
+          modelo: producto.modelo || '',
+          marca: producto.marca || '',
+          categoria: producto.categoria || '',
+          subcategoria: producto.subcategoria || '',
+          descripcion_corta: producto.descripcion_corta || '',
+          ean: producto.ean || '',
+          upc: producto.upc || '',
+          sustituto: producto.sustituto || '',
+          activo: producto.activo || 0,
+          protegido: producto.protegido || 0,
+          precio: precio,
+          moneda: producto.moneda || 'USD',
+          tipoCambio: tipoCambio,
+          precioMXN: precio * tipoCambio, // Precio calculado en pesos
+          existenciaTotal: this.calcularExistenciaTotalJSON(producto.existencia),
+          existencia: this.calcularExistenciaTotalJSON(producto.existencia),
+          almacenes: producto.existencia || {},
+          imagen: producto.imagen || '',
+          especificaciones: producto.especificaciones || [],
+          promociones: producto.promociones || [],
+          disponible: (producto.activo === 1 && this.calcularExistenciaTotalJSON(producto.existencia) > 0),
+          tieneExistencia: this.calcularExistenciaTotalJSON(producto.existencia) > 0,
+          stock: this.calcularExistenciaTotalJSON(producto.existencia),
+          ultimaActualizacion: new Date().toISOString(),
+          fuente: 'JSON'
+        };
+      });
+
+    } catch (error) {
+      logger.error('❌ Error transformando JSON:', error);
+      return [];
+    }
+  }
+
+  calcularExistenciaTotalJSON(existenciaData) {
+    if (!existenciaData || typeof existenciaData !== 'object') return 0;
+    
+    try {
+      let total = 0;
+      Object.values(existenciaData).forEach(cantidad => {
+        total += this.parsePrecio(cantidad);
+      });
+      return total;
+    } catch (error) {
+      return 0;
+    }
+  }
+
   updateCache() {
     try {
-      const processedPath = path.join(this.dirs.processed, 'productos_processed.json');
-      const existenciasPath = path.join(this.dirs.processed, 'existencias_processed.json');
+      const xmlProcessedPath = path.join(this.dirs.processed, 'productos_processed.json');
+      const jsonProcessedPath = path.join(this.dirs.processed, 'existencias_processed.json');
 
-      if (fs.existsSync(processedPath)) {
-        const data = JSON.parse(fs.readFileSync(processedPath, 'utf8'));
+      if (fs.existsSync(xmlProcessedPath)) {
+        const data = JSON.parse(fs.readFileSync(xmlProcessedPath, 'utf8'));
         const cacheData = {
           data: data.productos || [],
           metadata: data.metadata,
           lastUpdated: new Date().toISOString()
         };
         fs.writeFileSync(path.join(this.dirs.cache, 'productos_cache.json'), JSON.stringify(cacheData, null, 2));
+        logger.info(`💾 Cache XML actualizado: ${cacheData.data.length} productos`);
       }
 
-      if (fs.existsSync(existenciasPath)) {
-        const data = JSON.parse(fs.readFileSync(existenciasPath, 'utf8'));
+      if (fs.existsSync(jsonProcessedPath)) {
+        const data = JSON.parse(fs.readFileSync(jsonProcessedPath, 'utf8'));
         const cacheData = {
           data: data.productos || [],
           metadata: data.metadata,
           lastUpdated: new Date().toISOString()
         };
         fs.writeFileSync(path.join(this.dirs.cache, 'existencias_cache.json'), JSON.stringify(cacheData, null, 2));
+        logger.info(`💾 Cache JSON actualizado: ${cacheData.data.length} productos`);
       }
-
-      logger.info('💾 Cache actualizado');
 
     } catch (error) {
       logger.error('❌ Error actualizando cache:', error);
@@ -393,22 +565,20 @@ class FTPService {
 
   getHealth() {
     const fileInfo = this.getFileInfo();
-    const cacheData = this.getCachedData('existencias');
+    const productosCache = this.getCachedData('productos');
+    const existenciasCache = this.getCachedData('existencias');
     
     return {
       status: 'healthy',
-      lastUpdate: cacheData?.lastUpdated || null,
-      totalProducts: cacheData?.metadata?.total || 0,
+      lastUpdate: existenciasCache?.lastUpdated || productosCache?.lastUpdated || null,
+      totalProducts: productosCache?.data?.length || 0,
+      totalWithStock: existenciasCache?.data?.length || 0,
       files: fileInfo.summary,
       timestamp: new Date().toISOString()
     };
   }
 
-  /**
-   * Programar descargas automáticas
-   */
   scheduleDownloads() {
-    // Guarda la referencia del intervalo para poder detenerlo después
     this.downloadInterval = setInterval(async () => {
       try {
         logger.info('🔄 Descarga automática iniciada...');
@@ -416,14 +586,11 @@ class FTPService {
       } catch (error) {
         logger.error('❌ Error en descarga automática:', error);
       }
-    }, 15 * 60 * 1000); // 15 minutos
+    }, 15 * 60 * 1000);
 
     logger.info('✅ Descargas automáticas programadas cada 15 minutos');
   }
 
-  /**
-   * Detener las descargas programadas de manera segura
-   */
   stopScheduledDownloads() {
     if (this.isShuttingDown) {
       logger.info('⚠️ Shutdown ya en progreso...');
@@ -440,7 +607,6 @@ class FTPService {
       logger.info('ℹ️ No hay descargas programadas activas para detener');
     }
     
-    // Cerrar conexión FTP activa si existe
     if (this.client && typeof this.client.close === 'function') {
       try {
         this.client.close();
@@ -451,9 +617,6 @@ class FTPService {
     }
   }
 
-  /**
-   * Reiniciar las descargas programadas
-   */
   restartScheduledDownloads() {
     this.stopScheduledDownloads();
     this.isShuttingDown = false;
@@ -480,9 +643,6 @@ class FTPService {
     }
   }
 
-  /**
-   * Obtener datos cacheados para el controlador de productos
-   */
   getCacheForController() {
     try {
       const productosCache = this.getCachedData('productos');
@@ -491,7 +651,7 @@ class FTPService {
       const cacheData = {
         productos: productosCache?.data || [],
         existencias: existenciasCache?.data || [],
-        lastUpdate: productosCache?.lastUpdated || existenciasCache?.lastUpdated || new Date().toISOString()
+        lastUpdate: existenciasCache?.lastUpdated || productosCache?.lastUpdated || new Date().toISOString()
       };
 
       logger.info(`📊 Cache para controlador: ${cacheData.productos.length} productos, ${cacheData.existencias.length} existencias`);
@@ -507,9 +667,6 @@ class FTPService {
     }
   }
 
-  /**
-   * Verificar si el cache está disponible
-   */
   isCacheAvailable() {
     try {
       const productosCache = this.getCachedData('productos');
@@ -521,9 +678,6 @@ class FTPService {
     }
   }
 
-  /**
-   * Esperar a que el cache esté disponible (útil durante startup)
-   */
   async waitForCache(timeout = 30000) {
     const startTime = Date.now();
     
@@ -537,9 +691,6 @@ class FTPService {
     throw new Error('Timeout esperando por cache');
   }
 
-  /**
-   * Forzar reprocesamiento de archivos existentes
-   */
   async reprocessExistingFiles() {
     try {
       logger.info('🔄 Reprocesando archivos existentes...');
@@ -565,9 +716,6 @@ class FTPService {
     }
   }
 
-  /**
-   * Obtener estadísticas del servicio
-   */
   getStats() {
     const fileInfo = this.getFileInfo();
     const cacheProductos = this.getCachedData('productos');

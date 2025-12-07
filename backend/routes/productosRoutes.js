@@ -18,11 +18,14 @@ router.get('/existencias', productosController.getProductosConExistencia);
 // Búsqueda y filtros
 router.get('/buscar', productosController.buscarProductos);
 router.get('/categorias', productosController.getCategorias);
+router.get('/categorias-completas', productosController.getCategoriasCompletas); // ✅ IMPORTANTE
 router.get('/marcas', productosController.getMarcas);
 router.get('/estadisticas', productosController.getEstadisticas);
 
 // Producto específico
 router.get('/producto/:codigo', productosController.getProductoPorCodigo);
+router.get('/combinado/:codigo', productosController.getProductoCombinadoPorCodigo);
+router.get('/diagnostico/:codigo', productosController.diagnosticarProducto);
 
 // Administración
 router.post('/actualizar', productosController.actualizarDatos);

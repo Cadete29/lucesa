@@ -128,7 +128,7 @@ const Cart = () => {
                     <span className="ct-minimum-icon">⚠️</span>
                     <div className="ct-minimum-text">
                       <strong>Compra mínima requerida: $1,000 MXN</strong>
-                      <span>Para proceder al checkout</span>
+                      <span> Para proceder al checkout</span>
                     </div>
                   </div>
                 </div>

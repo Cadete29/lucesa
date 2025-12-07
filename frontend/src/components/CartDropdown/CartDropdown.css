@@ -50,7 +50,7 @@
 
 .cd-title {
   margin: 0;
-  color: #2d3748;
+  color: #16395c;
   font-size: 1.1rem;
   font-weight: 600;
 }
@@ -181,7 +181,7 @@
 .cd-item-price {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #48bb78;
+  color: #2C5F8E;
 }
 
 .cd-item-controls {
@@ -272,7 +272,7 @@
 
 .cd-total-amount {
   font-size: 1.2rem;
-  color: #48bb78;
+  color: #2C5F8E;
 }
 
 .cd-actions {

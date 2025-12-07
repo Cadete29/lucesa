@@ -2,7 +2,7 @@
 .lucesa-products-page {
     padding: 5rem 0 2rem 0;
     min-height: 100vh;
-    background: linear-gradient(135deg, #0f2642 0%, #16395C 100%);
+    background: #ffffff;
 }
 
 .lucesa-products-container {
@@ -29,9 +29,9 @@
 .lucesa-products-back-button {
     position: absolute;
     left: 0;
-    background: rgba(255, 255, 255, 0.1);
+    background: #16395C;
     backdrop-filter: blur(10px);
-    color: white;
+    color: #ffffff;
     border: 1px solid rgba(72, 149, 207, 0.3);
     padding: 0.75rem 1.5rem;
     border-radius: 12px;
@@ -55,7 +55,7 @@
 .lucesa-products-header h1 {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #ffffff;
+    color: #16395C;
     margin-bottom: 1.5rem;
     position: relative;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
@@ -113,20 +113,20 @@
 .lucesa-products-search-input {
     width: 100%;
     padding: 1rem 3rem 1rem 1.5rem;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    /* border: 2px solid rgba(22, 21, 21, 0.315); */
     border-radius: 50px;
     font-size: 1rem;
     transition: all 0.3s ease;
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
-    color: white;
+    color: rgb(0, 0, 0);
     font-family: inherit;
 }
 
 .lucesa-products-search-input:focus {
     outline: none;
-    border-color: #4895CF;
-    box-shadow: 0 0 0 3px rgba(72, 149, 207, 0.2);
+    
+    
     background: rgba(255, 255, 255, 0.08);
 }
 
@@ -208,7 +208,7 @@
     grid-template-columns: 320px 1fr;
     gap: 2rem;
     margin-bottom: 2rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: linear-gradient(90deg, #4895CF, #7CCBDD);
     backdrop-filter: blur(15px);
     padding: 1.5rem;
     border-radius: 16px;
@@ -334,7 +334,7 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.212);
     padding: 0.75rem 1.25rem;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -342,7 +342,7 @@
 
 .lucesa-products-sort-filter label {
     font-weight: 600;
-    color: #ffffff;
+    color: #16395C;
     white-space: nowrap;
     display: flex;
     align-items: center;
@@ -351,7 +351,7 @@
 
 .lucesa-products-sort-select {
     padding: 0.75rem 1rem;
-    border: 2px solid rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.527);
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
@@ -359,7 +359,7 @@
     transition: all 0.3s ease;
     font-size: 0.95rem;
     min-width: 220px;
-    color: white;
+    color: #16395C;
     font-weight: 500;
     font-family: inherit;
 }
@@ -372,8 +372,8 @@
 }
 
 .lucesa-products-sort-select option {
-    background: #1e293b;
-    color: white;
+    background: linear-gradient(90deg, #4895CF, #7CCBDD) ;
+    color: #16395C;
     padding: 0.5rem;
 }
 

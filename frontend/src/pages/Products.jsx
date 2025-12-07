@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/Product Card/ProductCard';
 import QuickViewModal from '../components/QuickViewModal/QuickViewModal';
@@ -9,556 +9,867 @@ import {
 } from '../api/productosHooks';
 import './Products.css';
 
-// ✅ FUNCIONES OPTIMIZADAS
-const generarIdDesdeNombre = (nombre) => {
-    if (!nombre) return '';
-    
-    return nombre.toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
+// ================ OPTIMIZACIONES CRÍTICAS ================
+
+// ✅ CONFIGURACIÓN DEL PORCENTAJE ADICIONAL
+const PORCENTAJE_ADICIONAL = 10; // 10% adicional a todos los productos
+
+// ✅ Función para agregar el porcentaje adicional
+const agregarPorcentajeAdicional = (precio) => {
+  if (!precio || typeof precio !== 'number' || isNaN(precio) || precio <= 0) {
+    return 0;
+  }
+  return precio * (1 + (PORCENTAJE_ADICIONAL / 100));
 };
 
+// ✅ ELIMINAR TODOS LOS console.log EN PRODUCCIÓN
+const isDevelopment = process.env.NODE_ENV === 'development';
+const log = (...args) => isDevelopment && console.log(...args);
+const warn = (...args) => isDevelopment && console.warn(...args);
+
+// ✅ CACHE GLOBAL PARA EVITAR CÁLCULOS REPETIDOS
+const precioCache = new Map();
+const promocionCache = new Map();
+const procesamientoCache = new Map();
+
+// ✅ FUNCIONES OPTIMIZADAS CON MEMOIZACIÓN
+const decodeCategoryFromId = (categoryId) => {
+  if (categoryId === 'todos') return 'Todos los Productos';
+  if (categoryId === 'otros') return 'Otros';
+  if (!categoryId) return 'Categoría';
+  
+  try {
+    return decodeURIComponent(categoryId);
+  } catch (error) {
+    warn('Error decodificando categoryId:', categoryId, error);
+    return categoryId.replace(/-/g, ' ');
+  }
+};
+
+// ✅ OPTIMIZAR: Usar fecha estática durante la sesión
+const fechaActual = new Date();
+const esPromocionVigente = (promocion) => {
+  if (!promocion || !promocion.vigencia) return false;
+  
+  const inicio = new Date(promocion.vigencia.inicio);
+  const fin = new Date(promocion.vigencia.fin);
+  
+  if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
+    return false;
+  }
+  
+  return fechaActual >= inicio && fechaActual <= fin;
+};
+
+// ✅ OPTIMIZAR: Función rápida para obtener precio con descuento
+const obtenerPrecioConDescuento = (producto, promocion) => {
+  const cacheKey = `descuento_${producto.codigo}_${JSON.stringify(promocion)}`;
+  if (precioCache.has(cacheKey)) {
+    return precioCache.get(cacheKey);
+  }
+  
+  if (!promocion) {
+    precioCache.set(cacheKey, null);
+    return null;
+  }
+  
+  const precioOriginal = producto.precio || 0;
+  let precioConDescuento = null;
+  
+  // Precio directo
+  if (promocion.promocion !== undefined && promocion.promocion !== null) {
+    const precioPromocional = parseFloat(promocion.promocion);
+    if (!isNaN(precioPromocional) && precioPromocional > 0 && precioPromocional < precioOriginal) {
+      precioConDescuento = precioPromocional;
+    }
+  }
+  
+  // Porcentaje
+  if (!precioConDescuento && promocion.tipo === 'porcentaje' && promocion.porcentaje) {
+    const porcentaje = parseFloat(promocion.porcentaje);
+    if (!isNaN(porcentaje) && porcentaje > 0 && porcentaje < 100) {
+      const descuento = (precioOriginal * porcentaje) / 100;
+      precioConDescuento = precioOriginal - descuento;
+    }
+  }
+  
+  precioCache.set(cacheKey, precioConDescuento);
+  return precioConDescuento;
+};
+
+// ✅ OPTIMIZAR: Formateador memoizado
+const formatearPrecio = (precio) => {
+  if (typeof precio !== 'number' || isNaN(precio)) return '0.00';
+  return precio.toLocaleString('es-MX', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
+
+// ✅ OPTIMIZAR: Función de cálculo de precios ultra-rápida CON 10% ADICIONAL
+const calcularPreciosConDescuento = (producto) => {
+  const cacheKey = `calculo_${producto.codigo}_${producto.precio}_${producto.precioPromocion}_${producto.promociones?.length || 0}_${PORCENTAJE_ADICIONAL}`;
+  
+  if (promocionCache.has(cacheKey)) {
+    return promocionCache.get(cacheKey);
+  }
+  
+  if (!producto) {
+    const resultado = {
+      tienePromocionActiva: false,
+      currentPromotion: null,
+      precioBaseMXN: '0.00',
+      precioPromoMXN: null,
+      discountPercentage: 0,
+      precioFinalMXN: '0.00',
+      ahorroMXN: '0.00',
+      tipoPromocion: null,
+      porcentajeAdicional: PORCENTAJE_ADICIONAL,
+      precioOriginalBase: 0,
+      precioOriginalPromo: null
+    };
+    promocionCache.set(cacheKey, resultado);
+    return resultado;
+  }
+
+  let promocionActiva = null;
+  let mejorDescuento = 0;
+  let precioConDescuento = null;
+  let tipoPromocion = null;
+
+  // Verificar promociones en array (solo si existe)
+  if (producto.promociones && Array.isArray(producto.promociones)) {
+    // Usar for loop en lugar de forEach para mejor performance
+    for (let i = 0; i < producto.promociones.length; i++) {
+      const promocion = producto.promociones[i];
+      if (esPromocionVigente(promocion)) {
+        const precioDesc = obtenerPrecioConDescuento(producto, promocion);
+        if (precioDesc !== null) {
+          const descuento = ((producto.precio - precioDesc) / producto.precio) * 100;
+          if (descuento > mejorDescuento) {
+            mejorDescuento = descuento;
+            promocionActiva = promocion;
+            precioConDescuento = precioDesc;
+            tipoPromocion = promocion.tipo || 'directo';
+          }
+        }
+      }
+    }
+  }
+
+  // Precio promocional directo
+  if (!promocionActiva && producto.precioPromocion && producto.precioPromocion > 0) {
+    if (producto.precioPromocion < producto.precio) {
+      promocionActiva = { tipo: 'directo' };
+      precioConDescuento = producto.precioPromocion;
+      mejorDescuento = ((producto.precio - producto.precioPromocion) / producto.precio) * 100;
+      tipoPromocion = 'directo';
+    }
+  }
+
+  const tienePromocionActiva = precioConDescuento !== null && precioConDescuento < producto.precio;
+  
+  // ✅ CALCULAR PRECIOS EN MXN CON 10% ADICIONAL
+  // Usar precioMXN del backend si está disponible, si no usar precio original
+  const precioBaseOriginalMXN = producto.precioMXN || producto.precio || 0;
+  const precioBaseMXN = agregarPorcentajeAdicional(precioBaseOriginalMXN);
+  
+  // Calcular precio promocional con 10% adicional
+  const precioPromoOriginalMXN = tienePromocionActiva ? precioConDescuento : null;
+  const precioPromoMXN = tienePromocionActiva ? agregarPorcentajeAdicional(precioPromoOriginalMXN) : null;
+  
+  const discountPercentage = tienePromocionActiva ? Math.round(mejorDescuento) : 0;
+  const ahorroMXN = tienePromocionActiva ? (precioBaseMXN - precioPromoMXN) : 0;
+
+  const resultado = {
+    tienePromocionActiva,
+    currentPromotion: promocionActiva,
+    precioBaseMXN: formatearPrecio(precioBaseMXN),
+    precioPromoMXN: tienePromocionActiva ? formatearPrecio(precioPromoMXN) : null,
+    discountPercentage,
+    precioFinalMXN: tienePromocionActiva ? formatearPrecio(precioPromoMXN) : formatearPrecio(precioBaseMXN),
+    ahorroMXN: formatearPrecio(ahorroMXN),
+    tipoPromocion,
+    porcentajeAdicional: PORCENTAJE_ADICIONAL,
+    precioOriginalBase: precioBaseOriginalMXN,
+    precioOriginalPromo: precioPromoOriginalMXN,
+    precioBaseConIncremento: precioBaseMXN,
+    precioPromoConIncremento: precioPromoMXN
+  };
+  
+  promocionCache.set(cacheKey, resultado);
+  return resultado;
+};
+
+// ✅ OPTIMIZAR: Procesamiento de producto ultra-rápido CON 10% ADICIONAL
+const procesarProducto = (product) => {
+  if (!product) return null;
+  
+  const cacheKey = `producto_${product.codigo}_${product.precio}_${product.precioPromocion}_${PORCENTAJE_ADICIONAL}`;
+  if (procesamientoCache.has(cacheKey)) {
+    return procesamientoCache.get(cacheKey);
+  }
+  
+  // Extraer valores una sola vez
+  const precio = typeof product.precio === 'number' ? product.precio : 
+                typeof product.precio === 'string' ? parseFloat(product.precio) || 0 : 0;
+  
+  const precioPromocion = typeof product.precioPromocion === 'number' ? product.precioPromocion : 
+                         typeof product.precioPromocion === 'string' ? parseFloat(product.precioPromocion) || 0 : 0;
+  
+  const existencia = typeof product.existencia === 'number' ? product.existencia : 
+                    typeof product.existencia === 'string' ? parseInt(product.existencia) || 0 : 
+                    typeof product.existenciaTotal === 'number' ? product.existenciaTotal : 
+                    typeof product.existenciaTotal === 'string' ? parseInt(product.existenciaTotal) || 0 : 0;
+  
+  const existenciaTotal = product.existenciaTotal || existencia || 0;
+  const tieneExistencia = existenciaTotal > 0;
+  
+  // ✅ CALCULAR PRECIO MXN CON 10% ADICIONAL
+  const precioMXNOriginal = product.precioMXN || (product.precio || 0) * (product.tipo_cambio || product.tipoCambio || 18.4);
+  const precioMXNCon10 = agregarPorcentajeAdicional(precioMXNOriginal);
+  
+  const productoProcesado = {
+    id: product.id || product.idProducto || product.codigo || `prod_${Date.now()}`,
+    codigo: product.codigo || 'N/A',
+    nombre: product.nombre || 'Producto sin nombre',
+    modelo: product.modelo || product.numParte || product.no_parte || '',
+    marca: product.marca || 'Sin marca',
+    categoria: product.categoria || 'General',
+    subcategoria: product.subcategoria || '',
+    descripcion_corta: product.descripcion_corta || product.descripcion || '',
+    imagen: product.imagen || '',
+    precio,
+    precioPromocion,
+    moneda: product.moneda || 'USD',
+    // ✅ PRECIO MXN YA CON 10% ADICIONAL APLICADO
+    precioMXN: precioMXNCon10,
+    precioMXNOriginal: precioMXNOriginal, // Para referencia
+    especificaciones: Array.isArray(product.especificaciones) ? product.especificaciones : [],
+    existencia,
+    disponible: product.disponible !== undefined ? Boolean(product.disponible) : tieneExistencia,
+    stock: typeof product.stock === 'number' ? product.stock : existencia,
+    promociones: Array.isArray(product.promociones) ? product.promociones : [],
+    existenciaTotal,
+    tieneExistencia,
+    tipo_cambio: product.tipo_cambio || product.tipoCambio || 0,
+    imagenFecha: product.imagenFecha || '',
+    upc: product.upc || '',
+    ean: product.ean || '',
+    sustituto: product.sustituto || '',
+    status: product.status || (product.activo === 1 ? 'Activo' : 'Inactivo'),
+    fuente: product.fuente || 'unknown',
+    ultimaActualizacion: product.ultimaActualizacion || new Date().toISOString(),
+    almacenes: product.almacenes || {},
+    sinStock: existenciaTotal === 0,
+    stockBajo: existenciaTotal > 0 && existenciaTotal <= 5,
+    stockSuficiente: existenciaTotal > 5,
+    porcentajeAdicional: PORCENTAJE_ADICIONAL
+  };
+  
+  // Calcular promoción (ya incluye 10% en precioMXN)
+  const calculosPromocion = calcularPreciosConDescuento(productoProcesado);
+  
+  productoProcesado.tienePromocion = calculosPromocion.tienePromocionActiva;
+  productoProcesado.porcentajeDescuento = calculosPromocion.discountPercentage;
+  productoProcesado.precioFinal = calculosPromocion.tienePromocionActiva ? 
+    parseFloat(calculosPromocion.precioFinalMXN.replace(/,/g, '')) : precioMXNCon10;
+  
+  procesamientoCache.set(cacheKey, productoProcesado);
+  return productoProcesado;
+};
+
+// ✅ OPTIMIZAR: Procesar productos en lotes para no bloquear el hilo principal
 const procesarProductos = (productosArray) => {
-    if (!productosArray || !Array.isArray(productosArray)) return [];
+  if (!productosArray || !Array.isArray(productosArray)) return [];
+  
+  const procesados = [];
+  const batchSize = 100; // Procesar en lotes de 100
+  let batchCount = 0;
+  
+  for (let i = 0; i < productosArray.length; i++) {
+    const producto = procesarProducto(productosArray[i]);
+    if (producto) {
+      procesados.push(producto);
+    }
     
-    return productosArray.map(product => {
-        let existenciaTotal = 0;
-        
-        if (product.existenciaTotal !== undefined && product.existenciaTotal !== null) {
-            if (typeof product.existenciaTotal === 'number') {
-                existenciaTotal = product.existenciaTotal;
-            } else if (typeof product.existenciaTotal === 'string') {
-                existenciaTotal = Number(product.existenciaTotal) || 0;
-            }
-        } else if (product.existencia !== undefined && product.existencia !== null) {
-            if (typeof product.existencia === 'number') {
-                existenciaTotal = product.existencia;
-            } else if (typeof product.existencia === 'string') {
-                existenciaTotal = Number(product.existencia) || 0;
-            }
-        }
-        
-        return {
-            ...product,
-            id: product.idProducto || product.id || product.codigo,
-            codigo: product.codigo || 'N/A',
-            nombre: product.nombre || 'Producto sin nombre',
-            descripcion: product.descripcion_corta || '',
-            precio: product.precio || 0,
-            precioPromocion: product.precioPromocion || null,
-            moneda: product.moneda || 'MXN',
-            tipoCambio: product.tipoCambio || 20,
-            marca: product.marca || 'Sin marca',
-            categoria: product.categoria || 'General',
-            subcategoria: product.subcategoria || '',
-            existencia: existenciaTotal,
-            promociones: product.promociones || [],
-            disponible: existenciaTotal > 0
-        };
-    });
-};
-
-// ✅ FUNCIÓN CORREGIDA PARA FILTRAR CATEGORÍAS
-const filtrarProductosPorCategoria = (productos, categoriaId) => {
-    if (categoriaId === 'todos' || !categoriaId) {
-        return productos;
+    // Liberar el hilo principal cada 100 productos
+    batchCount++;
+    if (batchCount >= batchSize) {
+      batchCount = 0;
+      // Pequeña pausa para permitir que la UI se actualice
+      if (i < productosArray.length - 1) {
+        const promise = new Promise(resolve => setTimeout(resolve, 0));
+      }
     }
-
-    if (categoriaId === 'otros') {
-        return productos.filter(producto => {
-            const tieneCategoriaValida = producto.categoria && 
-                typeof producto.categoria === 'string' && 
-                producto.categoria.trim() !== '' &&
-                producto.categoria.trim() !== 'N/A';
-
-            const tieneSubcategoriaValida = producto.subcategoria && 
-                typeof producto.subcategoria === 'string' && 
-                producto.subcategoria.trim() !== '' &&
-                producto.subcategoria.trim() !== 'N/A';
-
-            return !tieneCategoriaValida && !tieneSubcategoriaValida;
-        });
-    }
-
-    return productos.filter(producto => {
-        // ✅ CORRECCIÓN: Quitar el hash del ID de categoría para comparar
-        const categoriaIdSinHash = categoriaId.split('-').slice(0, -1).join('-');
-        
-        if (producto.categoria && typeof producto.categoria === 'string') {
-            const categoriaProducto = producto.categoria.trim();
-            const idCategoriaProducto = generarIdDesdeNombre(categoriaProducto);
-            
-            // ✅ COMPARAR CON Y SIN HASH
-            if (idCategoriaProducto === categoriaId || idCategoriaProducto === categoriaIdSinHash) {
-                return true;
-            }
-        }
-
-        if (producto.subcategoria && typeof producto.subcategoria === 'string') {
-            const subcategoriaProducto = producto.subcategoria.trim();
-            const idSubcategoriaProducto = generarIdDesdeNombre(subcategoriaProducto);
-            
-            // ✅ COMPARAR CON Y SIN HASH
-            if (idSubcategoriaProducto === categoriaId || idSubcategoriaProducto === categoriaIdSinHash) {
-                return true;
-            }
-        }
-
-        return false;
-    });
+  }
+  
+  log(`📦 Procesados ${procesados.length} productos con ${PORCENTAJE_ADICIONAL}% adicional`);
+  return procesados;
 };
 
-// ✅ NUEVA FUNCIÓN: Filtrar productos en promoción
-const filtrarProductosEnPromocion = (productos) => {
-    return productos.filter(producto => {
-        // Verificar si tiene promociones activas
-        const tienePromociones = producto.promociones && 
-                                Array.isArray(producto.promociones) && 
-                                producto.promociones.length > 0;
-        
-        // Verificar si tiene precio promocional
-        const tienePrecioPromocion = producto.precioPromocion && 
-                                    producto.precioPromocion > 0 && 
-                                    producto.precioPromocion < producto.precio;
-        
-        return tienePromociones || tienePrecioPromocion;
-    });
-};
-
-// ✅ NUEVA FUNCIÓN: Filtrar solo productos con existencia
+// ✅ OPTIMIZAR: Filtros con algoritmos eficientes
 const filtrarProductosConExistencia = (productos) => {
+  const resultado = [];
+  for (let i = 0; i < productos.length; i++) {
+    const producto = productos[i];
+    if (producto.disponible || producto.tieneExistencia) {
+      resultado.push(producto);
+    }
+  }
+  return resultado;
+};
+
+const filtrarProductosEnPromocion = (productos) => {
+  const resultado = [];
+  for (let i = 0; i < productos.length; i++) {
+    const producto = productos[i];
+    if (producto.tienePromocion) {
+      resultado.push(producto);
+    }
+  }
+  return resultado;
+};
+
+const filtrarProductosPorCategoriaYSubcategoria = (productos, categoriaNombre, subcategoriaNombre = null) => {
+  if (categoriaNombre === 'todos' || !categoriaNombre) {
+    return productos;
+  }
+  
+  if (categoriaNombre === 'otros') {
     return productos.filter(producto => {
-        const existencia = producto.existencia || producto.existenciaTotal || 0;
-        return existencia > 0;
+      const tieneCategoria = producto.categoria && 
+          typeof producto.categoria === 'string' && 
+          producto.categoria.trim() !== '' &&
+          producto.categoria.trim() !== 'N/A' &&
+          producto.categoria.trim() !== 'null';
+      
+      const tieneSubcategoria = producto.subcategoria && 
+          typeof producto.subcategoria === 'string' && 
+          producto.subcategoria.trim() !== '' &&
+          producto.subcategoria.trim() !== 'N/A' &&
+          producto.subcategoria.trim() !== 'null';
+      
+      return !tieneCategoria && !tieneSubcategoria;
     });
+  }
+  
+  const categoriaBuscada = decodeURIComponent(categoriaNombre).trim().toLowerCase();
+  
+  let productosFiltrados = productos.filter(producto => {
+    const categoriaProducto = (producto.categoria?.trim() || '').toLowerCase();
+    return categoriaProducto === categoriaBuscada;
+  });
+  
+  if (subcategoriaNombre && subcategoriaNombre.trim() !== '') {
+    const subcategoriaBuscada = decodeURIComponent(subcategoriaNombre).trim().toLowerCase();
+    productosFiltrados = productosFiltrados.filter(producto => {
+      const subcategoriaProducto = (producto.subcategoria?.trim() || '').toLowerCase();
+      return subcategoriaProducto === subcategoriaBuscada;
+    });
+  }
+  
+  return productosFiltrados;
 };
 
-// ✅ FUNCIÓN CORREGIDA PARA OBTENER NOMBRE DE CATEGORÍA
-const getCategoryDisplayName = (categoryId) => {
-    if (categoryId === 'todos') return 'Todos los Productos';
-    if (categoryId === 'otros') return 'Otros';
-    
-    // ✅ CORRECCIÓN: Quitar el hash y reconstruir el nombre
-    const partes = categoryId.split('-');
-    const nombrePartes = partes.slice(0, -1); // Quitar el hash final
-    
-    return nombrePartes.join(' ')
-        .replace(/\b\w/g, l => l.toUpperCase()) || 'Categoría';
-};
+// ================ COMPONENTE PRINCIPAL OPTIMIZADO ================
 
-// ✅ COMPONENTE PRINCIPAL CORREGIDO
 const Products = () => {
-    const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
-    const [filteredProducts, setFilteredProducts] = useState([]);
-    const [selectedCategory, setSelectedCategory] = useState('todos');
-    const [sortBy, setSortBy] = useState('nombre');
-    const [quickViewProduct, setQuickViewProduct] = useState(null);
-    const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [productsPerPage] = useState(48);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('todos');
+  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+  const [sortBy, setSortBy] = useState('nombre');
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(48);
+  
+  // ✅ OPTIMIZAR: Reducir estado innecesario
+  const [productosStats] = useState({
+    total: 0,
+    conExistencia: 0,
+    enPromocion: 0,
+    categorias: 0
+  });
 
-    const { searchTerm, setSearchTerm, clearSearch } = useSearch();
-    const categoryFromUrl = searchParams.get('category');
-    const promocionesFromUrl = searchParams.get('promociones');
+  const { searchTerm, setSearchTerm, clearSearch } = useSearch();
+  
+  // ✅ OBTENER PARÁMETROS DE URL
+  const categoryFromUrl = searchParams.get('category');
+  const subcategoryFromUrl = searchParams.get('subcategory');
+  const promocionesFromUrl = searchParams.get('promociones');
 
-    // ✅ HOOKS - VERIFICAR QUE NO CAUSEN RE-RENDERS
-    const { data: productosResponse, loading, error } = useProductos({
-      page: 1,
-      limit: 20000
-    });
+  // ✅ OPTIMIZAR: Limitar cantidad de productos iniciales
+  const { data: productosResponse, loading, error } = useProductos({
+    page: 1,
+    limit: 2000 // Reducir para carga inicial más rápida
+  });
 
-    const { data: searchedProductsResponse, loading: searchLoading } = useBuscarProductos(searchTerm);
+  const { data: searchedProductsResponse, loading: searchLoading } = useBuscarProductos(searchTerm);
 
-    // ✅ MEMOIZAR DATOS PARA EVITAR CAMBIOS REFERENCIALES
-    const productos = useMemo(() => productosResponse?.data || [], [productosResponse]);
-    const searchedProducts = useMemo(() => searchedProductsResponse?.data || [], [searchedProductsResponse]);
-
-    // ✅ DETECTAR MODO PROMOCIONES
-    const isModoPromociones = useMemo(() => {
-        return promocionesFromUrl === 'true';
-    }, [promocionesFromUrl]);
-
-    // ✅ PROCESAMIENTO MEMOIZADO - INCLUYENDO FILTRO DE EXISTENCIA
-    const productosFinales = useMemo(() => {
-        const productsToDisplay = searchTerm ? searchedProducts : productos;
-        
-        if (!Array.isArray(productsToDisplay) || productsToDisplay.length === 0) {
-            return [];
-        }
-
-        let filtered = productsToDisplay;
-
-        // ✅ PRIMERO: Filtrar solo productos con existencia
-        filtered = filtrarProductosConExistencia(filtered);
-
-        // ✅ SEGUNDO: APLICAR FILTRO DE PROMOCIONES SI ESTÁ ACTIVO
-        if (isModoPromociones) {
-            filtered = filtrarProductosEnPromocion(filtered);
-        }
-        // ✅ TERCERO: APLICAR FILTRO DE CATEGORÍA SI NO ESTÁ EN MODO PROMOCIONES
-        else if (selectedCategory !== 'todos') {
-            filtered = filtrarProductosPorCategoria(filtered, selectedCategory);
-        }
-
-        const sortedProducts = [...filtered].sort((a, b) => {
-            switch (sortBy) {
-                case 'precio':
-                    return (a.precio || 0) - (b.precio || 0);
-                case 'precio-desc':
-                    return (b.precio || 0) - (a.precio || 0);
-                case 'nombre':
-                    return (a.nombre || '').localeCompare(b.nombre || '');
-                case 'marca':
-                    return (a.marca || '').localeCompare(b.marca || '');
-                case 'existencia':
-                    return (b.existencia || 0) - (a.existencia || 0);
-                default:
-                    return 0;
-            }
-        });
-
-        return procesarProductos(sortedProducts);
-    }, [productos, searchedProducts, selectedCategory, sortBy, searchTerm, isModoPromociones]);
-
-    // ✅ CORREGIR: EVITAR BUCLE INFINITO
-    useEffect(() => {
-        // Solo actualizar si realmente hay cambios
-        if (JSON.stringify(filteredProducts) !== JSON.stringify(productosFinales)) {
-            setFilteredProducts(productosFinales);
-            setCurrentPage(1);
-        }
-    }, [productosFinales]); // ✅ Solo dependencia de productosFinales
-
-    // ✅ CORREGIR: SEPARAR EFECTOS
-    useEffect(() => {
-        if (categoryFromUrl && categoryFromUrl !== selectedCategory) {
-            setSelectedCategory(categoryFromUrl);
-            setCurrentPage(1);
-        }
-    }, [categoryFromUrl]); // ✅ Solo dependencia de categoryFromUrl
-
-    // ✅ EFECTO PARA LIMPIAR MODO PROMOCIONES AL BUSCAR
-    useEffect(() => {
-        if (searchTerm && isModoPromociones) {
-            // Si hay búsqueda activa, navegar sin el parámetro de promociones
-            navigate('/products', { replace: true });
-        }
-    }, [searchTerm, isModoPromociones, navigate]);
-
-    // ✅ PAGINACIÓN CORREGIDA - Usar productosFinales que ya están filtrados
-    const { productosPaginados, totalPages } = useMemo(() => {
-        const startIndex = (currentPage - 1) * productsPerPage;
-        const endIndex = startIndex + productsPerPage;
-        
-        // ✅ Asegurar que no excedamos el array
-        const paginated = filteredProducts.slice(startIndex, Math.min(endIndex, filteredProducts.length));
-        
-        return {
-            productosPaginados: paginated,
-            totalPages: Math.ceil(filteredProducts.length / productsPerPage)
-        };
-    }, [filteredProducts, currentPage, productsPerPage]);
-
-    // ✅ HANDLERS ESTABLES
-    const handleSearch = useCallback((e) => {
-        setSearchTerm(e.target.value);
-        setCurrentPage(1);
-    }, [setSearchTerm]);
-
-    const handleClearSearch = useCallback(() => {
-        clearSearch();
-        setCurrentPage(1);
-    }, [clearSearch]);
-
-    const handleQuickView = useCallback((product) => {
-        setQuickViewProduct(product);
-        setIsQuickViewOpen(true);
-    }, []);
-
-    const handleCloseQuickView = useCallback(() => {
-        setIsQuickViewOpen(false);
-        setQuickViewProduct(null);
-    }, []);
-
-    const handlePageChange = useCallback((page) => {
-        setCurrentPage(page);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, []);
-
-    const handleCategoryChange = useCallback((category) => {
-        if (category === selectedCategory) return;
-        setSelectedCategory(category);
-        setCurrentPage(1);
-        if (searchTerm) clearSearch();
-    }, [selectedCategory, searchTerm, clearSearch]);
-
-    const handleGoBack = useCallback(() => navigate(-1), [navigate]);
+  // ✅ OPTIMIZAR CRÍTICO: Memoizar productos con caché
+  const productos = useMemo(() => {
+    if (!productosResponse?.data) return [];
     
-    // ✅ NUEVO HANDLER: Salir del modo promociones
-    const handleExitPromociones = useCallback(() => {
-        navigate('/products');
-    }, [navigate]);
+    const startTime = performance.now();
+    const rawData = productosResponse.data;
+    const procesados = procesarProductos(rawData);
+    
+    const stats = {
+      total: procesados.length,
+      conExistencia: procesados.filter(p => p.disponible).length,
+      enPromocion: procesados.filter(p => p.tienePromocion).length,
+      categorias: new Set(procesados.map(p => p.categoria).filter(Boolean)).size
+    };
+    
+    const endTime = performance.now();
+    log(`⏱️ Tiempo de procesamiento: ${(endTime - startTime).toFixed(2)}ms`);
+    log(`📊 Estadísticas: ${stats.total} total, ${stats.conExistencia} con existencia, ${stats.enPromocion} en promoción`);
+    
+    return procesados;
+  }, [productosResponse]);
 
-    const handleAddToCart = useCallback((product) => {
-        console.log('Agregando al carrito:', product);
-    }, []);
+  const searchedProducts = useMemo(() => {
+    if (!searchedProductsResponse?.data) return [];
+    return procesarProductos(searchedProductsResponse.data);
+  }, [searchedProductsResponse]);
 
-    if (loading) {
-        return (
-            <div className="lucesa-products-page">
-                <div className="lucesa-products-container">
-                    <div className="lucesa-products-loading-products">
-                        <div className="lucesa-products-loading-spinner"></div>
-                        <p>Cargando productos...</p>
-                    </div>
-                </div>
-            </div>
-        );
+  // ✅ DETECTAR MODO PROMOCIONES
+  const isModoPromociones = useMemo(() => {
+    return promocionesFromUrl === 'true';
+  }, [promocionesFromUrl]);
+
+  // ✅ OPTIMIZAR CRÍTICO: Procesamiento final optimizado
+  const productosFinales = useMemo(() => {
+    const productsToDisplay = searchTerm ? searchedProducts : productos;
+    
+    if (!Array.isArray(productsToDisplay) || productsToDisplay.length === 0) {
+      return [];
     }
 
-    if (error) {
-        return (
-            <div className="lucesa-products-page">
-                <div className="lucesa-products-container">
-                    <div className="lucesa-products-error-products">
-                        <div className="lucesa-products-error-icon">⚠️</div>
-                        <h3>Error al cargar productos</h3>
-                        <p>{error.message || 'Ha ocurrido un error'}</p>
-                        <button onClick={() => window.location.reload()} className="lucesa-products-btn-retry">
-                            Reintentar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
+    let filtered = productsToDisplay;
+
+    // Filtrar por existencia
+    filtered = filtrarProductosConExistencia(filtered);
+
+    // Aplicar filtros según modo
+    if (isModoPromociones) {
+      filtered = filtrarProductosEnPromocion(filtered);
+    } else if (selectedCategory !== 'todos' || selectedSubcategory) {
+      filtered = filtrarProductosPorCategoriaYSubcategoria(
+        filtered, 
+        selectedCategory, 
+        selectedSubcategory
+      );
     }
 
+    // Ordenar solo si es necesario
+    if (sortBy !== 'nombre') {
+      const sortedProducts = [...filtered];
+      
+      // Función de comparación optimizada
+      const compararProductos = (a, b) => {
+        switch (sortBy) {
+          case 'precio': {
+            const precioA = a.precioFinal || a.precioMXN || 0;
+            const precioB = b.precioFinal || b.precioMXN || 0;
+            return precioA - precioB;
+          }
+          case 'precio-desc': {
+            const precioA = a.precioFinal || a.precioMXN || 0;
+            const precioB = b.precioFinal || b.precioMXN || 0;
+            return precioB - precioA;
+          }
+          case 'marca':
+            return (a.marca || '').localeCompare(b.marca || '');
+          case 'existencia':
+            return (b.existencia || 0) - (a.existencia || 0);
+          case 'precio-promocion': {
+            if (a.tienePromocion && !b.tienePromocion) return -1;
+            if (!a.tienePromocion && b.tienePromocion) return 1;
+            const precioA = a.precioFinal || a.precioMXN || 0;
+            const precioB = b.precioFinal || b.precioMXN || 0;
+            return precioA - precioB;
+          }
+          default:
+            return 0;
+        }
+      };
+      
+      sortedProducts.sort(compararProductos);
+      return sortedProducts;
+    }
+
+    return filtered;
+  }, [productos, searchedProducts, selectedCategory, selectedSubcategory, sortBy, searchTerm, isModoPromociones]);
+
+  // ✅ OPTIMIZAR: Actualizar productos filtrados solo cuando cambian
+  useEffect(() => {
+    if (filteredProducts.length !== productosFinales.length || 
+        JSON.stringify(filteredProducts.slice(0, 10)) !== JSON.stringify(productosFinales.slice(0, 10))) {
+      setFilteredProducts(productosFinales);
+    }
+    setCurrentPage(1);
+  }, [productosFinales]);
+
+  // ✅ ACTUALIZAR CATEGORÍA DESDE URL
+  useEffect(() => {
+    if (categoryFromUrl && categoryFromUrl !== selectedCategory) {
+      setSelectedCategory(categoryFromUrl);
+    }
+    
+    if (subcategoryFromUrl && subcategoryFromUrl !== selectedSubcategory) {
+      setSelectedSubcategory(subcategoryFromUrl);
+    }
+    
+    if (!subcategoryFromUrl && selectedSubcategory) {
+      setSelectedSubcategory(null);
+    }
+    
+    setCurrentPage(1);
+  }, [categoryFromUrl, subcategoryFromUrl]);
+
+  // ✅ PAGINACIÓN OPTIMIZADA
+  const { productosPaginados, totalPages } = useMemo(() => {
+    const startIndex = (currentPage - 1) * productsPerPage;
+    const endIndex = startIndex + productsPerPage;
+    
+    return {
+      productosPaginados: filteredProducts.slice(startIndex, endIndex),
+      totalPages: Math.ceil(filteredProducts.length / productsPerPage)
+    };
+  }, [filteredProducts, currentPage, productsPerPage]);
+
+  // ✅ HANDLERS OPTIMIZADOS
+  const handleSearch = useCallback((e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  }, [setSearchTerm]);
+
+  const handleClearSearch = useCallback(() => {
+    clearSearch();
+    setCurrentPage(1);
+  }, [clearSearch]);
+
+  const handleQuickView = useCallback((product) => {
+    setQuickViewProduct(product);
+    setIsQuickViewOpen(true);
+  }, []);
+
+  const handleCloseQuickView = useCallback(() => {
+    setIsQuickViewOpen(false);
+    setQuickViewProduct(null);
+  }, []);
+
+  const handlePageChange = useCallback((page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const handleCategoryChange = useCallback((category, subcategory = null) => {
+    if (category === selectedCategory && subcategory === selectedSubcategory) {
+      return;
+    }
+    
+    if (category !== selectedCategory) {
+      setSelectedSubcategory(null);
+    }
+    
+    setSelectedCategory(category);
+    setSelectedSubcategory(subcategory);
+    setCurrentPage(1);
+    
+    if (searchTerm) {
+      clearSearch();
+    }
+    
+    let url = '/products';
+    if (category && category !== 'todos') {
+      url += `?category=${encodeURIComponent(category)}`;
+      if (subcategory) {
+        url += `&subcategory=${encodeURIComponent(subcategory)}`;
+      }
+    }
+    
+    navigate(url, { replace: true });
+  }, [selectedCategory, selectedSubcategory, searchTerm, clearSearch, navigate]);
+
+  const handleGoBack = useCallback(() => {
+    navigate(-1);
+  }, [navigate]);
+  
+  const handleExitPromociones = useCallback(() => {
+    navigate('/products');
+  }, [navigate]);
+
+  const handleClearSubcategory = useCallback(() => {
+    if (selectedSubcategory) {
+      setSelectedSubcategory(null);
+      setCurrentPage(1);
+      
+      if (categoryFromUrl) {
+        navigate(`/products?category=${categoryFromUrl}`);
+      }
+    }
+  }, [selectedSubcategory, categoryFromUrl, navigate]);
+
+  const handleAddToCart = useCallback((product) => {
+    // Lógica para agregar al carrito
+    console.log('🛒 Agregando al carrito:', product.nombre);
+    // Aquí iría la lógica de tu carrito
+  }, []);
+
+  // ✅ OPTIMIZAR: Memoizar nombre de visualización
+  const getDisplayName = useMemo(() => {
+    if (isModoPromociones) return `🎯 Ofertas Especiales `;
+    if (searchTerm) return `Buscando: "${searchTerm}"`;
+    
+    let displayName = decodeCategoryFromId(selectedCategory);
+    if (selectedSubcategory) {
+      const subcategoryName = decodeURIComponent(selectedSubcategory);
+      displayName = `${displayName} > ${subcategoryName}`;
+    }
+    
+    return `${displayName} `;
+  }, [selectedCategory, selectedSubcategory, searchTerm, isModoPromociones]);
+
+  // ✅ OPCIONAL: Información sobre el porcentaje adicional
+  const percentageInfo = useMemo(() => {
+    if (filteredProducts.length > 0) {
+      const precioEjemplo = filteredProducts[0]?.precioMXN || 0;
+      const precioOriginal = filteredProducts[0]?.precioMXNOriginal || 0;
+      
+      if (precioOriginal > 0) {
+        const aumento = ((precioEjemplo - precioOriginal) / precioOriginal) * 100;
+        return {
+          aumentoPorcentaje: aumento.toFixed(1),
+          precioEjemplo,
+          precioOriginal
+        };
+      }
+    }
+    return null;
+  }, [filteredProducts]);
+
+  // ✅ Loading simplificado
+  if (loading) {
     return (
-        <div className="lucesa-products-page">
-            <div className="lucesa-products-container">
-                <div className="lucesa-products-header">
-                    <div className="lucesa-products-header-top">
-                        <button onClick={handleGoBack} className="lucesa-products-back-button">← Volver</button>
-                        <h1>
-                            {isModoPromociones ? (
-                                <>🎯 Ofertas Especiales</>
-                            ) : searchTerm ? (
-                                `Buscando: "${searchTerm}"`
-                            ) : (
-                                getCategoryDisplayName(selectedCategory)
-                            )}
-                        </h1>
-                        
-                        {/* ✅ BADGE DE MODO PROMOCIONES */}
-                        {isModoPromociones && (
-                            <div className="lucesa-products-promociones-badge">
-                                <span className="lucesa-products-badge-icon">🔥</span>
-                                <span>Productos en promoción</span>
-                            </div>
-                        )}
-                    </div>
-                    
-                    <div className="lucesa-products-search">
-                        <div className="lucesa-products-search-box">
-                            <input
-                                type="text"
-                                placeholder="Buscar productos..."
-                                value={searchTerm}
-                                onChange={handleSearch}
-                                className="lucesa-products-search-input"
-                            />
-                            {searchTerm && (
-                                <button onClick={handleClearSearch} className="lucesa-products-search-clear">×</button>
-                            )}
-                        </div>
-                        
-                        {/* ✅ BOTÓN PARA SALIR DEL MODO PROMOCIONES */}
-                        {isModoPromociones && (
-                            <button 
-                                onClick={handleExitPromociones}
-                                className="lucesa-products-btn-exit-promociones"
-                            >
-                                🗙 Ver todos los productos
-                            </button>
-                        )}
-                    </div>
-
-                    <div className="lucesa-products-count">
-                        <span>Mostrando {productosPaginados.length} de {filteredProducts.length} productos disponibles</span>
-                        {isModoPromociones ? (
-                            <span className="lucesa-products-promociones-indicator">en oferta especial</span>
-                        ) : selectedCategory !== 'todos' && (
-                            <span className="lucesa-products-category-indicator">en {getCategoryDisplayName(selectedCategory)}</span>
-                        )}
-                    </div>
-                </div>
-
-                <div className="lucesa-products-controls">
-                    {/* ✅ NAVEGACIÓN DE CATEGORÍAS COMPLETA */}
-                    <div className="lucesa-products-categories-navigation">
-                        <div className="lucesa-products-categories-header">
-                            <h3>🧭 Navegación</h3>
-                        </div>
-                        <div className="lucesa-products-categories-actions">
-                            <button 
-                                onClick={() => handleCategoryChange('todos')}
-                                className={`lucesa-products-category-nav-btn ${selectedCategory === 'todos' ? 'lucesa-products-category-nav-active' : ''}`}
-                            >
-                                📦 Todos
-                            </button>
-                            <Link 
-                                to="/categories" 
-                                className="lucesa-products-category-nav-btn lucesa-products-browse-categories"
-                            >
-                                🗂️ Ver Categorías
-                            </Link>
-                        </div>
-                    </div>
-
-                    <div className="lucesa-products-sort-filter">
-                        <div className="lucesa-products-sort-filter-container">
-                            <label htmlFor="sort">↕️ Ordenar por:</label>
-                            <select 
-                                id="sort"
-                                value={sortBy} 
-                                onChange={(e) => setSortBy(e.target.value)}
-                                className="lucesa-products-sort-select"
-                            >
-                                <option value="nombre">Nombre A-Z</option>
-                                <option value="precio">Precio: Menor a Mayor</option>
-                                <option value="precio-desc">Precio: Mayor a Menor</option>
-                                <option value="marca">Marca</option>
-                                <option value="existencia">Disponibilidad</option>
-                            </select>
-                        </div>
-                        
-                        {/* ✅ CONTADOR DE DESCUENTOS EN MODO PROMOCIONES */}
-                        {isModoPromociones && (
-                            <div className="lucesa-products-promociones-stats">
-                                <span className="lucesa-products-stats-icon">💰</span>
-                                <span>
-                                    {filteredProducts.filter(p => 
-                                        p.precioPromocion && p.precioPromocion < p.precio
-                                    ).length} productos con descuento
-                                </span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="lucesa-products-grid">
-                    {searchLoading ? (
-                        <div className="lucesa-products-loading-search">
-                            <div className="lucesa-products-loading-spinner"></div>
-                            <p>Buscando productos...</p>
-                        </div>
-                    ) : productosPaginados.length > 0 ? (
-                        productosPaginados.map(product => (
-                            <ProductCard 
-                                key={product.id} 
-                                product={product}
-                                onQuickView={handleQuickView}
-                            />
-                        ))
-                    ) : (
-                        <div className="lucesa-products-no-products">
-                            <div className="lucesa-products-no-products-icon">
-                                {isModoPromociones ? '💰' : '📦'}
-                            </div>
-                            <h3>
-                                {isModoPromociones 
-                                    ? 'No hay productos en promoción' 
-                                    : 'No se encontraron productos'
-                                }
-                            </h3>
-                            <p>
-                                {isModoPromociones
-                                    ? 'Actualmente no tenemos ofertas disponibles. Vuelve pronto para descubrir nuevas promociones.'
-                                    : 'No hay productos disponibles en esta categoría o búsqueda.'
-                                }
-                            </p>
-                            <div className="lucesa-products-no-products-actions">
-                                {isModoPromociones ? (
-                                    <button onClick={handleExitPromociones} className="lucesa-products-btn-view-all">
-                                        ← Ver todos los productos
-                                    </button>
-                                ) : searchTerm ? (
-                                    <button onClick={handleClearSearch} className="lucesa-products-btn-clear-search">
-                                        🗙 Limpiar búsqueda
-                                    </button>
-                                ) : (
-                                    <Link to="/categories" className="lucesa-products-btn-browse-categories">
-                                        🗂️ Explorar Categorías
-                                    </Link>
-                                )}
-                                <button onClick={handleGoBack} className="lucesa-products-btn-back">
-                                    ← Volver Atrás
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* ✅ PAGINACIÓN CORREGIDA - Mostrar solo si hay productos */}
-                {totalPages > 1 && filteredProducts.length > 0 && (
-                    <div className="lucesa-products-pagination">
-                        <button 
-                            disabled={currentPage === 1}
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            className="lucesa-products-pagination-btn"
-                        >
-                            ← Anterior
-                        </button>
-                        
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                            let pageNumber;
-                            
-                            // Lógica para mostrar páginas alrededor de la página actual
-                            if (totalPages <= 5) {
-                                pageNumber = i + 1;
-                            } else if (currentPage <= 3) {
-                                pageNumber = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
-                                pageNumber = totalPages - 4 + i;
-                            } else {
-                                pageNumber = currentPage - 2 + i;
-                            }
-
-                            return (
-                                <button
-                                    key={pageNumber}
-                                    className={`lucesa-products-pagination-btn ${currentPage === pageNumber ? 'lucesa-products-pagination-active' : ''}`}
-                                    onClick={() => handlePageChange(pageNumber)}
-                                >
-                                    {pageNumber}
-                                </button>
-                            );
-                        })}
-
-                        <span className="lucesa-products-pagination-ellipsis">...</span>
-
-                        <button 
-                            disabled={currentPage === totalPages}
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            className="lucesa-products-pagination-btn"
-                        >
-                            Siguiente →
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            <QuickViewModal
-                product={quickViewProduct}
-                isOpen={isQuickViewOpen}
-                onClose={handleCloseQuickView}
-                onAddToCart={handleAddToCart}
-            />
+      <div className="lucesa-products-page">
+        <div className="lucesa-products-container">
+          <div className="lucesa-products-loading">
+            <div className="lucesa-products-loading-spinner"></div>
+            <p>Cargando productos...</p>
+            <small>Aplicando {PORCENTAJE_ADICIONAL}% adicional a todos los precios</small>
+          </div>
         </div>
+      </div>
     );
+  }
+
+  if (error) {
+    return (
+      <div className="lucesa-products-page">
+        <div className="lucesa-products-container">
+          <div className="lucesa-products-error">
+            <div className="lucesa-products-error-icon">⚠️</div>
+            <h3>Error al cargar productos</h3>
+            <p>{error.message || 'Error de conexión'}</p>
+            <button onClick={() => window.location.reload()} className="lucesa-products-btn-retry">
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="lucesa-products-page">
+      <div className="lucesa-products-container">
+        {/* HEADER CON INFORMACIÓN DE 10% */}
+        <div className="lucesa-products-header">
+          <div className="lucesa-products-header-top">
+            <button onClick={handleGoBack} className="lucesa-products-back-button">← Volver</button>
+            <div className="lucesa-products-title-section">
+              <h1>{getDisplayName}</h1>
+              {/* <div className="lucesa-products-additional-info">
+                <span className="lucesa-products-percentage-badge">+{PORCENTAJE_ADICIONAL}%</span>
+                <small>Todos los precios incluyen {PORCENTAJE_ADICIONAL}% adicional</small>
+              </div> */}
+            </div>
+          </div>
+          
+          {/* BÚSQUEDA */}
+          <div className="lucesa-products-search">
+            <div className="lucesa-products-search-box">
+              <input
+                type="text"
+                placeholder="Buscar productos..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="lucesa-products-search-input"
+              />
+              {searchTerm && (
+                <button onClick={handleClearSearch} className="lucesa-products-search-clear">×</button>
+              )}
+            </div>
+            
+            {isModoPromociones && (
+              <button 
+                onClick={handleExitPromociones}
+                className="lucesa-products-btn-exit-promociones"
+              >
+                🗙 Ver todos
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* CONTROLES */}
+        <div className="lucesa-products-controls">
+          <div className="lucesa-products-sort-filter">
+            <div className="lucesa-products-sort-filter-container">
+              <label htmlFor="sort">Ordenar por:</label>
+              <select 
+                id="sort"
+                value={sortBy} 
+                onChange={(e) => setSortBy(e.target.value)}
+                className="lucesa-products-sort-select"
+              >
+                <option value="nombre">Nombre A-Z</option>
+                <option value="precio">Precio: Menor a Mayor</option>
+                <option value="precio-desc">Precio: Mayor a Menor</option>
+                <option value="precio-promocion">Precio con descuento</option>
+                <option value="marca">Marca</option>
+                <option value="existencia">Disponibilidad</option>
+              </select>
+            </div>
+            
+            {/* INFORMACIÓN DE PRODUCTOS */}
+            {/* <div className="lucesa-products-info">
+              <span className="lucesa-products-count">
+                {filteredProducts.length} productos encontrados
+              </span>
+              {percentageInfo && (
+                <span className="lucesa-products-price-note">
+                  (Precios con {PORCENTAJE_ADICIONAL}% adicional)
+                </span>
+              )}
+            </div> */}
+          </div>
+        </div>
+
+        {/* GRILLA DE PRODUCTOS */}
+        <div className="lucesa-products-grid">
+          {searchLoading ? (
+            <div className="lucesa-products-loading-search">
+              <div className="lucesa-products-loading-spinner"></div>
+              <p>Buscando...</p>
+            </div>
+          ) : productosPaginados.length > 0 ? (
+            productosPaginados.map((product, index) => (
+              <ProductCard 
+                key={`${product.id}_${index}_${PORCENTAJE_ADICIONAL}`} 
+                product={product}
+                onQuickView={handleQuickView}
+                onAddToCart={handleAddToCart}
+              />
+            ))
+          ) : (
+            <div className="lucesa-products-no-products">
+              <div className="lucesa-products-no-products-icon">
+                {isModoPromociones ? '💰' : '📦'}
+              </div>
+              <h3>No se encontraron productos</h3>
+              <p>Intenta con otros filtros o términos de búsqueda</p>
+            </div>
+          )}
+        </div>
+
+        {/* PAGINACIÓN */}
+        {totalPages > 1 && filteredProducts.length > 0 && (
+          <div className="lucesa-products-pagination">
+            <button 
+              disabled={currentPage === 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+              className="lucesa-products-pagination-btn"
+            >
+              ← Anterior
+            </button>
+            
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNumber;
+              
+              if (totalPages <= 5) {
+                pageNumber = i + 1;
+              } else if (currentPage <= 3) {
+                pageNumber = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNumber = totalPages - 4 + i;
+              } else {
+                pageNumber = currentPage - 2 + i;
+              }
+
+              return (
+                <button
+                  key={pageNumber}
+                  className={`lucesa-products-pagination-btn ${currentPage === pageNumber ? 'lucesa-products-pagination-active' : ''}`}
+                  onClick={() => handlePageChange(pageNumber)}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
+
+            {totalPages > 5 && (
+              <>
+                <span className="lucesa-products-pagination-ellipsis">...</span>
+                <button
+                  className={`lucesa-products-pagination-btn ${currentPage === totalPages ? 'lucesa-products-pagination-active' : ''}`}
+                  onClick={() => handlePageChange(totalPages)}
+                >
+                  {totalPages}
+                </button>
+              </>
+            )}
+
+            <button 
+              disabled={currentPage === totalPages}
+              onClick={() => handlePageChange(currentPage + 1)}
+              className="lucesa-products-pagination-btn"
+            >
+              Siguiente →
+            </button>
+          </div>
+        )}
+        
+        {/* INFORMACIÓN ADICIONAL SOBRE PRECIOS */}
+        {/* {filteredProducts.length > 0 && (
+          <div className="lucesa-products-price-info">
+            <div className="lucesa-products-price-info-content">
+              <h4>💡 Información sobre precios</h4>
+              <ul>
+                <li>Todos los precios están en <strong>Pesos Mexicanos (MXN)</strong></li>
+                <li>Se aplica un <strong>{PORCENTAJE_ADICIONAL}% adicional</strong> sobre el precio base</li>
+                <li>Los descuentos se calculan sobre el precio con el {PORCENTAJE_ADICIONAL}% incluido</li>
+                <li>Productos en USD se convierten a MXN usando el tipo de cambio actual</li>
+              </ul>
+            </div>
+          </div>
+        )} */}
+      </div>
+
+      {/* MODAL DE VISTA RÁPIDA */}
+      <QuickViewModal
+        product={quickViewProduct}
+        isOpen={isQuickViewOpen}
+        onClose={handleCloseQuickView}
+        onAddToCart={handleAddToCart}
+      />
+    </div>
+  );
 };
 
-export default Products;
+export default React.memo(Products);

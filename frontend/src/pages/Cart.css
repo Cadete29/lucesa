@@ -3,7 +3,7 @@
   min-height: 100vh;
   background: #f8fafc;
   padding: 2rem 0;
-  padding-top: 100px;
+  padding-top: 150px !important;
 }
 
 .ct-container {
@@ -22,7 +22,7 @@
 }
 
 .ct-title {
-  color: #ffffff; /* CAMBIADO A BLANCO */
+  color: #16395C !important; /* CAMBIADO A BLANCO */
   font-size: 2rem;
   font-weight: 700;
   margin: 0;
@@ -178,7 +178,7 @@
 .ct-price {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #48bb78; /* MANTENIDO VERDE */
+  color: #ffffff; /* MANTENIDO VERDE */
   margin-bottom: 0.5rem;
 }
 
@@ -311,12 +311,12 @@
 }
 
 .ct-total-amount {
-  color: #48bb78; /* MANTENIDO VERDE */
+  color: #ffffff; /* MANTENIDO VERDE */
   font-size: 1.3rem;
 }
 
 .ct-free-shipping {
-  color: #48bb78; /* MANTENIDO VERDE */
+  color: #ffffff; /* MANTENIDO VERDE */
   font-weight: 700;
 }
 
@@ -339,7 +339,7 @@
 
 .ct-checkout-btn {
   width: 100%;
-  background: #48bb78;
+  background: linear-gradient(135deg, #0f4780, #7CCBDD);
   color: white;
   border: none;
   padding: 1rem 2rem;
@@ -352,7 +352,7 @@
 }
 
 .ct-checkout-btn:hover {
-  background: #38a169;
+  background: linear-gradient(135deg, #7CCBDD, #0f4780);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
 }
@@ -360,7 +360,7 @@
 .ct-continue-shopping {
   display: block;
   text-align: center;
-  color: #4299e1;
+  color: #ffffff;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s ease;
@@ -508,7 +508,7 @@
 
 @media (max-width: 1024px) {
   .ct-page {
-    padding-top: 95px;
+    padding-top: 90px !important;
   }
   
   .ct-content {
@@ -738,14 +738,14 @@
 /* Dark Mode Support - ACTUALIZADO CON TEXTO BLANCO */
 @media (prefers-color-scheme: dark) {
   .ct-page {
-    background: #1a202c;
+    background: #ffffff;
   }
   
   .ct-empty,
   .ct-items-section,
   .ct-summary-card,
   .ct-benefits {
-    background: #2d3748;
+    background: linear-gradient(90deg, #4895CF, #7CCBDD);
     color: #ffffff; /* CAMBIADO A BLANCO */
   }
   

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import './AdminPanels.css';
+import './ProductManagement.css';
+
 
 const ProductManagement = () => {
   const { user, token } = useAuth();
@@ -991,7 +992,7 @@ const ProductManagement = () => {
     const item = selectedDetailItem;
 
     return (
-      <div className="modal-overlay" onClick={handleCloseModal}>
+      <div className="modal-overlay active" onClick={handleCloseModal}>
         <div className="modal-content" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
             <h2>
@@ -1274,7 +1275,7 @@ const ProductManagement = () => {
 
   if (user?.rol !== 'admin') {
     return (
-      <div className="admin-panel">
+      <div className="admin-panel-container">
         <div className="no-access">
           <div className="no-access-icon">🔒</div>
           <h3>Acceso Restringido</h3>
@@ -1285,7 +1286,7 @@ const ProductManagement = () => {
   }
 
   return (
-    <div className="admin-panel">
+    <div className="admin-panel-container">
       <div className="admin-header">
         <h1>🛍️ Gestión de Garantías y Devoluciones</h1>
         <p>Administra garantías y devoluciones del sistema</p>
@@ -1568,13 +1569,13 @@ const ProductManagement = () => {
                             <option value="aplicada">Aplicada</option>
                             <option value="expirada">Expirada</option>
                           </select>
-                          <button 
+                          {/* <button 
                             className="btn-small btn-warning"
                             onClick={() => handleWarrantyAction(warranty.id, 'extender')}
                             disabled={warranty.status === 'expirada'}
                           >
                             ⏳ Extender
-                          </button>
+                          </button> */}
                         </div>
                       </td>
                     </tr>

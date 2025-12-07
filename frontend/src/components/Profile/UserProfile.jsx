@@ -21,28 +21,35 @@ const UserProfile = () => {
   const [error, setError] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Estados para órdenes
   const [userOrders, setUserOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orderDetailsLoading, setOrderDetailsLoading] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
 
-  // Estado para los datos del perfil
   const [profileData, setProfileData] = useState({
     nombre: '',
     username: '',
     email: ''
   });
 
-  // Estado para el formulario de edición
   const [isEditing, setIsEditing] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
-
-  // Estado para forzar recarga de imagen
   const [imageReloadKey, setImageReloadKey] = useState(0);
 
-  // Inicializar datos del perfil
+  // Controlar el scroll del body cuando el menú móvil está abierto
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.classList.add('sidebar-open');
+    } else {
+      document.body.classList.remove('sidebar-open');
+    }
+    
+    return () => {
+      document.body.classList.remove('sidebar-open');
+    };
+  }, [mobileMenuOpen]);
+
   useEffect(() => {
     if (user) {
       setProfileData({
@@ -53,27 +60,17 @@ const UserProfile = () => {
     }
   }, [user]);
 
-  // Cargar órdenes cuando se active la pestaña de historial
   useEffect(() => {
     if (activeTab === 'orders' && user) {
       loadOrderHistory();
     }
   }, [activeTab, user]);
 
-  // Función para cargar historial de órdenes
   const loadOrderHistory = async () => {
     try {
       setOrdersLoading(true);
-      console.log('🔄 Cargando historial de compras desde el servidor...');
-      
       const orders = await getOrderHistory();
       
-      console.log(`📊 Órdenes recibidas del servidor:`, {
-        count: orders?.length || 0,
-        orders: orders
-      });
-      
-      // Formatear las órdenes para asegurar estructura correcta
       const formattedOrders = (orders || []).map(order => ({
         id: order.id,
         order_number: order.order_number || `ORD-${order.id}`,
@@ -99,157 +96,40 @@ const UserProfile = () => {
           precioFinal: item.unit_price || item.precio || item.precioFinal || 0,
           quantity: item.quantity || 1,
           total_price: item.total_price || ((item.unit_price || item.precio || 0) * (item.quantity || 1))
-        })),
-        items_details: (order.items || order.items_details || []).map(item => ({
-          id: item.id,
-          product_code: item.product_code || item.codigo || `PROD-${Math.random().toString(36).substr(2, 9)}`,
-          product_name: item.product_name || item.nombre || 'Producto sin nombre',
-          nombre: item.product_name || item.nombre || 'Producto sin nombre',
-          codigo: item.product_code || item.codigo || `PROD-${Math.random().toString(36).substr(2, 9)}`,
-          product_brand: item.product_brand || item.marca || 'Sin marca',
-          marca: item.product_brand || item.marca || 'Sin marca',
-          product_image_url: item.product_image_url,
-          unit_price: item.unit_price || item.precio || item.precioFinal || 0,
-          precio: item.unit_price || item.precio || item.precioFinal || 0,
-          precioFinal: item.unit_price || item.precio || item.precioFinal || 0,
-          quantity: item.quantity || 1,
-          total_price: item.total_price || ((item.unit_price || item.precio || 0) * (item.quantity || 1))
         }))
       }));
       
-      console.log(`✅ Órdenes formateadas:`, {
-        count: formattedOrders.length,
-        primeraOrden: formattedOrders[0] ? {
-          id: formattedOrders[0].id,
-          order_number: formattedOrders[0].order_number,
-          itemsCount: formattedOrders[0].items?.length || 0,
-          items: formattedOrders[0].items
-        } : 'No hay órdenes'
-      });
-      
       setUserOrders(formattedOrders);
-      
     } catch (error) {
-      console.error('❌ Error cargando historial de compras:', error);
+      console.error('Error cargando historial de compras:', error);
       setError('Error al cargar el historial de compras');
-      
-      // Fallback a datos de ejemplo
-      console.log('📋 Mostrando datos de ejemplo para desarrollo');
-      setUserOrders(getSampleOrders());
     } finally {
       setOrdersLoading(false);
     }
   };
 
-  // Función para obtener datos de ejemplo
-  const getSampleOrders = () => {
-    return [
-      {
-        id: 1,
-        order_number: 'LUCESA-20240115-001',
-        status: 'delivered',
-        total_amount: 1299.99,
-        total: 1299.99,
-        created_at: '2024-01-15T10:30:00Z',
-        order_date: '2024-01-15T10:30:00Z',
-        items: [
-          {
-            id: 1,
-            product_code: 'PROD001',
-            product_name: 'Laptop Gaming Pro',
-            nombre: 'Laptop Gaming Pro',
-            codigo: 'PROD001',
-            unit_price: 1200,
-            precio: 1200,
-            precioFinal: 1200,
-            quantity: 1,
-            total_price: 1200,
-            product_brand: 'GamingBrand',
-            marca: 'GamingBrand',
-            product_image_url: '/api/images/code/PROD001?size=small'
-          },
-          {
-            id: 2,
-            product_code: 'PROD002',
-            product_name: 'Mouse Gamer RGB',
-            nombre: 'Mouse Gamer RGB',
-            codigo: 'PROD002',
-            unit_price: 99.99,
-            precio: 99.99,
-            precioFinal: 99.99,
-            quantity: 1,
-            total_price: 99.99,
-            product_brand: 'GamingBrand',
-            marca: 'GamingBrand',
-            product_image_url: '/api/images/code/PROD002?size=small'
-          }
-        ]
-      },
-      {
-        id: 2,
-        order_number: 'LUCESA-20240220-002',
-        status: 'processing',
-        total_amount: 599.99,
-        total: 599.99,
-        created_at: '2024-02-20T14:20:00Z',
-        order_date: '2024-02-20T14:20:00Z',
-        items: [
-          {
-            id: 3,
-            product_code: 'PROD003',
-            product_name: 'Teclado Mecánico',
-            nombre: 'Teclado Mecánico',
-            codigo: 'PROD003',
-            unit_price: 299.99,
-            precio: 299.99,
-            precioFinal: 299.99,
-            quantity: 2,
-            total_price: 599.98,
-            product_brand: 'TechBrand',
-            marca: 'TechBrand',
-            product_image_url: '/api/images/code/PROD003?size=small'
-          }
-        ]
-      }
-    ];
-  };
-
-  // Función para ver detalles de orden
   const handleViewOrderDetails = async (orderId) => {
     try {
-      console.log('🔍 Intentando ver detalles de orden:', orderId);
       setOrderDetailsLoading(true);
-      
-      // Buscar la orden en las órdenes cargadas primero
       const orderFromList = userOrders.find(order => order.id === orderId);
       
       if (orderFromList) {
-        console.log('✅ Orden encontrada en la lista:', orderFromList.order_number);
         setSelectedOrder(orderFromList);
         setShowOrderModal(true);
         return;
       }
       
-      // Si no está en la lista, intentar obtener del servidor
-      console.log('🔄 Orden no encontrada en lista, consultando servidor...');
       const order = await getOrderDetails(orderId);
       
       if (order) {
-        console.log('✅ Detalles obtenidos del servidor:', order.order_number);
         setSelectedOrder(order);
         setShowOrderModal(true);
       } else {
-        console.error('❌ No se pudo obtener detalles de la orden');
         setError('No se pudieron cargar los detalles de la orden');
       }
     } catch (error) {
-      console.error('❌ Error cargando detalles de orden:', error);
+      console.error('Error cargando detalles de orden:', error);
       setError('Error al cargar los detalles de la orden');
-      
-      // Mostrar datos de ejemplo como fallback
-      const sampleOrder = getSampleOrders().find(o => o.id === orderId) || getSampleOrders()[0];
-      setSelectedOrder(sampleOrder);
-      setShowOrderModal(true);
     } finally {
       setOrderDetailsLoading(false);
     }
@@ -289,7 +169,6 @@ const UserProfile = () => {
     setSelectedAdminTab(null);
   };
 
-  // Función para manejar cambios en los campos del formulario
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setProfileData(prev => ({
@@ -298,7 +177,6 @@ const UserProfile = () => {
     }));
   };
 
-  // Función para activar/desactivar edición
   const toggleEdit = () => {
     if (isEditing) {
       setProfileData({
@@ -312,7 +190,6 @@ const UserProfile = () => {
     setMessage('');
   };
 
-  // Función para actualizar el perfil
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     setEditLoading(true);
@@ -357,11 +234,9 @@ const UserProfile = () => {
     }
   };
 
-  // Función para construir la URL de la imagen de perfil
   const getProfileImageUrl = (imagePath) => {
     if (!imagePath) return null;
     
-    // Si ya es una URL completa
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
@@ -370,22 +245,18 @@ const UserProfile = () => {
       ? 'https://testpaginaweb.shop'
       : 'http://localhost:4004';
     
-    // Normalizar la ruta
     let normalizedPath = imagePath;
     
-    // Asegurar que empiece con /
     if (!normalizedPath.startsWith('/')) {
       normalizedPath = `/${normalizedPath}`;
     }
     
-    // Agregar timestamp para evitar caché
     const timestamp = imageReloadKey || Date.now();
     const finalUrl = `${baseUrl}${normalizedPath}?t=${timestamp}`;
     
     return finalUrl;
   };
 
-  // Función para subir foto de perfil (CON ELIMINACIÓN DE IMAGEN ANTERIOR)
   const handlePhotoUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -407,37 +278,19 @@ const UserProfile = () => {
     try {
       const token = localStorage.getItem('lucesa-token');
       
-      // PASO 1: Primero eliminar la imagen anterior si existe
       if (user?.images_profile) {
-        console.log('🗑️ Eliminando imagen anterior...');
         try {
-          const deleteResponse = await fetch(`${API_BASE_URL}/user/me/remove-photo`, {
+          await fetch(`${API_BASE_URL}/user/me/remove-photo`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           });
-          
-          const deleteData = await deleteResponse.json();
-          
-          if (deleteData.success) {
-            console.log('✅ Imagen anterior eliminada exitosamente');
-          } else {
-            console.log('⚠️ No se pudo eliminar la imagen anterior, continuando...', deleteData.message);
-          }
         } catch (deleteError) {
-          console.error('⚠️ Error al eliminar imagen anterior:', deleteError);
-          // Continuar con la subida aunque falle la eliminación
+          console.error('Error al eliminar imagen anterior:', deleteError);
         }
       }
-
-      // PASO 2: Subir la nueva imagen
-      console.log('📤 Subiendo nueva imagen...', {
-        filename: file.name,
-        size: file.size,
-        type: file.type
-      });
 
       const formData = new FormData();
       formData.append('profileImage', file);
@@ -451,15 +304,11 @@ const UserProfile = () => {
       });
 
       const data = await response.json();
-      console.log('📥 Respuesta del servidor:', data);
 
       if (data.success) {
         setMessage('Foto de perfil actualizada correctamente');
-        
-        // Forzar recarga de imagen actualizando la key
         setImageReloadKey(Date.now());
         
-        // Actualizar el usuario en localStorage
         if (data.data && data.data.user) {
           const updatedUser = {
             ...user,
@@ -468,18 +317,15 @@ const UserProfile = () => {
           
           localStorage.setItem('lucesa-user', JSON.stringify(updatedUser));
           
-          // Recargar la página después de un breve delay para mostrar el mensaje
           setTimeout(() => {
             window.location.reload();
           }, 1500);
-          
-          console.log('✅ Nueva foto subida exitosamente, página se recargará en 1.5 segundos');
         }
       } else {
         setError(data.message || 'Error al subir la imagen');
       }
     } catch (error) {
-      console.error('❌ Error subiendo imagen:', error);
+      console.error('Error subiendo imagen:', error);
       setError('Error de conexión al subir la imagen');
     } finally {
       setUploadLoading(false);
@@ -487,7 +333,6 @@ const UserProfile = () => {
     }
   };
 
-  // Función para eliminar foto de perfil (CON RECARGA AUTOMÁTICA)
   const removeProfilePhoto = async () => {
     if (!window.confirm('¿Estás seguro de que quieres eliminar tu foto de perfil?')) {
       return;
@@ -513,7 +358,6 @@ const UserProfile = () => {
       if (data.success) {
         setMessage('Foto de perfil eliminada correctamente');
         
-        // Actualizar localStorage
         if (data.data && data.data.user) {
           const updatedUser = {
             ...user,
@@ -522,42 +366,29 @@ const UserProfile = () => {
           
           localStorage.setItem('lucesa-user', JSON.stringify(updatedUser));
           
-          // Recargar la página después de un breve delay
           setTimeout(() => {
             window.location.reload();
           }, 1500);
-          
-          console.log('✅ Foto eliminada, página se recargará en 1.5 segundos');
         }
       } else {
         setError(data.message || 'Error al eliminar la foto');
       }
     } catch (error) {
-      console.error('❌ Error eliminando imagen:', error);
+      console.error('Error eliminando imagen:', error);
       setError('Error de conexión al eliminar la foto');
     } finally {
       setUploadLoading(false);
     }
   };
 
-  // Función para manejar errores en la carga de imágenes
-  const handleImageError = (e, imagePath) => {
-    console.error('❌ Error cargando imagen:', {
-      rutaOriginal: imagePath,
-      urlConstruida: getProfileImageUrl(imagePath),
-      srcActual: e.target.src,
-      timestamp: new Date().toISOString()
-    });
-    
+  const handleImageError = (e) => {
     e.target.style.display = 'none';
-    
     const fallback = e.target.nextSibling;
     if (fallback) {
       fallback.style.display = 'flex';
     }
   };
 
-  // Función para formatear fecha
   const formatDate = (dateString) => {
     if (!dateString) return 'Fecha no disponible';
     try {
@@ -571,7 +402,6 @@ const UserProfile = () => {
     }
   };
 
-  // Función para formatear fecha y hora
   const formatDateTime = (dateString) => {
     if (!dateString) return 'Fecha no disponible';
     try {
@@ -587,7 +417,6 @@ const UserProfile = () => {
     }
   };
 
-  // Función para obtener texto del estado de la orden
   const getOrderStatusText = (status) => {
     const statusMap = {
       'confirmed': 'Confirmado',
@@ -601,7 +430,6 @@ const UserProfile = () => {
     return statusMap[status] || status;
   };
 
-  // Función para obtener clase CSS del estado de la orden
   const getOrderStatusClass = (status) => {
     const statusClassMap = {
       'confirmed': 'confirmed',
@@ -615,23 +443,14 @@ const UserProfile = () => {
     return statusClassMap[status] || 'confirmed';
   };
 
-  // Función para alternar menú móvil
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  // Función para obtener URL de imagen de producto
-  const getProductImageUrl = (productCode) => {
-    if (!productCode) return null;
-    
-    const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
-      ? 'https://testpaginaweb.shop/api/images/code'
-      : 'http://localhost:4004/api/images/code';
-    
-    return `${IMAGE_BASE_URL}/${productCode}?size=small`;
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
   };
 
-  // Renderizar la sección de historial de compras
   const renderOrdersSection = () => {
     return (
       <div className="tab-content">
@@ -642,7 +461,12 @@ const UserProfile = () => {
             className="btn-refresh"
             disabled={ordersLoading}
           >
-            {ordersLoading ? '🔄 Cargando...' : '🔄 Actualizar'}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '8px'}}>
+              <path d="M23 4v6h-6"></path>
+              <path d="M1 20v-6h6"></path>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            {ordersLoading ? 'Cargando...' : 'Actualizar'}
           </button>
         </div>
         
@@ -655,10 +479,10 @@ const UserProfile = () => {
           ) : userOrders && userOrders.length > 0 ? (
             <div className="orders-list">
               {userOrders.map((order, index) => {
-                const items = order.items || order.items_details || [];
+                const items = order.items || [];
                 
                 return (
-                  <div key={order.id || index} className="order-card">
+                  <div key={order.id || index} className="order-item">
                     <div className="order-header">
                       <div className="order-basic-info">
                         <span className="order-id">Orden #{order.order_number || order.id}</span>
@@ -671,57 +495,31 @@ const UserProfile = () => {
                       </span>
                     </div>
                     
-                    {/* ITEMS DE LA ORDEN */}
-                    {items.length > 0 ? (
-                      <div className="order-items">
-                        {items.slice(0, 3).map((item, itemIndex) => {
-                          const itemName = item.nombre || item.product_name || 'Producto';
-                          const itemPrice = item.precio || item.unit_price || item.precioFinal || 0;
-                          const itemQuantity = item.quantity || 1;
-                          const itemTotal = item.total_price || (itemPrice * itemQuantity);
-                          const itemImageUrl = item.product_image_url || getProductImageUrl(item.codigo || item.product_code);
-                          
-                          return (
-                            <div key={itemIndex} className="order-item">
-                              <div className="item-image">
-                                {itemImageUrl ? (
-                                  <img 
-                                    src={itemImageUrl} 
-                                    alt={itemName}
-                                    onError={(e) => {
-                                      e.target.style.display = 'none';
-                                      e.target.nextSibling.style.display = 'flex';
-                                    }}
-                                  />
-                                ) : null}
-                                <div className="image-placeholder">
-                                  📦
-                                </div>
-                              </div>
-                              <div className="item-details">
-                                <h4>{itemName}</h4>
-                                <p>Código: {item.codigo || item.product_code || 'N/A'}</p>
-                                <p>Cantidad: {itemQuantity}</p>
-                                <p>${itemPrice.toFixed(2)} c/u</p>
-                                <p className="item-total">
-                                  Total: ${itemTotal.toFixed(2)}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        })}
+                    <div className="order-items-summary">
+                      {items.slice(0, 3).map((item, itemIndex) => {
+                        const itemName = item.nombre || item.product_name || 'Producto';
+                        const itemPrice = item.precio || item.unit_price || item.precioFinal || 0;
+                        const itemQuantity = item.quantity || 1;
+                        const itemTotal = item.total_price || (itemPrice * itemQuantity);
                         
-                        {items.length > 3 && (
-                          <div className="more-items">
-                            +{items.length - 3} más productos
+                        return (
+                          <div key={itemIndex} className="order-product-item">
+                            <div className="product-item-info">
+                              <span className="product-item-name">{itemName}</span>
+                              <span className="product-item-details">
+                                {itemQuantity} x ${itemPrice.toFixed(2)} = ${itemTotal.toFixed(2)}
+                              </span>
+                            </div>
                           </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="no-items">
-                        <p>No se encontraron productos en esta orden</p>
-                      </div>
-                    )}
+                        );
+                      })}
+                      
+                      {items.length > 3 && (
+                        <div className="more-items-summary">
+                          +{items.length - 3} más productos
+                        </div>
+                      )}
+                    </div>
                     
                     <div className="order-footer">
                       <div className="order-total">
@@ -751,7 +549,6 @@ const UserProfile = () => {
           )}
         </div>
 
-        {/* Modal de Detalles de Orden */}
         {showOrderModal && selectedOrder && (
           <div className="order-details-modal active">
             <div className="modal-overlay" onClick={handleCloseOrderDetails}></div>
@@ -765,160 +562,111 @@ const UserProfile = () => {
                     </span>
                   </div>
                 </div>
-                <button className="modal-close" onClick={handleCloseOrderDetails} aria-label="Cerrar">
+                <button className="modal-close" onClick={handleCloseOrderDetails}>
                   <span>✕</span>
                 </button>
               </div>
               
               <div className="modal-body">
-                {/* Información general de la orden */}
-                <div className="order-summary-section">
-                  <div className="order-summary-grid">
-                    <div className="summary-item">
-                      <div className="summary-label">Fecha de la orden</div>
-                      <div className="summary-value">{formatDateTime(selectedOrder.order_date || selectedOrder.created_at)}</div>
-                    </div>
-                    <div className="summary-item">
-                      <div className="summary-label">Número de orden</div>
-                      <div className="summary-value order-number">#{selectedOrder.order_number || selectedOrder.id}</div>
-                    </div>
-                    <div className="summary-item">
-                      <div className="summary-label">Estado</div>
-                      <div className="summary-value">
-                        <span className={`order-status-badge ${getOrderStatusClass(selectedOrder.status)}`}>
-                          {getOrderStatusText(selectedOrder.status)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="summary-item">
-                      <div className="summary-label">Total de productos</div>
-                      <div className="summary-value">
-                        {selectedOrder.items?.length || selectedOrder.items_details?.length || 0} items
-                      </div>
-                    </div>
+                <div className="order-info-grid">
+                  <div className="order-info-item">
+                    <span className="order-info-label">Fecha de la orden:</span>
+                    <span className="order-info-value">{formatDateTime(selectedOrder.order_date || selectedOrder.created_at)}</span>
+                  </div>
+                  <div className="order-info-item">
+                    <span className="order-info-label">Número de orden:</span>
+                    <span className="order-info-value">#{selectedOrder.order_number || selectedOrder.id}</span>
+                  </div>
+                  <div className="order-info-item">
+                    <span className="order-info-label">Estado:</span>
+                    <span className={`order-info-value ${getOrderStatusClass(selectedOrder.status)}`}>
+                      {getOrderStatusText(selectedOrder.status)}
+                    </span>
+                  </div>
+                  <div className="order-info-item">
+                    <span className="order-info-label">Total de productos:</span>
+                    <span className="order-info-value">{selectedOrder.items?.length || 0} items</span>
                   </div>
                 </div>
 
-                {/* Sección de productos */}
-                <div className="order-products-section">
-                  <div className="section-header">
-                    <h4>📋 Productos de la Orden</h4>
-                    <div className="items-count">
-                      ({selectedOrder.items?.length || selectedOrder.items_details?.length || 0} productos)
-                    </div>
-                  </div>
+                <div className="order-products-list">
+                  <h4>📋 Productos de la Orden ({selectedOrder.items?.length || 0})</h4>
                   
-                  <div className="products-list-container">
-                    {(selectedOrder.items || selectedOrder.items_details || []).length > 0 ? (
-                      <div className="products-grid">
-                        {(selectedOrder.items || selectedOrder.items_details || []).map((item, index) => {
-                          const itemName = item.nombre || item.product_name || 'Producto sin nombre';
-                          const itemCode = item.codigo || item.product_code || 'N/A';
-                          const itemBrand = item.marca || item.product_brand || 'Sin marca';
-                          const itemPrice = item.precio || item.unit_price || item.precioFinal || 0;
-                          const itemQuantity = item.quantity || 1;
-                          const itemTotal = item.total_price || (itemPrice * itemQuantity);
-                          const itemImageUrl = item.product_image_url || getProductImageUrl(item.codigo || item.product_code);
-                          
-                          return (
-                            <div key={index} className="product-card">
-                              <div className="product-card-header">
-                                <div className="product-number">#{index + 1}</div>
-                                <div className="product-codigo">Código: {itemCode}</div>
-                              </div>
-                              
-                              <div className="product-card-body">
-                                {/* Imagen del producto */}
-                                <div className="product-image-wrapper">
-                                  {itemImageUrl ? (
-                                    <img 
-                                      src={itemImageUrl} 
-                                      alt={itemName}
-                                      className="product-image-detail"
-                                      onError={(e) => {
-                                        e.target.style.display = 'none';
-                                        e.target.nextElementSibling.style.display = 'flex';
-                                      }}
-                                    />
-                                  ) : null}
-                                  <div className="product-image-fallback">
-                                    <span>📦</span>
-                                  </div>
+                  <div className="products-container">
+                    {(selectedOrder.items || []).length > 0 ? (
+                      (selectedOrder.items || []).map((item, index) => {
+                        const itemName = item.nombre || item.product_name || 'Producto sin nombre';
+                        const itemCode = item.codigo || item.product_code || 'N/A';
+                        const itemPrice = item.precio || item.unit_price || item.precioFinal || 0;
+                        const itemQuantity = item.quantity || 1;
+                        const itemTotal = item.total_price || (itemPrice * itemQuantity);
+                        
+                        return (
+                          <div key={index} className="product-item-detail">
+                            <div className="product-detail-header">
+                              <span className="product-number">#{index + 1}</span>
+                              <span className="product-code">Código: {itemCode}</span>
+                            </div>
+                            
+                            <div className="product-detail-content">
+                              <div className="product-name">{itemName}</div>
+                              <div className="product-details-grid">
+                                <div className="product-detail">
+                                  <span>Precio unitario:</span>
+                                  <span>${itemPrice.toFixed(2)}</span>
                                 </div>
-                                
-                                {/* Información del producto */}
-                                <div className="product-info-wrapper">
-                                  <div className="product-name">{itemName}</div>
-                                  <div className="product-brand">Marca: {itemBrand}</div>
-                                  
-                                  <div className="product-specs-grid">
-                                    <div className="spec-item">
-                                      <span className="spec-label">Precio unitario:</span>
-                                      <span className="spec-value">${itemPrice.toFixed(2)}</span>
-                                    </div>
-                                    <div className="spec-item">
-                                      <span className="spec-label">Cantidad:</span>
-                                      <span className="spec-value">{itemQuantity}</span>
-                                    </div>
-                                    <div className="spec-item">
-                                      <span className="spec-label">Subtotal:</span>
-                                      <span className="spec-value">${(itemPrice * itemQuantity).toFixed(2)}</span>
-                                    </div>
-                                  </div>
+                                <div className="product-detail">
+                                  <span>Cantidad:</span>
+                                  <span>{itemQuantity}</span>
                                 </div>
-                                
-                                {/* Total del producto */}
-                                <div className="product-total-wrapper">
-                                  <div className="product-total-label">Total del producto</div>
-                                  <div className="product-total-amount">${itemTotal.toFixed(2)}</div>
+                                <div className="product-detail">
+                                  <span>Subtotal:</span>
+                                  <span>${(itemPrice * itemQuantity).toFixed(2)}</span>
                                 </div>
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
+                            
+                            <div className="product-total">
+                              <span className="total-label">Total:</span>
+                              <span className="total-amount">${itemTotal.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        );
+                      })
                     ) : (
-                      <div className="no-products-message">
+                      <div className="no-products">
                         <div className="no-products-icon">📦</div>
-                        <div className="no-products-text">
-                          <p>No se encontraron productos en esta orden</p>
-                          <small>Es posible que la información de productos no esté disponible</small>
-                        </div>
+                        <p>No se encontraron productos en esta orden</p>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Resumen de precios */}
-                <div className="order-totals-section">
-                  <div className="section-header">
-                    <h4>💰 Resumen de Pagos</h4>
-                  </div>
+                <div className="order-totals">
+                  <h4>💰 Resumen de Pagos</h4>
                   
-                  <div className="totals-grid">
-                    <div className="total-row">
-                      <div className="total-label">Subtotal de productos:</div>
-                      <div className="total-value">
-                        ${(selectedOrder.subtotal || selectedOrder.subtotal_amount || 
-                          (selectedOrder.total_amount || selectedOrder.total || 0) - 
-                          (selectedOrder.tax_amount || selectedOrder.tax || 0) - 
-                          (selectedOrder.shipping_amount || selectedOrder.shipping || 0)).toFixed(2)}
-                      </div>
+                  <div className="totals-list">
+                    <div className="total-item">
+                      <span>Subtotal de productos:</span>
+                      <span>${(selectedOrder.subtotal || selectedOrder.subtotal_amount || 
+                        (selectedOrder.total_amount || selectedOrder.total || 0) - 
+                        (selectedOrder.tax_amount || selectedOrder.tax || 0) - 
+                        (selectedOrder.shipping_amount || selectedOrder.shipping || 0)).toFixed(2)}</span>
                     </div>
                     
-                    <div className="total-row">
-                      <div className="total-label">Envío:</div>
-                      <div className="total-value">${(selectedOrder.shipping_amount || selectedOrder.shipping || 0).toFixed(2)}</div>
+                    <div className="total-item">
+                      <span>Envío:</span>
+                      <span>${(selectedOrder.shipping_amount || selectedOrder.shipping || 0).toFixed(2)}</span>
                     </div>
                     
-                    <div className="total-row">
-                      <div className="total-label">Impuestos (IVA):</div>
-                      <div className="total-value">${(selectedOrder.tax_amount || selectedOrder.tax || 0).toFixed(2)}</div>
+                    <div className="total-item">
+                      <span>Impuestos (IVA):</span>
+                      <span>${(selectedOrder.tax_amount || selectedOrder.tax || 0).toFixed(2)}</span>
                     </div>
                     
-                    <div className="total-row grand-total">
-                      <div className="total-label">Total de la orden:</div>
-                      <div className="total-value">${(selectedOrder.total_amount || selectedOrder.total || 0).toFixed(2)}</div>
+                    <div className="total-item grand-total">
+                      <span>Total de la orden:</span>
+                      <span>${(selectedOrder.total_amount || selectedOrder.total || 0).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -928,14 +676,6 @@ const UserProfile = () => {
                 <button className="btn-close-modal" onClick={handleCloseOrderDetails}>
                   Cerrar Detalles
                 </button>
-                {/* <div className="order-actions">
-                  <button className="btn-secondary">
-                    📄 Descargar Factura
-                  </button>
-                  <button className="btn-primary">
-                    📞 Contactar Soporte
-                  </button>
-                </div> */}
               </div>
             </div>
           </div>
@@ -944,23 +684,38 @@ const UserProfile = () => {
     );
   };
 
-  // Renderizar la sección de perfil
   const renderProfileSection = () => (
     <div className="tab-content">
-      <div className="profile-header">
+      <div className="profile-header-inner">
         <h2>Mi Perfil</h2>
         <button 
           onClick={toggleEdit}
           className={`btn-edit ${isEditing ? 'editing' : ''}`}
         >
-          {isEditing ? '✕ Cancelar' : '✏️ Editar'}
+          {isEditing ? (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '6px'}}>
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              Cancelar
+            </>
+          ) : (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '6px'}}>
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              Editar
+            </>
+          )}
         </button>
       </div>
       
-      <div className="profile-section">
+      <div className="profile-content-container">
         <div className="photo-section">
           <h3>Foto de Perfil</h3>
-          <div className="photo-upload">
+          <div className="photo-container">
             <div className="current-photo">
               {user?.images_profile ? (
                 <>
@@ -969,8 +724,7 @@ const UserProfile = () => {
                     src={getProfileImageUrl(user.images_profile)} 
                     alt="Foto de perfil" 
                     className="profile-photo" 
-                    onError={(e) => handleImageError(e, user.images_profile)}
-                    onLoad={() => console.log('✅ Imagen de perfil cargada exitosamente')}
+                    onError={handleImageError}
                   />
                   <div className="photo-fallback" style={{display: 'none'}}>
                     <span>👤</span>
@@ -984,7 +738,7 @@ const UserProfile = () => {
                 </div>
               )}
             </div>
-            <div className="photo-actions">
+            <div className="photo-controls">
               <label htmlFor="photo-upload" className={`btn-primary ${uploadLoading ? 'disabled' : ''}`}>
                 {uploadLoading ? '📤 Subiendo...' : '📷 Cambiar Foto'}
               </label>
@@ -1007,15 +761,15 @@ const UserProfile = () => {
                 </button>
               )}
             </div>
-            <div className="photo-requirements">
-              <p><strong>Formatos aceptados:</strong> JPEG, PNG, GIF</p>
-              <p><strong>Tamaño máximo:</strong> 5MB</p>
-              <p><strong>Nota:</strong> Al cambiar la foto, la anterior será eliminada automáticamente</p>
-            </div>
+          </div>
+          <div className="photo-info">
+            <p><strong>Formatos aceptados:</strong> JPEG, PNG, GIF</p>
+            <p><strong>Tamaño máximo:</strong> 5MB</p>
+            <p><strong>Nota:</strong> Al cambiar la foto, la anterior será eliminada automáticamente</p>
           </div>
         </div>
 
-        <div className="profile-info-section">
+        <div className="info-section">
           <h3>Información Personal</h3>
           
           {isEditing ? (
@@ -1081,28 +835,22 @@ const UserProfile = () => {
               </div>
             </form>
           ) : (
-            <div className="profile-info-display">
-              <div className="info-item">
-                <label>Nombre Completo:</label>
-                <span>{user?.nombre || 'No especificado'}</span>
+            <div className="info-display">
+              <div className="info-row">
+                <span className="info-label">Nombre Completo:</span>
+                <span className="info-value">{user?.nombre || 'No especificado'}</span>
               </div>
-              <div className="info-item">
-                <label>Username:</label>
-                <span>@{user?.username || 'No especificado'}</span>
+              <div className="info-row">
+                <span className="info-label">Username:</span>
+                <span className="info-value">@{user?.username || 'No especificado'}</span>
               </div>
-              <div className="info-item">
-                <label>Email:</label>
-                <span>{user?.email || 'No especificado'}</span>
+              <div className="info-row">
+                <span className="info-label">Email:</span>
+                <span className="info-value">{user?.email || 'No especificado'}</span>
               </div>
-              {/* <div className="info-item">
-                <label>Rol:</label>
-                <span className={`role-badge ${user?.rol}`}>
-                  {user?.rol === 'admin' ? 'Administrador' : 'Usuario'}
-                </span>
-              </div> */}
-              <div className="info-item">
-                <label>Miembro desde:</label>
-                <span>{formatDate(user?.created_at)}</span>
+              <div className="info-row">
+                <span className="info-label">Miembro desde:</span>
+                <span className="info-value">{formatDate(user?.created_at)}</span>
               </div>
             </div>
           )}
@@ -1111,35 +859,52 @@ const UserProfile = () => {
     </div>
   );
 
-  // Renderizar la sección de administración
   const renderAdminSection = () => (
     <div className="tab-content">
       <div className="admin-section">
         {user?.rol === 'admin' ? (
-          <div className="admin-dashboard">
+          <div className="admin-content">
             {!selectedAdminTab ? (
               <div>
-                <div className="admin-header-internal">
+                <div className="admin-header">
                   <h2>Panel de Administración</h2>
                   <p>Selecciona una opción para gestionar el sistema</p>
                 </div>
-                <div className="admin-cards">
-                  <div className="admin-card">
-                    <div className="admin-card-icon">🛍️</div>
-                    <h3>Gestión de Productos</h3>
-                    <p>Administrar productos, garantías y devoluciones</p>
+                <div className="admin-actions">
+                  <div className="admin-action">
+                    <div className="admin-action-icon">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4895CF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="3" y1="9" x2="21" y2="9"></line>
+                        <line x1="9" y1="21" x2="9" y2="9"></line>
+                      </svg>
+                    </div>
+                    <div className="admin-action-info">
+                      <h3>Gestión de Productos</h3>
+                      <p>Administrar productos, garantías y devoluciones</p>
+                    </div>
                     <button 
                       className="btn-primary"
                       onClick={() => handleAdminTabChange('products')}
                     >
-                      Gestionar Productos
+                      Gestionar
                     </button>
                   </div>
                   
-                  <div className="admin-card">
-                    <div className="admin-card-icon">📝</div>
-                    <h3>Gestión de Pedidos</h3>
-                    <p>Ver y administrar todos los pedidos</p>
+                  <div className="admin-action">
+                    <div className="admin-action-icon">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4895CF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                      </svg>
+                    </div>
+                    <div className="admin-action-info">
+                      <h3>Gestión de Pedidos</h3>
+                      <p>Ver y administrar todos los pedidos</p>
+                    </div>
                     <button 
                       className="btn-primary"
                       onClick={() => handleAdminTabChange('orders')}
@@ -1148,10 +913,16 @@ const UserProfile = () => {
                     </button>
                   </div>
 
-                  <div className="admin-card">
-                    <div className="admin-card-icon">❤️</div>
-                    <h3>Gestión de Favoritos</h3>
-                    <p>Ver estadísticas de productos favoritos</p>
+                  <div className="admin-action">
+                    <div className="admin-action-icon">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4895CF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                      </svg>
+                    </div>
+                    <div className="admin-action-info">
+                      <h3>Gestión de Favoritos</h3>
+                      <p>Ver estadísticas de productos favoritos</p>
+                    </div>
                     <button 
                       className="btn-primary"
                       onClick={() => handleAdminTabChange('favorites')}
@@ -1162,7 +933,7 @@ const UserProfile = () => {
                 </div>
               </div>
             ) : (
-              <div className="admin-content">
+              <div className="admin-panel">
                 <button 
                   className="back-button"
                   onClick={handleBackToAdmin}
@@ -1177,8 +948,8 @@ const UserProfile = () => {
             )}
           </div>
         ) : (
-          <div className="no-admin-access">
-            <div className="no-access-icon">🔒</div>
+          <div className="no-admin">
+            <div className="no-admin-icon">🔒</div>
             <h3>Acceso Restringido</h3>
             <p>No tienes permisos de administrador para acceder a esta sección.</p>
           </div>
@@ -1187,277 +958,274 @@ const UserProfile = () => {
     </div>
   );
 
-  // Renderizar la sección de configuración
-  const renderSettingsSection = () => (
-    <div className="tab-content">
-      <h2>Configuración</h2>
-      <div className="settings-section">
-        <div className="setting-group">
-          <h3>Preferencias de Notificación</h3>
-          <div className="setting-item">
-            <label className="switch">
-              <input type="checkbox" defaultChecked />
-              <span className="slider"></span>
-            </label>
-            <span>Notificaciones por email</span>
-          </div>
-          <div className="setting-item">
-            <label className="switch">
-              <input type="checkbox" defaultChecked />
-              <span className="slider"></span>
-            </label>
-            <span>Notificaciones de ofertas</span>
-          </div>
-          <div className="setting-item">
-            <label className="switch">
-              <input type="checkbox" />
-              <span className="slider"></span>
-            </label>
-            <span>Notificaciones de nuevos productos</span>
-          </div>
-        </div>
-
-        <div className="setting-group">
-          <h3>Privacidad</h3>
-          <div className="setting-item">
-            <label className="switch">
-              <input type="checkbox" defaultChecked />
-              <span className="slider"></span>
-            </label>
-            <span>Perfil público</span>
-          </div>
-          <div className="setting-item">
-            <label className="switch">
-              <input type="checkbox" />
-              <span className="slider"></span>
-            </label>
-            <span>Mostrar actividad reciente</span>
-          </div>
-        </div>
-
-        <div className="setting-group">
-          <h3>Zona Peligrosa</h3>
-          <div className="danger-zone">
-            <button type="button" className="btn-danger">
-              Eliminar Mi Cuenta
-            </button>
-            <p>Esta acción no se puede deshacer. Se perderán todos tus datos.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
-    <main className="user-profile-main">
-      <div className="container">
-        <div className="user-profile-card">
-          {/* Header */}
-          <div className="profile-card-header">
-            <h1 className="profile-card-title">Mi Cuenta</h1>
-            <div className="profile-card-subtitle">Gestiona tu perfil y preferencias</div>
-            
-            {/* Botón de menú móvil */}
+    <div className="user-profile">
+      {/* Header Principal */}
+      <header className="profile-header">
+        <div className="header-content">
+          <h1>Mi Cuenta</h1>
+          <p>Gestiona tu perfil y preferencias</p>
+        </div>
+        
+        <button 
+          className={`mobile-menu-btn ${mobileMenuOpen ? 'active' : ''}`}
+          onClick={toggleMobileMenu}
+          aria-label="Abrir menú"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </header>
+      
+      <div className="profile-layout">
+        {/* Sidebar de Navegación - Escritorio */}
+        <aside className="profile-sidebar">
+          <div className="user-summary">
+            <div className="user-avatar">
+              {user?.images_profile ? (
+                <img 
+                  key={`avatar-${imageReloadKey}`}
+                  src={getProfileImageUrl(user.images_profile)} 
+                  alt="Avatar del usuario" 
+                  className="avatar-img" 
+                  onError={handleImageError}
+                />
+              ) : null}
+              <div className={`avatar-default ${user?.images_profile ? 'avatar-fallback' : ''}`}>
+                {user?.nombre?.charAt(0) || user?.username?.charAt(0) || 'U'}
+              </div>
+            </div>
+            <div className="user-info">
+              <h3>{user?.nombre || user?.username || 'Usuario'}</h3>
+              <p>{user?.email || 'email@ejemplo.com'}</p>
+              <span className="member-since">
+                Miembro desde {formatDate(user?.created_at)}
+              </span>
+              {user?.rol === 'admin' && (
+                <span className="admin-tag">Administrador</span>
+              )}
+            </div>
+          </div>
+
+          <nav className="navigation-menu">
             <button 
-              className="mobile-menu-toggle"
-              onClick={toggleMobileMenu}
-              aria-label="Abrir menú"
+              className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
+              onClick={() => handleTabChange('profile')}
             >
-              <span></span>
-              <span></span>
-              <span></span>
+              <span className="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </span>
+              Mi Perfil
+            </button>
+            
+            <Link to="/favorites" className="nav-btn">
+              <span className="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+              </span>
+              Mis Favoritos
+            </Link>
+
+            <button 
+              className={`nav-btn ${activeTab === 'orders' ? 'active' : ''}`}
+              onClick={() => handleTabChange('orders')}
+            >
+              <span className="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                  <path d="M8 21v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"></path>
+                </svg>
+              </span>
+              Historial de Compras
+            </button>
+
+            {user?.rol === 'admin' && (
+              <button 
+                className={`nav-btn ${activeTab === 'admin' ? 'active' : ''}`}
+                onClick={() => handleTabChange('admin')}
+              >
+                <span className="nav-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                  </svg>
+                </span>
+                Panel de Administración
+              </button>
+            )}
+
+            <button className="nav-btn logout" onClick={handleLogout}>
+              <span className="nav-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+              </span>
+              Cerrar Sesión
+            </button>
+          </nav>
+        </aside>
+
+        {/* Overlay del Menú Móvil */}
+        <div 
+          className={`mobile-overlay ${mobileMenuOpen ? 'active' : ''}`} 
+          onClick={closeMobileMenu}
+        ></div>
+        
+        {/* Sidebar Móvil */}
+        <aside className={`mobile-sidebar ${mobileMenuOpen ? 'active' : ''}`}>
+          {/* Header fijo del sidebar móvil */}
+          <div className="mobile-sidebar-header">
+            <div className="user-avatar">
+              {user?.images_profile ? (
+                <img 
+                  key={`mobile-header-avatar-${imageReloadKey}`}
+                  src={getProfileImageUrl(user.images_profile)} 
+                  alt="Avatar" 
+                  className="avatar-img" 
+                  onError={handleImageError}
+                />
+              ) : null}
+              <div className={`avatar-default ${user?.images_profile ? 'avatar-fallback' : ''}`}>
+                {user?.nombre?.charAt(0) || user?.username?.charAt(0) || 'U'}
+              </div>
+            </div>
+            <div className="user-info">
+              <h3>{user?.nombre || user?.username || 'Usuario'}</h3>
+              <p>{user?.email || 'email@ejemplo.com'}</p>
+            </div>
+            <button className="close-sidebar-btn" onClick={closeMobileMenu}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
             </button>
           </div>
           
-          <div className="user-profile-container">
-            {/* Sidebar de Navegación - DESKTOP */}
-            <div className="profile-sidebar">
-              <div className="user-info-card">
-                <div className="user-avatar">
-                  {user?.images_profile ? (
-                    <img 
-                      key={`avatar-${imageReloadKey}`}
-                      src={getProfileImageUrl(user.images_profile)} 
-                      alt="Avatar del usuario" 
-                      className="avatar-image" 
-                      onError={(e) => handleImageError(e, user.images_profile)}
-                      onLoad={() => console.log('✅ Avatar cargado')}
-                    />
-                  ) : null}
-                  <div className={`avatar-placeholder ${user?.images_profile ? 'avatar-fallback' : ''}`}>
-                    {user?.nombre?.charAt(0) || user?.username?.charAt(0) || 'U'}
-                  </div>
+          {/* Contenido desplazable del sidebar */}
+          <div className="mobile-sidebar-content">
+            <div className="mobile-user-summary">
+              <div className="user-avatar">
+                {user?.images_profile ? (
+                  <img 
+                    key={`mobile-avatar-${imageReloadKey}`}
+                    src={getProfileImageUrl(user.images_profile)} 
+                    alt="Avatar del usuario" 
+                    className="avatar-img" 
+                    onError={handleImageError}
+                  />
+                ) : null}
+                <div className={`avatar-default ${user?.images_profile ? 'avatar-fallback' : ''}`}>
+                  {user?.nombre?.charAt(0) || user?.username?.charAt(0) || 'U'}
                 </div>
-                <div className="user-details">
-                  <h3>{user?.nombre || user?.username || 'Usuario'}</h3>
-                  <p>{user?.email || 'email@ejemplo.com'}</p>
-                  <span className="member-since">
-                    Miembro desde {formatDate(user?.created_at)}
+              </div>
+              <div className="user-info">
+                <h3>{user?.nombre || user?.username || 'Usuario'}</h3>
+                <p>{user?.email || 'email@ejemplo.com'}</p>
+                <span className="member-since">
+                  Miembro desde {formatDate(user?.created_at)}
+                </span>
+                {/* {user?.rol === 'admin' && (
+                  <span className="admin-tag">Administrador</span>
+                )} */}
+              </div>
+            </div>
+
+            <nav className="mobile-navigation-menu">
+              <button 
+                className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
+                onClick={() => handleTabChange('profile')}
+              >
+                <span className="nav-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </span>
+                Mi Perfil
+              </button>
+              
+              <Link to="/favorites" className="nav-btn" onClick={closeMobileMenu}>
+                <span className="nav-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                </span>
+                Mis Favoritos
+              </Link>
+
+              <button 
+                className={`nav-btn ${activeTab === 'orders' ? 'active' : ''}`}
+                onClick={() => handleTabChange('orders')}
+              >
+                <span className="nav-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                    <path d="M8 21v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"></path>
+                  </svg>
+                </span>
+                Historial de Compras
+              </button>
+
+              {user?.rol === 'admin' && (
+                <button 
+                  className={`nav-btn ${activeTab === 'admin' ? 'active' : ''}`}
+                  onClick={() => handleTabChange('admin')}
+                >
+                  <span className="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="3"></circle>
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
                   </span>
-                  {user?.rol === 'admin' && (
-                    <span className="admin-badge">Administrador</span>
-                  )}
-                </div>
-              </div>
-
-              <nav className="profile-nav">
-                <button 
-                  className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-                  onClick={() => handleTabChange('profile')}
-                >
-                  <span className="nav-icon">👤</span>
-                  Mi Perfil
+                  Panel de Administración
                 </button>
-                
-                <Link to="/favorites" className="nav-item">
-                  <span className="nav-icon">❤️</span>
-                  Mis Favoritos
-                </Link>
-
-                <button 
-                  className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
-                  onClick={() => handleTabChange('orders')}
-                >
-                  <span className="nav-icon">📦</span>
-                  Historial de Compras
-                </button>
-
-                {user?.rol === 'admin' && (
-                  <button 
-                    className={`nav-item ${activeTab === 'admin' ? 'active' : ''}`}
-                    onClick={() => handleTabChange('admin')}
-                  >
-                    <span className="nav-icon">⚙️</span>
-                    Panel de Administración
-                  </button>
-                )}
-
-                {/* <button 
-                  className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-                  onClick={() => handleTabChange('settings')}
-                >
-                  <span className="nav-icon">🔧</span>
-                  Configuración
-                </button> */}
-
-                <button className="nav-item logout-btn" onClick={handleLogout}>
-                  <span className="nav-icon">🚪</span>
-                  Cerrar Sesión
-                </button>
-              </nav>
-            </div>
-
-            {/* Overlay del Menú Móvil */}
-            <div 
-              className={`mobile-menu-overlay ${mobileMenuOpen ? 'active' : ''}`} 
-              onClick={() => setMobileMenuOpen(false)}
-            ></div>
-            
-            {/* Sidebar Móvil */}
-            <div className={`mobile-sidebar ${mobileMenuOpen ? 'active' : ''}`}>
-              <div className="mobile-user-info">
-                <div className="user-avatar">
-                  {user?.images_profile ? (
-                    <img 
-                      key={`mobile-avatar-${imageReloadKey}`}
-                      src={getProfileImageUrl(user.images_profile)} 
-                      alt="Avatar del usuario" 
-                      className="avatar-image" 
-                      onError={(e) => handleImageError(e, user.images_profile)}
-                    />
-                  ) : null}
-                  <div className={`avatar-placeholder ${user?.images_profile ? 'avatar-fallback' : ''}`}>
-                    {user?.nombre?.charAt(0) || user?.username?.charAt(0) || 'U'}
-                  </div>
-                </div>
-                <div className="user-details">
-                  <h3>{user?.nombre || user?.username || 'Usuario'}</h3>
-                  <p>{user?.email || 'email@ejemplo.com'}</p>
-                  {user?.rol === 'admin' && (
-                    <span className="admin-badge">Administrador</span>
-                  )}
-                </div>
-              </div>
-
-              <nav className="mobile-profile-nav">
-                <button 
-                  className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-                  onClick={() => handleTabChange('profile')}
-                >
-                  <span className="nav-icon">👤</span>
-                  Mi Perfil
-                </button>
-                
-                <Link to="/favorites" className="nav-item" onClick={() => setMobileMenuOpen(false)}>
-                  <span className="nav-icon">❤️</span>
-                  Mis Favoritos
-                </Link>
-
-                <button 
-                  className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
-                  onClick={() => handleTabChange('orders')}
-                >
-                  <span className="nav-icon">📦</span>
-                  Historial de Compras
-                </button>
-
-                {user?.rol === 'admin' && (
-                  <button 
-                    className={`nav-item ${activeTab === 'admin' ? 'active' : ''}`}
-                    onClick={() => handleTabChange('admin')}
-                  >
-                    <span className="nav-icon">⚙️</span>
-                    Panel de Administración
-                  </button>
-                )}
-
-                {/* <button 
-                  className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-                  onClick={() => handleTabChange('settings')}
-                >
-                  <span className="nav-icon">🔧</span>
-                  Configuración
-                </button> */}
-
-                <button className="nav-item logout-btn" onClick={handleLogout}>
-                  <span className="nav-icon">🚪</span>
-                  Cerrar Sesión
-                </button>
-              </nav>
-            </div>
-
-            {/* Contenido Principal */}
-            <div className="profile-content">
-              {message && (
-                <div className="profile-message success">
-                  <span>✅</span>
-                  {message}
-                </div>
               )}
 
-              {error && (
-                <div className="profile-message error">
-                  <span>⚠️</span>
-                  {error}
-                </div>
-              )}
-
-              {/* Pestaña: Mi Perfil */}
-              {activeTab === 'profile' && renderProfileSection()}
-
-              {/* Pestaña: Historial de Compras */}
-              {activeTab === 'orders' && renderOrdersSection()}
-
-              {/* Pestaña: Panel de Administración */}
-              {activeTab === 'admin' && renderAdminSection()}
-
-              {/* Pestaña: Configuración */}
-              {activeTab === 'settings' && renderSettingsSection()}
-            </div>
+              <button className="nav-btn logout" onClick={handleLogout}>
+                <span className="nav-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                </span>
+                Cerrar Sesión
+              </button>
+            </nav>
           </div>
-        </div>
+        </aside>
+
+        {/* Área de Contenido Principal */}
+        <main className="profile-main-content">
+          {message && (
+            <div className="alert success">
+              <span>✅</span>
+              {message}
+            </div>
+          )}
+
+          {error && (
+            <div className="alert error">
+              <span>⚠️</span>
+              {error}
+            </div>
+          )}
+
+          {activeTab === 'profile' && renderProfileSection()}
+          {activeTab === 'orders' && renderOrdersSection()}
+          {activeTab === 'admin' && renderAdminSection()}
+        </main>
       </div>
-    </main>
+    </div>
   );
 };
 

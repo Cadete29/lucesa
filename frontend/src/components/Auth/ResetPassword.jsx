@@ -256,12 +256,12 @@ const ResetPassword = () => {
               </ul>
             </div>
 
-            {token && (
+            {/* {token && (
               <div className="debug-info" style={{marginTop: '15px', padding: '12px', background: '#f3f4f6', borderRadius: '6px', fontSize: '12px'}}>
                 <p><strong>Token detectado:</strong> {token.substring(0, 25)}...</p>
                 <p><strong>Estado:</strong> {tokenValid === null ? 'Verificando...' : tokenValid ? '✅ Válido' : '❌ Inválido'}</p>
               </div>
-            )}
+            )} */}
 
             <div className="auth-footer">
               <p>

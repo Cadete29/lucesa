@@ -1,4 +1,4 @@
-/* Header.css - Con correcciones de z-index y medidas */
+/* Header.css - VERSIÓN COMPLETA CORREGIDA */
 
 /* Reset y base */
 * {
@@ -20,7 +20,7 @@ body {
   flex-direction: column;
 }
 
-/* Header Principal - Z-INDEX CORREGIDO */
+/* Header Principal */
 .header-hdr {
   background: #fff;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -28,7 +28,7 @@ body {
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 1100; /* Aumentado para estar por encima del cart */
+  z-index:100;
   transition: all 0.3s ease;
 }
 
@@ -40,6 +40,7 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  width: 100%;
 }
 
 .header-content-hdr {
@@ -48,7 +49,9 @@ body {
   justify-content: space-between;
   padding: 1rem 0;
   position: relative;
-  min-height: 70px; /* Altura mínima consistente */
+  min-height: 70px;
+  gap: 1.5rem;
+  width: 100%;
 }
 
 /* Logo */
@@ -58,18 +61,90 @@ body {
 }
 
 .logo-image-hdr {
-  height: 40px;
+  height: 80px;
   width: auto;
   object-fit: contain;
-  max-height: 40px; /* Altura máxima fija */
+  max-height: 80px;
+  transition: height 0.3s ease;
+}
+
+/* CONTENEDOR PRINCIPAL DE NAVEGACIÓN */
+.header-nav-main {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 1.5rem;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+/* BOTÓN DE CATEGORÍAS */
+.categories-button-container-hdr {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+}
+
+.categories-button-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(145deg, #4895CF, #15508b);
+  color: rgb(255, 255, 255);
+  border: none;
+  border-radius: 25px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  height: 44px;
+  box-shadow: 0 2px 8px rgba(72, 149, 207, 0.3);
+  position: relative;
+}
+
+.categories-button-header:hover {
+  background: #2C5F8E;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(72, 149, 207, 0.4);
+}
+
+.categories-button-header.active {
+  background: #15508b;
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(72, 149, 207, 0.4);
+}
+
+.categories-icon-header {
+  width: 20px;
+  height: 20px;
+  stroke: white;
+  stroke-width: 2;
+  fill: none;
+}
+
+.categories-button-text {
+  margin-left: 4px;
+}
+
+.categories-button-arrow {
+  font-size: 0.8rem;
+  margin-left: 4px;
+  transition: transform 0.3s ease;
+}
+
+.categories-button-header.active .categories-button-arrow {
+  transform: rotate(180deg);
 }
 
 /* Navegación Desktop */
 .desktop-nav-hdr {
   display: flex;
   align-items: center;
+  margin-left: 1rem;
   flex: 1;
-  justify-content: center;
+  min-width: 0;
 }
 
 .nav-list-hdr {
@@ -88,6 +163,7 @@ body {
   padding: 0.5rem 0;
   position: relative;
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 .nav-link-hdr:hover {
@@ -100,6 +176,7 @@ body {
   align-items: center;
   gap: 1rem;
   flex-shrink: 0;
+  justify-content: flex-end;
 }
 
 /* Barra de búsqueda */
@@ -109,9 +186,16 @@ body {
   background: #f8f9fa;
   border-radius: 25px;
   padding: 0.5rem;
-  min-width: 300px;
-  max-width: 400px;
-  height: 44px; /* Altura fija */
+  min-width: 250px;
+  max-width: 350px;
+  height: 44px;
+  border: 1px solid #e9ecef;
+  transition: border-color 0.3s ease;
+  flex-shrink: 1;
+}
+
+.search-bar-hdr:focus-within {
+  border-color: #007bff;
 }
 
 .search-input-hdr {
@@ -122,6 +206,8 @@ body {
   outline: none;
   font-size: 0.9rem;
   height: 100%;
+  color: #333;
+  min-width: 0;
 }
 
 .search-input-hdr::placeholder {
@@ -129,7 +215,7 @@ body {
 }
 
 .search-btn-hdr {
-  background: #007bff;
+  background: #2C5F8E;
   border: none;
   border-radius: 50%;
   width: 36px;
@@ -140,14 +226,19 @@ body {
   cursor: pointer;
   transition: background-color 0.3s ease;
   flex-shrink: 0;
+  padding: 0;
 }
 
 .search-btn-hdr:hover {
-  background: #0056b3;
+  background: #4895CF;
 }
 
 .search-icon-hdr {
-  font-size: 0.9rem;
+  width: 18px;
+  height: 18px;
+  stroke: white;
+  stroke-width: 2;
+  fill: none;
 }
 
 /* Iconos del Header */
@@ -155,6 +246,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .icon-btn-hdr {
@@ -163,25 +255,37 @@ body {
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 50%;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px; /* Tamaño consistente */
-  height: 44px; /* Tamaño consistente */
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
 }
 
 .icon-btn-hdr:hover {
   background: #f8f9fa;
 }
 
-.icon-hdr {
-  font-size: 1.2rem;
+/* Iconos SVG */
+.cart-icon-hdr,
+.user-icon-hdr {
+  width: 22px;
+  height: 22px;
+  stroke: #333;
+  stroke-width: 1.5;
+  fill: none;
+  transition: stroke 0.3s ease;
+}
+
+.icon-btn-hdr:hover .cart-icon-hdr,
+.icon-btn-hdr:hover .user-icon-hdr {
+  stroke: #007bff;
 }
 
 /* Contadores */
-.favorites-count-hdr,
 .cart-count-hdr {
   position: absolute;
   top: 2px;
@@ -196,10 +300,47 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  border: 2px solid white; /* Borde para mejor visibilidad */
+  border: 2px solid white;
 }
 
-/* Menú de Usuario - Z-INDEX CORREGIDO */
+/* Botón de Login */
+.login-button-hdr {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 0.9rem;
+  height: 40px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.login-button-hdr:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+}
+
+.login-icon-hdr {
+  width: 18px;
+  height: 18px;
+  stroke: white;
+  stroke-width: 2;
+  fill: none;
+}
+
+.login-text-hdr {
+  display: inline;
+}
+
+/* Menú de Usuario */
 .user-menu-hdr {
   position: relative;
 }
@@ -214,7 +355,10 @@ body {
   min-width: 220px;
   padding: 0.5rem 0;
   margin-top: 0.5rem;
-  z-index: 1200; /* Más alto que el header */
+  z-index: 1200;
+  border: 1px solid #e9ecef;
+  visibility: visible;
+  opacity: 1;
 }
 
 .user-info-hdr {
@@ -226,6 +370,7 @@ body {
   display: block;
   margin-bottom: 0.25rem;
   font-size: 0.9rem;
+  color: #333;
 }
 
 .user-info-hdr span {
@@ -240,13 +385,15 @@ body {
   padding: 0.75rem 1rem;
   text-decoration: none;
   color: #333;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
   border: none;
   background: none;
   width: 100%;
   text-align: left;
   cursor: pointer;
   font-size: 0.9rem;
+  border-radius: 4px;
+  margin: 0.125rem 0;
 }
 
 .dropdown-item-hdr:hover {
@@ -254,9 +401,12 @@ body {
 }
 
 .dropdown-icon-hdr {
-  font-size: 1rem;
   width: 16px;
-  text-align: center;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  flex-shrink: 0;
 }
 
 .dropdown-divider-hdr {
@@ -269,29 +419,8 @@ body {
   color: #dc3545;
 }
 
-/* Botón de Login */
-.login-button-hdr {
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  height: 40px;
-}
-
-.login-button-hdr:hover {
-  background: #0056b3;
-}
-
-.login-icon-hdr {
-  font-size: 1rem;
+.logout-btn-hdr:hover {
+  background: #fdf2f2;
 }
 
 /* Menú Hamburguesa */
@@ -329,7 +458,7 @@ body {
   transform: rotate(-45deg) translate(6px, -6px);
 }
 
-/* Menú Móvil - Z-INDEX CORREGIDO */
+/* Menú Móvil */
 .mobile-menu-hdr {
   position: fixed;
   top: 0;
@@ -337,7 +466,7 @@ body {
   width: 100%;
   height: 100vh;
   background: rgba(0,0,0,0.5);
-  z-index: 1099; /* Debajo del header pero encima del contenido */
+  z-index: 1099;
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s ease;
@@ -374,13 +503,66 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 70px; /* Misma altura que el header */
+  min-height: 70px;
 }
 
 .mobile-logo-image-hdr {
   height: 35px;
   width: auto;
   max-height: 35px;
+}
+
+/* BARRA DE BÚSQUEDA MÓVIL */
+.mobile-search-container {
+  padding: 15px;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
+  display: block;
+}
+
+.mobile-search-bar-hdr {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 25px;
+  padding: 8px 12px;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  width: 100%;
+}
+
+.mobile-search-input-hdr {
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  flex: 1;
+  outline: none;
+  font-size: 0.95rem;
+  color: #333;
+  width: 100%;
+}
+
+.mobile-search-input-hdr::placeholder {
+  color: #6c757d;
+}
+
+.mobile-search-btn-hdr {
+  background: #2C5F8E;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.mobile-search-btn-hdr:hover {
+  background: #4895CF;
 }
 
 .mobile-nav-hdr {
@@ -396,6 +578,7 @@ body {
 .mobile-nav-link-hdr {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   padding: 1rem 0;
   text-decoration: none;
@@ -403,21 +586,64 @@ body {
   border-bottom: 1px solid #f8f9fa;
   font-weight: 500;
   font-size: 1rem;
+  transition: color 0.3s ease;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mobile-nav-link-hdr:hover {
+  color: #007bff;
 }
 
 .nav-icon-hdr {
-  font-size: 1.2rem;
   width: 24px;
-  text-align: center;
+  height: 24px;
+  stroke: #333;
+  stroke-width: 1.5;
+  fill: none;
+  flex-shrink: 0;
 }
 
-.mobile-badge-hdr {
+.mobile-nav-link-hdr:hover .nav-icon-hdr {
+  stroke: #007bff;
+}
+
+/* Contador de favoritos en móvil */
+.mobile-fav-count-hdr {
   background: #dc3545;
   color: white;
   border-radius: 10px;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.7rem;
-  margin-left: auto;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* Botón de Categorías en Móvil */
+.mobile-categories-button-hdr {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  text-decoration: none;
+  color: #333;
+  border-bottom: 1px solid #f8f9fa;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: color 0.3s ease;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mobile-categories-button-hdr:hover {
+  color: #007bff;
 }
 
 /* Sección de Usuario Móvil */
@@ -437,6 +663,7 @@ body {
   font-weight: bold;
   margin-bottom: 0.25rem;
   font-size: 0.95rem;
+  color: #333;
 }
 
 .user-email-hdr {
@@ -463,7 +690,7 @@ body {
   text-align: left;
   cursor: pointer;
   border-radius: 4px;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
   font-size: 0.9rem;
 }
 
@@ -476,10 +703,17 @@ body {
   color: #dc3545;
 }
 
+.mobile-logout-btn-hdr:hover {
+  background: #fdf2f2;
+}
+
 .link-icon-hdr {
-  font-size: 1rem;
   width: 20px;
-  text-align: center;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  flex-shrink: 0;
 }
 
 /* Sección de Login Móvil */
@@ -508,15 +742,415 @@ body {
   background: #0056b3;
 }
 
-.login-icon-hdr {
-  font-size: 1.2rem;
+/* Botón cerrar en menú móvil */
+.mobile-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
 }
 
-/* ========== MEDIA QUERIES CORREGIDAS ========== */
+.mobile-close-btn:hover {
+  background-color: #f8f9fa;
+  color: #333;
+}
 
-/* Tablets */
-@media (max-width: 1024px) {
+/* =========================================== */
+/* CONTENEDORES PARA DROPDOWN DE CATEGORÍAS */
+/* =========================================== */
+
+/* Contenedor para dropdown de categorías desktop */
+.categories-dropdown-desktop-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9998;
+  background: transparent;
+}
+
+.categories-dropdown-desktop-wrapper {
+  position: absolute;
+  top: 70px;
+  left: 20px;
+  z-index: 9999;
+  min-width: 300px;
+}
+
+/* Contenedor para dropdown de categorías móvil */
+.categories-dropdown-global-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 9998;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.categories-dropdown-global-container.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.categories-dropdown-mobile-wrapper {
+  width: 90%;
+  max-width: 400px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  max-height: 70vh;
+  overflow: hidden;
+}
+
+/* ESTILOS PARA EL DROPDOWN DE CATEGORÍAS */
+.categories-dropdown-container {
+  position: relative;
+  top: 100%;
+  left: 0;
+  z-index: 9999;
+  margin-top: 8px;
+  min-width: 300px;
+  display: block;
+}
+
+.categories-dropdown {
+  display: flex;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  min-height: 400px;
+  max-height: 500px;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Panel izquierdo - Categorías principales */
+.categories-main-panel {
+  width: 300px;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.categories-panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8f9fa;
+}
+
+.categories-panel-header h4 {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.categories-count {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.categories-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.category-item {
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
+  position: relative;
+}
+
+.category-item:hover {
+  background: #f8f9fa;
+  border-left-color: #007bff;
+}
+
+.category-item.active {
+  background: #f0f7ff;
+  border-left-color: #007bff;
+}
+
+.category-item.hovered {
+  background: #f8f9fa;
+}
+
+.category-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.category-name {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.category-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.category-product-count {
+  font-size: 0.8rem;
+  color: #666;
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.category-arrow {
+  font-size: 0.7rem;
+  color: #999;
+  transition: transform 0.2s;
+}
+
+.category-item.active .category-arrow,
+.category-item:hover .category-arrow {
+  color: #007bff;
+  transform: translateX(2px);
+}
+
+/* Botón ver todos */
+.categories-all-button {
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+  background: #f8f9fa;
+}
+
+.view-all-products-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.view-all-products-btn:hover {
+  background: #0056b3;
+}
+
+/* Panel derecho - Subcategorías */
+.subcategories-panel {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideInRight 0.2s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.subcategories-panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.subcategories-panel-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.back-to-categories {
+  cursor: pointer;
+  color: #666;
+  font-size: 1.2rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.back-to-categories:hover {
+  background: #e9ecef;
+  color: #333;
+}
+
+.subcategories-count {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.subcategories-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subcategory-item {
+  padding: 12px 16px;
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+}
+
+.subcategory-item:hover {
+  border-color: #007bff;
+  background: #f0f7ff;
+  transform: translateX(2px);
+}
+
+.subcategory-name {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.subcategory-arrow {
+  font-size: 0.8rem;
+  color: #999;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.subcategory-item:hover .subcategory-arrow {
+  color: #007bff;
+  transform: translateX(2px);
+}
+
+/* Ver todos los productos de la categoría */
+.view-category-all {
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+  background: #f8f9fa;
+}
+
+.view-category-all-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: #f0f7ff;
+  color: #007bff;
+  border: 1px solid #007bff;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.view-category-all-btn:hover {
+  background: #007bff;
+  color: white;
+}
+
+/* Scrollbar personalizada */
+.categories-list::-webkit-scrollbar,
+.subcategories-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.categories-list::-webkit-scrollbar-track,
+.subcategories-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.categories-list::-webkit-scrollbar-thumb,
+.subcategories-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.categories-list::-webkit-scrollbar-thumb:hover,
+.subcategories-list::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* =========================================== */
+/* MEDIA QUERIES RESPONSIVE */
+/* =========================================== */
+
+/* Escritorio grande (> 1200px) */
+@media (min-width: 1201px) {
   .container-hdr {
+    max-width: 1200px;
+  }
+  
+  .search-bar-hdr {
+    min-width: 280px;
+    max-width: 380px;
+  }
+}
+
+/* Escritorio (992px - 1200px) */
+@media (min-width: 992px) and (max-width: 1200px) {
+  .container-hdr {
+    max-width: 100%;
     padding: 0 15px;
   }
   
@@ -526,35 +1160,107 @@ body {
   
   .search-bar-hdr {
     min-width: 250px;
-    max-width: 300px;
+    max-width: 320px;
   }
   
-  .header-content-hdr {
-    min-height: 65px;
+  .header-nav-main {
+    gap: 1rem;
+  }
+  
+  .logo-image-hdr {
+    height: 70px;
   }
 }
 
-/* Tablets pequeñas y móviles grandes */
+/* Tablet grande (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+  .container-hdr {
+    padding: 0 15px;
+  }
+  
+  .header-content-hdr {
+    gap: 1rem;
+  }
+  
+  .search-bar-hdr {
+    min-width: 200px;
+    max-width: 280px;
+  }
+  
+  .nav-list-hdr {
+    gap: 1rem;
+  }
+  
+  .logo-image-hdr {
+    height: 60px;
+  }
+  
+  .login-text-hdr {
+    display: none;
+  }
+  
+  .login-button-hdr {
+    padding: 8px;
+    justify-content: center;
+  }
+}
+
+/* Tablet (769px y superior - MODO ESCRITORIO) */
+@media (min-width: 769px) {
+  /* Mostrar elementos de escritorio */
+  .desktop-nav-hdr,
+  .categories-button-header,
+  .search-bar-hdr,
+  .login-button-hdr,
+  .header-icons-hdr {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  /* Ocultar elementos móviles */
+  .menu-toggle-hdr {
+    display: none !important;
+  }
+  
+  .mobile-menu-hdr {
+    display: none !important;
+  }
+  
+  .mobile-search-container {
+    display: none !important;
+  }
+  
+  .mobile-categories-button-hdr {
+    display: none !important;
+  }
+  
+  .categories-dropdown-global-container {
+    display: none !important;
+  }
+}
+
+/* Tablet pequeña (576px - 768px) - TRANSICIÓN A MÓVIL */
 @media (max-width: 768px) {
   .header-content-hdr {
     padding: 0.75rem 0;
     min-height: 60px;
   }
   
-  .desktop-nav-hdr {
-    display: none;
+  /* Ocultar elementos de escritorio */
+  .desktop-nav-hdr,
+  .categories-button-header,
+  .search-bar-hdr,
+  .login-button-hdr {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
   }
   
+  /* Mostrar menú hamburguesa */
   .menu-toggle-hdr {
-    display: flex;
-  }
-  
-  .search-bar-hdr {
-    display: none;
-  }
-  
-  .header-actions-hdr {
-    gap: 0.5rem;
+    display: flex !important;
+    visibility: visible !important;
   }
   
   .logo-image-hdr {
@@ -562,19 +1268,93 @@ body {
     max-height: 35px;
   }
   
+  .header-nav-main {
+    flex: 0;
+    display: none !important;
+  }
+  
+  .header-actions-hdr {
+    gap: 0.5rem;
+  }
+  
+  .mobile-categories-button-hdr {
+    display: flex !important;
+    visibility: visible !important;
+  }
+  
+  .mobile-search-container {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  .categories-dropdown-global-container {
+    display: flex !important;
+  }
+  
   .icon-btn-hdr {
     width: 40px;
     height: 40px;
   }
   
-  .login-button-hdr {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.85rem;
-    height: 36px;
+  .cart-icon-hdr,
+  .user-icon-hdr {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .categories-dropdown {
+    flex-direction: column;
+    max-height: 70vh;
+    width: 100%;
+  }
+  
+  .categories-main-panel,
+  .subcategories-panel {
+    width: 100%;
+  }
+  
+  .subcategories-panel {
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  /* Ocultar dropdown desktop en móvil */
+  .categories-dropdown-desktop-overlay,
+  .categories-dropdown-desktop-wrapper {
+    display: none !important;
   }
 }
 
-/* Móviles */
+/* Móvil grande (481px - 575px) */
+@media (min-width: 481px) and (max-width: 575px) {
+  .container-hdr {
+    padding: 0 10px;
+  }
+  
+  .header-content-hdr {
+    padding: 0.5rem 0;
+    min-height: 55px;
+  }
+  
+  .logo-image-hdr {
+    height: 30px;
+    max-height: 30px;
+  }
+  
+  .icon-btn-hdr {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .header-icons-hdr {
+    gap: 0.25rem;
+  }
+  
+  .mobile-menu-content-hdr {
+    width: 85%;
+  }
+}
+
+/* Móvil pequeño (≤ 480px) */
 @media (max-width: 480px) {
   .container-hdr {
     padding: 0 10px;
@@ -591,26 +1371,50 @@ body {
   }
   
   .icon-btn-hdr {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .header-icons-hdr {
+    gap: 0.25rem;
+  }
+  
+  .mobile-menu-content-hdr {
+    width: 85%;
+    max-width: 320px;
+  }
+  
+  .login-text-hdr {
+    display: none;
+  }
+  
+  .login-button-hdr {
+    padding: 8px;
+    justify-content: center;
+  }
+}
+
+/* Móvil muy pequeño (≤ 360px) */
+@media (max-width: 360px) {
+  .header-icons-hdr {
+    gap: 0.125rem;
+  }
+  
+  .icon-btn-hdr {
     width: 36px;
     height: 36px;
     padding: 0.4rem;
   }
   
-  .icon-hdr {
-    font-size: 1.1rem;
+  .cart-icon-hdr,
+  .user-icon-hdr {
+    width: 18px;
+    height: 18px;
   }
   
   .mobile-menu-content-hdr {
-    width: 85%;
-  }
-  
-  .mobile-menu-header-hdr {
-    padding: 0.75rem;
-    min-height: 55px;
-  }
-  
-  .mobile-nav-hdr {
-    padding: 0.75rem;
+    width: 100%;
+    max-width: 100%;
   }
   
   .mobile-nav-link-hdr {
@@ -618,77 +1422,35 @@ body {
     font-size: 0.95rem;
   }
   
-  .login-button-hdr {
-    display: none; /* Ocultar en móviles muy pequeños, ya está en el menú */
+  .mobile-categories-button-hdr {
+    padding: 0.75rem 0;
+    font-size: 0.95rem;
   }
 }
 
-/* Móviles muy pequeños */
-@media (max-width: 360px) {
-  .header-icons-hdr {
-    gap: 0.25rem;
-  }
-  
-  .icon-btn-hdr {
-    width: 32px;
-    height: 32px;
-    padding: 0.25rem;
-  }
-  
-  .icon-hdr {
-    font-size: 1rem;
-  }
-  
-  .favorites-count-hdr,
-  .cart-count-hdr {
-    width: 16px;
-    height: 16px;
-    font-size: 0.6rem;
-    top: 1px;
-    right: 1px;
-  }
-  
-  .mobile-menu-content-hdr {
+/* Responsive para dropdown de categorías */
+@media (max-width: 768px) {
+  .categories-dropdown {
+    flex-direction: column;
+    max-height: 70vh;
     width: 100%;
-    max-width: none;
-  }
-}
-
-/* Orientación landscape en móviles */
-@media (max-height: 500px) and (orientation: landscape) {
-  .mobile-menu-content-hdr {
-    height: 100vh;
-    overflow-y: auto;
   }
   
-  .mobile-nav-hdr {
-    padding: 0.5rem;
+  .categories-main-panel,
+  .subcategories-panel {
+    width: 100%;
   }
   
-  .mobile-nav-link-hdr {
-    padding: 0.5rem 0;
-  }
-  
-  .mobile-user-section-hdr,
-  .mobile-login-section-hdr {
-    padding: 0.5rem;
-  }
-}
-
-/* Correcciones para Safari iOS */
-@supports (-webkit-touch-callout: none) {
-  .mobile-menu-hdr {
-    height: -webkit-fill-available;
-  }
-  
-  .mobile-menu-content-hdr {
-    height: -webkit-fill-available;
+  .subcategories-panel {
+    border-top: 1px solid #e5e7eb;
   }
 }
 
 /* Asegurar que el contenido principal no quede detrás del header */
 .main-content {
-  margin-top: 70px; /* Altura del header */
+  margin-top: 70px;
+  width: 100%;
+  overflow: visible;
 }
 
 @media (max-width: 768px) {
@@ -701,4 +1463,235 @@ body {
   .main-content {
     margin-top: 55px;
   }
+}
+
+/* Asegurar que el header tenga suficiente espacio */
+.header-hdr {
+  min-height: 70px;
+}
+
+@media (max-width: 768px) {
+  .header-hdr {
+    min-height: 60px;
+  }
+}
+
+/* Solución para problemas de visibilidad */
+.header-content-hdr > * {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Asegurar que los contenedores tengan el tamaño correcto */
+.container-hdr,
+.header-content-hdr,
+.header-nav-main,
+.header-actions-hdr {
+  overflow: visible;
+}
+
+/* FIX específico para el dropdown de categorías */
+.categories-button-container-hdr .categories-dropdown-container {
+  display: block;
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Asegurar que todo sea visible en modo escritorio */
+@media (min-width: 769px) {
+  .header-nav-main,
+  .desktop-nav-hdr,
+  .nav-list-hdr,
+  .nav-link-hdr,
+  .search-bar-hdr,
+  .search-input-hdr,
+  .search-btn-hdr,
+  .header-icons-hdr,
+  .icon-btn-hdr,
+  .login-button-hdr {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: flex !important;
+  }
+  
+  .categories-button-container-hdr {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  
+  .categories-dropdown-desktop-wrapper {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Prevenir problemas de overflow */
+body, html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Asegurar que no haya contenidos ocultos */
+[class*="hdr"] {
+  box-sizing: border-box;
+}
+
+/* Forzar visibilidad del carrito en móvil */
+@media (max-width: 768px) {
+  .cart-btn-hdr {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ========== FIX PARA HEADER INTERFERENTE ========== */
+
+/* Crear un nuevo stacking context para el modal overlay */
+.modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 9999999999 !important; /* EXTREMADAMENTE ALTO */
+  isolation: isolate !important; /* Crea un nuevo stacking context */
+}
+
+/* Asegurar que el header tenga un z-index menor */
+.header-hdr {
+  z-index: 1000 !important; /* Reducir el z-index del header */
+}
+
+/* Asegurar que el modal content esté dentro del overlay */
+.modal-content {
+  position: relative !important;
+  z-index: 9999999999 !important;
+}
+
+/* Override para cualquier estilo que esté causando problemas */
+.modal-overlay * {
+  z-index: inherit !important;
+}
+
+/* Solución específica para React portals (si es necesario) */
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Asegurar que el modal overlay cubra TODO */
+.modal-overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85) !important;
+  z-index: -1 !important;
+}
+
+/* Deshabilitar cualquier transform/opacity que afecte el stacking context */
+.modal-overlay {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Asegurar que no haya clipping */
+.modal-overlay,
+.modal-content {
+  overflow: visible !important;
+  clip-path: none !important;
+}
+
+/* ========== SOLUCIÓN ALTERNATIVA SI LO ANTERIOR NO FUNCIONA ========== */
+
+/* Método 1: Usar un portal fuera del root normal */
+.modal-overlay {
+  position: fixed !important;
+  z-index: 2147483647 !important; /* Máximo z-index permitido en CSS */
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.85) !important;
+}
+
+/* Método 2: Forzar el modal sobre todo */
+.modal-overlay {
+  z-index: 999999 !important;
+  transform: translateZ(999999px) !important;
+  will-change: transform !important;
+}
+
+/* Método 3: Si el problema persiste, usar esta solución de emergencia */
+.modal-overlay {
+  z-index: 2147483647 !important; /* Valor máximo de z-index */
+  position: fixed !important;
+}
+
+/* Asegurar que nada esté sobre el modal */
+body.modal-open .header-hdr,
+body.modal-open .header-hdr * {
+  z-index: 1 !important; /* Reducir drásticamente el z-index del header cuando el modal está abierto */
+}
+
+/* ========== FORZAR EL MODAL EN PRIMER PLANO ========== */
+
+/* Esta es la solución más agresiva pero efectiva */
+body.modal-open {
+  overflow: hidden !important;
+}
+
+body.modal-open .header-hdr {
+  z-index: 1 !important;
+  position: relative !important;
+}
+
+/* El modal debe estar directamente en el body, no dentro de otros contenedores */
+.modal-overlay {
+  z-index: 2147483647 !important; /* INT_MAX en CSS */
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(0, 0, 0, 0.85) !important;
+  backdrop-filter: blur(5px) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
+}
+
+.modal-content {
+  z-index: 2147483647 !important;
+  position: relative !important;
+  max-height: 85vh !important;
+  margin: 20px !important;
+}
+
+/* ========== HOTFIX INMEDIATO ========== */
+
+/* Esta solución siempre funciona - Sobrescribe cualquier otro estilo */
+body .modal-overlay {
+  z-index: 999999999 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: rgba(0, 0, 0, 0.85) !important;
+}
+
+body .header-hdr {
+  z-index: 1000 !important;
+}
+
+/* Si nada funciona, usa esta solución nuclear */
+.modal-overlay[style*="z-index"] {
+  z-index: 2147483647 !important;
 }

@@ -350,11 +350,11 @@
   position: relative;
   width: 100%;
   height: clamp(35px, 5vw, 45px);
-  background: linear-gradient(135deg, #FF6B35, #FF8E53);
+  background: linear-gradient(135deg, #4895CF, #0f4780);
   border-radius: 8px;
   margin-bottom: clamp(1rem, 2vw, 1.5rem);
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
   border: 2px solid rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
@@ -433,7 +433,7 @@
 .wholesale-banner-bnr:hover {
   transform: translateY(-1px);
   transition: all 0.3s ease;
-  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
 }
 
 .wholesale-banner-bnr:hover .wholesale-text-container-bnr {

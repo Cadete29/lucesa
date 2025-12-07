@@ -253,14 +253,14 @@ const Register = () => {
             </form>
 
             {/* Separador para registro social */}
-            <div className="auth-separator-corrected">
+            {/* <div className="auth-separator-corrected">
               <div className="separator-line"></div>
               <div className="separator-text">o regístrate con</div>
               <div className="separator-line"></div>
-            </div>
+            </div> */}
 
             {/* Botones de redes sociales */}
-            <div className="social-buttons-compact">
+            {/* <div className="social-buttons-compact">
               <button
                 type="button"
                 onClick={() => handleSocialLogin('google')}
@@ -287,7 +287,7 @@ const Register = () => {
                 </svg>
                 Facebook
               </button>
-            </div>
+            </div> */}
 
             {/* Enlace a login */}
             <div className="auth-footer">

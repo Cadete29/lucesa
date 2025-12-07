@@ -1,14 +1,16 @@
 /* ===== FAVORITES PAGE STYLES ===== */
 .favorites-page {
-  padding: 2rem 0;
+  padding-top: 2rem;
   min-height: 60vh;
-  background: #f8f9fa;
+  background: #ffffff !important; /* CAMBIADO: De #f8f9fa a #ffffff */
+  margin-top: 70px; /* ESPACIO PARA EL HEADER */
 }
 
 .container-lucesa {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  width: 100%;
 }
 
 /* Header mejorado con estructura completa */
@@ -19,7 +21,7 @@
   margin-bottom: 2rem;
   padding-bottom: 1rem;
   border-bottom: 2px solid #e0e0e0;
-  padding-top: 100px;
+  padding-top: 0;
 }
 
 .favorites-title-section {
@@ -29,7 +31,7 @@
 }
 
 .favorites-header h1 {
-  color: #333;
+  color: #16395C !important;
   font-size: 2rem;
   margin: 0;
   font-weight: 700;
@@ -130,7 +132,7 @@
   transform: translateY(-50%);
   background: transparent;
   border: none;
-  color: #999;
+  color: #999 ;
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0;
@@ -232,6 +234,34 @@
   }
 }
 
+/* Estado vacío */
+.empty-favorites {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin: 2rem 0;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-favorites h2 {
+  color: #666;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.empty-favorites p {
+  color: #888;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+}
+
 /* Sin resultados de búsqueda */
 .no-search-results {
   text-align: center;
@@ -278,6 +308,11 @@
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .favorites-loading p {
@@ -371,7 +406,7 @@
   stroke: currentColor;
 }
 
-/* Responsive */
+/* RESPONSIVE - CORREGIDO */
 @media (max-width: 1200px) {
   .favorites-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -379,9 +414,28 @@
   }
 }
 
+@media (max-width: 992px) {
+  .favorites-page {
+    margin-top: 60px;
+  }
+  
+  .container-lucesa {
+    padding: 0 16px;
+  }
+  
+  .favorites-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .search-box {
+    max-width: 350px;
+  }
+}
+
 @media (max-width: 768px) {
   .favorites-page {
-    padding: 1rem 0;
+    padding-top: 1rem;
+    margin-top: 60px;
   }
   
   .container-lucesa {
@@ -416,6 +470,7 @@
   
   .search-box {
     max-width: 100%;
+    min-width: 100%;
   }
   
   .sort-controls {
@@ -450,16 +505,20 @@
   .no-results-icon {
     font-size: 2.5rem;
   }
+  
+  .favorites-loading {
+    padding: 3rem 1rem;
+  }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
+  .favorites-page {
+    margin-top: 55px;
+  }
+  
   .favorites-grid {
     grid-template-columns: 1fr;
     gap: 12px;
-  }
-  
-  .favorites-header {
-    padding-top: 20px;
   }
   
   .favorites-header h1 {
@@ -470,15 +529,68 @@
     padding: 8px 16px;
     font-size: 0.85rem;
   }
+  
+  .search-input {
+    padding: 10px 36px 10px 12px;
+  }
+  
+  .sort-select {
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .favorites-page {
+    margin-top: 50px;
+  }
+  
+  .container-lucesa {
+    padding: 0 12px;
+  }
+  
+  .favorites-header h1 {
+    font-size: 1.2rem;
+  }
+  
+  .favorites-count {
+    font-size: 0.9rem;
+  }
+}
+
+/* Botón primario (si no está definido en otro lugar) */
+.btn-primary {
+  background: linear-gradient(135deg, #4895CF, #2C5F8E);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2C5F8E, #16395C);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(44, 95, 142, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Mejoras de accesibilidad */
 @media (prefers-reduced-motion: reduce) {
   .product-card,
-  .favorite-btn,
   .remove-favorite-btn,
   .btn-clear-all,
-  .btn-primary,
   .btn-add-cart,
   .search-input,
   .sort-select {
@@ -494,12 +606,16 @@
   .syncing-badge {
     animation: none;
   }
+  
+  .favorites-grid {
+    animation: none;
+  }
 }
 
-/* Modo oscuro */
+/* Modo oscuro - Mantenido pero ahora con fondo blanco por defecto */
 @media (prefers-color-scheme: dark) {
   .favorites-page {
-    background: #1a202c;
+    background: #ffffff !important; /* En modo oscuro también blanco si lo prefieres */
   }
   
   .favorites-header {
@@ -507,75 +623,75 @@
   }
   
   .favorites-header h1 {
-    color: #e2e8f0;
+    color: #16395C !important; /* Mantener color azul oscuro */
   }
   
   .favorites-count {
-    color: #a0aec0;
+    color: #666;
   }
   
   .syncing-badge {
-    background: #d69e2e;
-    color: #744210;
+    background: #ffc107;
+    color: #856404;
   }
   
   .search-input,
   .sort-select {
-    background: #2d3748;
-    border-color: #4a5568;
-    color: #e2e8f0;
+    background: #ffffff !important;
+    border-color: #e0e0e0;
+    color: #333 !important;
   }
   
   .search-input::placeholder {
-    color: #a0aec0;
+    color: #666;
   }
   
   .search-input:focus {
-    border-color: #63b3ed;
-    box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.1);
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
   }
   
   .search-results-info {
-    background: #2c5282;
-    border-left-color: #63b3ed;
+    background: #e3f2fd;
+    border-left-color: #007bff;
   }
   
   .search-results-info p {
-    color: #bee3f8;
+    color: #0066cc;
   }
   
   .btn-clear-search {
-    border-color: #63b3ed;
-    color: #63b3ed;
+    border-color: #007bff;
+    color: #007bff;
   }
   
   .btn-clear-search:hover {
-    background: #63b3ed;
-    color: #1a202c;
+    background: #007bff;
+    color: white;
   }
   
   .product-card.favorites-variant,
   .empty-favorites,
   .no-search-results,
   .favorites-loading {
-    background: #2d3748;
-    color: #e2e8f0;
+    background: white;
+    color: #333;
   }
   
   .remove-favorite-btn {
-    background: rgba(45, 55, 72, 0.95);
+    background: rgba(255, 255, 255, 0.95);
   }
   
   .remove-favorite-btn svg {
-    stroke: #e2e8f0;
+    stroke: #333;
   }
   
   .remove-favorite-btn:hover {
-    background: #c53030;
+    background: #ff4444;
   }
   
   .empty-icon,
   .no-results-icon {
-    opacity: 0.8;
+    opacity: 0.5;
   }
 }

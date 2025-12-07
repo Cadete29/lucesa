@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import './AdminPanels.css';
+import './OrderManagement.css';
 
 const OrderManagement = () => {
   const { user, token } = useAuth();
@@ -994,7 +994,7 @@ const OrderManagement = () => {
               <div className="order-detail-content">
                 <div className="order-detail-header">
                   <h3 id={`order-modal-title-${selectedOrder.id}`}>
-                    <span className="lucesa-order-badge">🏭</span>
+                    {/* <span className="lucesa-order-badge">🏭</span> */}
                     Detalles del Pedido - {selectedOrder.order_number}
                   </h3>
                   <button 
@@ -1020,9 +1020,9 @@ const OrderManagement = () => {
                       <div className="detail-item">
                         <strong>Teléfono:</strong> {selectedOrder.customer_phone || selectedOrder.shipping_address?.telefono || 'No especificado'}
                       </div>
-                      <div className="detail-item">
+                      {/* <div className="detail-item">
                         <strong>Usuario ID:</strong> {selectedOrder.user_id || 'No disponible'}
-                      </div>
+                      </div> */}
                     </div>
                   </div>
 
@@ -1137,12 +1137,12 @@ const OrderManagement = () => {
                   <div className="timestamps">
                     <small>📅 Creado: {formatDate(selectedOrder.created_at)}</small>
                   </div>
-                  <button 
+                  {/* <button 
                     className="btn-secondary"
                     onClick={() => window.print()}
                   >
                     🖨️ Imprimir Detalles
-                  </button>
+                  </button> */}
                   <button 
                     className="btn-secondary"
                     onClick={closeOrderDetails}

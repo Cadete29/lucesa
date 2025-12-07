@@ -1,3 +1,4 @@
+// src/components/Checkout/Checkout.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
@@ -6,15 +7,28 @@ import './Checkout.css';
 
 import paymentService from '../api/paymentService';
 
+// ✅ Configuración de URLs por entorno - USANDO LA MISMA QUE EL CARRITO
 const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://testpaginaweb.shop/api/images/code'
   : 'http://localhost:4004/api/images/code';
 
 const Checkout = () => {
-  const { cartItems, getCartTotal, clearCart, getCartItemsCount } = useCart();
+  const { cartItems, getCartTotal, clearCart, getCartItemsCount, debugCart } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // DEBUG: Verificar carrito
+  useEffect(() => {
+    console.log('🔍 CHECKOUT - Productos en carrito:', cartItems.map(item => ({
+      id: item.id,
+      idProducto: item.idProducto,
+      codigo: item.codigo,
+      nombre: item.nombre,
+      tieneCodigo: !!item.codigo,
+      codigoValido: item.codigo && item.codigo !== 'N/A'
+    })));
+  }, [cartItems]);
 
   const [formData, setFormData] = useState({
     firstName: user?.nombre?.split(' ')[0] || '',
@@ -31,29 +45,11 @@ const Checkout = () => {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [orderData, setOrderData] = useState(null);
 
   const subtotal = getCartTotal();
   const shipping = subtotal >= 1000 ? 0 : 150;
   const tax = subtotal * 0.16;
   const total = subtotal + tax + shipping;
-
-  // ✅ Validación PERMISIVA - Solo verifica precio y cantidad
-  const validateCartItems = (items) => {
-    const invalidItems = items.filter(item => {
-      const hasPrice = (item.precioFinal || item.precio) > 0;
-      const hasQuantity = item.quantity && item.quantity > 0;
-      
-      return !hasPrice || !hasQuantity;
-    });
-
-    if (invalidItems.length > 0) {
-      console.warn('⚠️ Productos con precio o cantidad inválida:', invalidItems);
-      return false;
-    }
-
-    return true;
-  };
 
   const canContinueToConfirmation = () => {
     if (currentStep === 1) {
@@ -77,12 +73,6 @@ const Checkout = () => {
       return;
     }
 
-    // ✅ Validación PERMISIVA - Solo precio y cantidad
-    if (!validateCartItems(cartItems)) {
-      alert('Algunos productos tienen precio o cantidad inválida. Por favor, revisa tu carrito.');
-      return;
-    }
-
     setIsProcessing(true);
 
     try {
@@ -101,47 +91,22 @@ const Checkout = () => {
         phone: formData.phone
       };
 
-      console.log('🛒 Iniciando proceso de pago...');
-      console.log('📦 Items:', cartItems.length);
-      console.log('🏠 Dirección:', shippingAddress);
-      console.log('👤 Cliente:', customerInfo);
-      console.log('🔍 Productos en carrito:', cartItems.map(item => ({
-        nombre: item.nombre || 'Sin nombre (se generará automáticamente)',
-        codigo: item.codigo || 'Sin código',
-        precio: item.precioFinal || item.precio,
-        cantidad: item.quantity
-      })));
-      
-      console.log('🔢 El backend generará el número de orden LUCESA automáticamente');
-
-      // ✅ EL TOKEN SE ENVÍA AUTOMÁTICAMENTE DESDE EL SERVICE
       const result = await paymentService.createCheckout(
         cartItems,
         shippingAddress,
         customerInfo
       );
-
-      console.log('✅ Pago creado exitosamente:', result);
       
-      if (result.order_number) {
-        console.log(`🔢 Número de orden LUCESA recibido del backend: ${result.order_number}`);
-        
-        // ✅ Redirigir al checkout de Mercado Pago con el número LUCESA
-        if (result.payment_url) {
-          console.log(`🔗 Redirigiendo a Mercado Pago para orden ${result.order_number}`);
-          window.location.href = result.payment_url;
-        } else {
-          throw new Error('No se recibió URL de pago');
-        }
+      if (result.order_number && result.payment_url) {
+        window.location.href = result.payment_url;
       } else {
-        throw new Error('No se recibió número de orden del backend');
+        throw new Error('No se recibió URL de pago');
       }
 
     } catch (error) {
       console.error('❌ Error al procesar el pago:', error);
       
       if (error.message.includes('Token inválido') || error.message.includes('expirado')) {
-        // Token expirado - forzar logout
         alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
         logout();
         navigate('/login');
@@ -174,12 +139,12 @@ const Checkout = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="co-page">
-        <div className="co-container">
-          <div className="co-empty">
-            <h2 className="co-empty-title">No hay productos en el carrito</h2>
-            <p className="co-empty-text">Agrega algunos productos antes de proceder al checkout</p>
-            <button onClick={() => navigate('/products')} className="co-btn co-btn-primary">
+      <div className="lcs-co-page">
+        <div className="lcs-co-container">
+          <div className="lcs-co-empty">
+            <h2 className="lcs-co-empty-title">No hay productos en el carrito</h2>
+            <p className="lcs-co-empty-text">Agrega algunos productos antes de proceder al checkout</p>
+            <button onClick={() => navigate('/products')} className="lcs-co-btn lcs-co-btn-primary">
               Explorar Productos
             </button>
           </div>
@@ -189,177 +154,145 @@ const Checkout = () => {
   }
 
   return (
-    <div className="co-page">
-      <div className="co-container">
-        <div className="co-header">
-          <h1 className="co-title">Checkout ({getCartItemsCount()})</h1>
-          <div className="co-steps">
-            <div className={`co-step ${currentStep >= 1 ? 'co-active' : ''}`}>
-              <span className="co-step-number">1</span>
-              <span className="co-step-label">Envío</span>
+    <div className="lcs-co-page">
+      <div className="lcs-co-container">
+        <div className="lcs-co-header">
+          <h1 className="lcs-co-title">Checkout ({getCartItemsCount()})</h1>
+          <div className="lcs-co-steps">
+            <div className={`lcs-co-step ${currentStep >= 1 ? 'lcs-co-active' : ''}`}>
+              <span className="lcs-co-step-number">1</span>
+              <span className="lcs-co-step-label">Envío</span>
             </div>
-            <div className={`co-step ${currentStep >= 2 ? 'co-active' : ''}`}>
-              <span className="co-step-number">2</span>
-              <span className="co-step-label">Confirmación</span>
+            <div className={`lcs-co-step ${currentStep >= 2 ? 'lcs-co-active' : ''}`}>
+              <span className="lcs-co-step-number">2</span>
+              <span className="lcs-co-step-label">Confirmación</span>
             </div>
-            <div className={`co-step ${currentStep >= 3 ? 'co-active' : ''}`}>
-              <span className="co-step-number">3</span>
-              <span className="co-step-label">Pago</span>
+            <div className={`lcs-co-step ${currentStep >= 3 ? 'lcs-co-active' : ''}`}>
+              <span className="lcs-co-step-number">3</span>
+              <span className="lcs-co-step-label">Pago</span>
             </div>
           </div>
         </div>
 
-        <div className="co-content">
-          <div className="co-form-section">
-            <div className="co-form">
+        <div className="lcs-co-content">
+          <div className="lcs-co-form-section">
+            <div className="lcs-co-form">
               {currentStep === 1 && (
-                <div className="co-form-step">
-                  <h2 className="co-step-title">Información de Envío</h2>
+                <div className="lcs-co-form-step">
+                  <h2 className="lcs-co-step-title">Información de Envío</h2>
                   
-                  <div className="co-form-row">
-                    <div className="co-form-group">
-                      <label htmlFor="firstName" className="co-label">Nombre *</label>
+                  <div className="lcs-co-form-row">
+                    <div className="lcs-co-form-group">
+                      <label htmlFor="firstName" className="lcs-co-label">Nombre *</label>
                       <input
                         type="text"
                         id="firstName"
                         name="firstName"
                         value={formData.firstName}
                         onChange={handleInputChange}
-                        className="co-input"
+                        className="lcs-co-input"
                         required
                       />
                     </div>
-                    <div className="co-form-group">
-                      <label htmlFor="lastName" className="co-label">Apellido *</label>
+                    <div className="lcs-co-form-group">
+                      <label htmlFor="lastName" className="lcs-co-label">Apellido *</label>
                       <input
                         type="text"
                         id="lastName"
                         name="lastName"
                         value={formData.lastName}
                         onChange={handleInputChange}
-                        className="co-input"
+                        className="lcs-co-input"
                         required
                       />
                     </div>
                   </div>
 
-                  <div className="co-form-row">
-                    <div className="co-form-group">
-                      <label htmlFor="email" className="co-label">Email *</label>
+                  <div className="lcs-co-form-row">
+                    <div className="lcs-co-form-group">
+                      <label htmlFor="email" className="lcs-co-label">Email *</label>
                       <input
                         type="email"
                         id="email"
                         name="email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className="co-input"
+                        className="lcs-co-input"
                         required
                       />
                     </div>
-                    <div className="co-form-group">
-                      <label htmlFor="phone" className="co-label">Teléfono *</label>
+                    <div className="lcs-co-form-group">
+                      <label htmlFor="phone" className="lcs-co-label">Teléfono *</label>
                       <input
                         type="tel"
                         id="phone"
                         name="phone"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        className="co-input"
+                        className="lcs-co-input"
                         required
                       />
                     </div>
                   </div>
 
-                  <div className="co-form-group">
-                    <label htmlFor="address" className="co-label">Dirección *</label>
+                  <div className="lcs-co-form-group">
+                    <label htmlFor="address" className="lcs-co-label">Dirección *</label>
                     <input
                       type="text"
                       id="address"
                       name="address"
                       value={formData.address}
                       onChange={handleInputChange}
-                      className="co-input"
+                      className="lcs-co-input"
                       required
                       placeholder="Calle, número, colonia"
                     />
                   </div>
 
-                  <div className="co-form-row">
-                    <div className="co-form-group">
-                      <label htmlFor="city" className="co-label">Ciudad *</label>
+                  <div className="lcs-co-form-row">
+                    <div className="lcs-co-form-group">
+                      <label htmlFor="city" className="lcs-co-label">Ciudad *</label>
                       <input
                         type="text"
                         id="city"
                         name="city"
                         value={formData.city}
                         onChange={handleInputChange}
-                        className="co-input"
+                        className="lcs-co-input"
                         required
                       />
                     </div>
-                    <div className="co-form-group">
-                      <label htmlFor="state" className="co-label">Estado *</label>
+                    <div className="lcs-co-form-group">
+                      <label htmlFor="state" className="lcs-co-label">Estado *</label>
                       <input
                         type="text"
                         id="state"
                         name="state"
                         value={formData.state}
                         onChange={handleInputChange}
-                        className="co-input"
+                        className="lcs-co-input"
                         required
                       />
                     </div>
-                    <div className="co-form-group">
-                      <label htmlFor="zipCode" className="co-label">Código Postal *</label>
+                    <div className="lcs-co-form-group">
+                      <label htmlFor="zipCode" className="lcs-co-label">Código Postal *</label>
                       <input
                         type="text"
                         id="zipCode"
                         name="zipCode"
                         value={formData.zipCode}
                         onChange={handleInputChange}
-                        className="co-input"
+                        className="lcs-co-input"
                         required
                       />
                     </div>
                   </div>
 
-                  <div className="co-shipping-info-minimum">
-                    <div className="co-shipping-header">
-                      <span className="co-shipping-icon">🚚</span>
-                      <h3 className="co-shipping-title">Información de Envío</h3>
-                    </div>
-                    
-                    {subtotal >= 1000 ? (
-                      <div className="co-free-shipping-active">
-                        <div className="co-free-shipping-badge-large">🎉 ¡ENVÍO GRATIS!</div>
-                        <p className="co-free-shipping-description">
-                          Tu compra califica para envío gratis estándar (3-5 días hábiles)
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="co-shipping-cost">
-                        <div className="co-shipping-warning">
-                          <span className="co-warning-icon">📦</span>
-                          <div className="co-warning-content">
-                            <h4 className="co-warning-title">Costo de envío: $150 MXN</h4>
-                            <p className="co-warning-text">
-                              El envío gratis está disponible en compras mayores a <strong>$1,000 MXN</strong>
-                            </p>
-                            <div className="co-amount-needed">
-                              <span className="co-amount-label">Faltan para envío gratis: </span>
-                              <span className="co-amount-value">${(1000 - subtotal).toFixed(2)} MXN</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="co-form-actions">
+                  <div className="lcs-co-form-actions">
                     <button 
                       type="button" 
                       onClick={nextStep} 
-                      className="co-btn co-btn-primary"
+                      className="lcs-co-btn lcs-co-btn-primary"
                       disabled={!canContinueToConfirmation()}
                     >
                       Continuar a Confirmación
@@ -369,12 +302,12 @@ const Checkout = () => {
               )}
 
               {currentStep === 2 && (
-                <div className="co-form-step">
-                  <h2 className="co-step-title">Revisar y Confirmar Pedido</h2>
+                <div className="lcs-co-form-step">
+                  <h2 className="lcs-co-step-title">Revisar y Confirmar Pedido</h2>
                   
-                  <div className="co-order-summary">
-                    <h3 className="co-section-title">Resumen del Pedido</h3>
-                    <div className="co-order-items">
+                  <div className="lcs-co-order-summary">
+                    <h3 className="lcs-co-section-title">Resumen del Pedido</h3>
+                    <div className="lcs-co-order-items">
                       {cartItems.map(item => (
                         <CheckoutOrderItem 
                           key={item.id || item.idProducto} 
@@ -384,9 +317,9 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  <div className="co-shipping-info">
-                    <h3 className="co-section-title">Dirección de Envío</h3>
-                    <div className="co-shipping-details">
+                  <div className="lcs-co-shipping-info">
+                    <h3 className="lcs-co-section-title">Dirección de Envío</h3>
+                    <div className="lcs-co-shipping-details">
                       <strong>{formData.firstName} {formData.lastName}</strong><br />
                       {formData.address}<br />
                       {formData.city}, {formData.state} {formData.zipCode}<br />
@@ -396,8 +329,8 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  <div className="co-form-group co-terms">
-                    <label className="co-terms-label">
+                  <div className="lcs-co-form-group lcs-co-terms">
+                    <label className="lcs-co-terms-label">
                       <input
                         type="checkbox"
                         name="acceptTerms"
@@ -410,14 +343,14 @@ const Checkout = () => {
                     </label>
                   </div>
 
-                  <div className="co-form-actions">
-                    <button type="button" onClick={prevStep} className="co-btn co-btn-secondary">
+                  <div className="lcs-co-form-actions">
+                    <button type="button" onClick={prevStep} className="lcs-co-btn lcs-co-btn-secondary">
                       ← Volver a Envío
                     </button>
                     <button 
                       type="button" 
                       onClick={nextStep} 
-                      className="co-btn co-btn-primary"
+                      className="lcs-co-btn lcs-co-btn-primary"
                       disabled={!formData.acceptTerms}
                     >
                       Continuar a Pago
@@ -427,70 +360,52 @@ const Checkout = () => {
               )}
 
               {currentStep === 3 && (
-                <div className="co-form-step">
-                  <h2 className="co-step-title">Pago con Mercado Pago</h2>
+                <div className="lcs-co-form-step">
+                  <h2 className="lcs-co-step-title">Pago con Mercado Pago</h2>
                   
-                  <div className="co-mercadopago-section">
-                    <div className="co-mercadopago-header">
-                      <div className="co-mercadopago-logo">
-                        <div className="co-mp-icon">
+                  <div className="lcs-co-mercadopago-section">
+                    <div className="lcs-co-mercadopago-header">
+                      <div className="lcs-co-mercadopago-logo">
+                        <div className="lcs-co-mp-icon">
                           <img 
                             src="/mer.svg" 
                             alt="Mercado Pago" 
-                            className="co-mp-logo-img"
+                            className="lcs-co-mp-logo-img"
                           />
                         </div>
-                        <h3 className="co-mp-title">Mercado Pago</h3>
+                        <h3 className="lcs-co-mp-title">Mercado Pago</h3>
                       </div>
-                      <p className="co-mp-description">
+                      <p className="lcs-co-mp-description">
                         Serás redirigido a Mercado Pago para completar tu pago de manera segura
                       </p>
                     </div>
 
                     {!isAuthenticated && (
-                      <div className="co-auth-required-message">
-                        <p className="co-auth-message-text">
+                      <div className="lcs-co-auth-required-message">
+                        <p className="lcs-co-auth-message-text">
                           🔐 <strong>Autenticación requerida:</strong> Debes iniciar sesión para proceder con el pago.
                         </p>
                       </div>
                     )}
 
-                    <div className="co-payment-security">
-                      <div className="co-security-badge">
-                        <span className="co-security-icon">🔒</span>
-                        <div className="co-security-text">
+                    <div className="lcs-co-payment-security">
+                      <div className="lcs-co-security-badge">
+                        <span className="lcs-co-security-icon">🔒</span>
+                        <div className="lcs-co-security-text">
                           <strong>Pago 100% seguro</strong>
                           <span>Tus datos están protegidos con encriptación SSL</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="co-payment-methods-preview">
-                      <h4 className="co-payment-methods-title">Métodos de pago aceptados:</h4>
-                      <div className="co-payment-methods-grid">
-                        <div className="co-payment-method">
-                          <span className="co-method-icon">💳</span>
-                          <span className="co-method-name">Tarjetas de crédito</span>
-                        </div>
-                        <div className="co-payment-method">
-                          <span className="co-method-icon">🏦</span>
-                          <span className="co-method-name">Tarjetas de débito</span>
-                        </div>
-                        <div className="co-payment-method">
-                          <span className="co-method-icon">📱</span>
-                          <span className="co-method-name">Mercado Pago</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="co-order-total-payment">
-                      <h4 className="co-total-payment-title">Total a pagar:</h4>
-                      <div className="co-total-payment-amount">${total.toFixed(2)} MXN</div>
+                    <div className="lcs-co-order-total-payment">
+                      <h4 className="lcs-co-total-payment-title">Total a pagar:</h4>
+                      <div className="lcs-co-total-payment-amount">${total.toFixed(2)} MXN</div>
                     </div>
                   </div>
 
-                  <div className="co-form-actions">
-                    <button type="button" onClick={prevStep} className="co-btn co-btn-secondary">
+                  <div className="lcs-co-form-actions">
+                    <button type="button" onClick={prevStep} className="lcs-co-btn lcs-co-btn-secondary">
                       ← Volver a Confirmación
                     </button>
                     
@@ -498,12 +413,12 @@ const Checkout = () => {
                       <button 
                         type="button" 
                         onClick={handleMercadoPagoPayment}
-                        className="co-btn co-btn-primary co-btn-mercadopago"
+                        className="lcs-co-btn lcs-co-btn-primary lcs-co-btn-mercadopago"
                         disabled={isProcessing}
                       >
                         {isProcessing ? (
                           <>
-                            <div className="co-loading-spinner"></div>
+                            <div className="lcs-co-loading-spinner"></div>
                             Conectando con Mercado Pago...
                           </>
                         ) : (
@@ -519,31 +434,22 @@ const Checkout = () => {
                             message: 'Inicia sesión para completar tu compra'
                           }
                         })}
-                        className="co-btn co-btn-primary co-btn-login-required"
+                        className="lcs-co-btn lcs-co-btn-primary lcs-co-btn-login-required"
                       >
                         🔐 Iniciar Sesión para Pagar
                       </button>
                     )}
-                  </div>
-
-                  <div className="co-payment-note">
-                    <p className="co-note-text">
-                      💡 <strong>Nota:</strong> Después del pago, serás redirigido automáticamente a nuestra página de confirmación.
-                    </p>
-                    <p className="co-note-text">
-                      🔄 <strong>Información:</strong> Los productos sin nombre se procesarán automáticamente con nombres generados.
-                    </p>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="co-summary">
-            <div className="co-summary-card">
-              <h3 className="co-summary-title">Resumen del Pedido</h3>
+          <div className="lcs-co-summary">
+            <div className="lcs-co-summary-card">
+              <h3 className="lcs-co-summary-title">Resumen del Pedido</h3>
               
-              <div className="co-order-preview">
+              <div className="lcs-co-order-preview">
                 {cartItems.map(item => (
                   <CheckoutPreviewItem 
                     key={item.id || item.idProducto} 
@@ -552,72 +458,32 @@ const Checkout = () => {
                 ))}
               </div>
 
-              <div className="co-summary-details">
-                <div className="co-summary-row">
-                  <span className="co-summary-label">Subtotal ({getCartItemsCount()} productos):</span>
-                  <span className="co-summary-value">${subtotal.toFixed(2)} MXN</span>
+              <div className="lcs-co-summary-details">
+                <div className="lcs-co-summary-row">
+                  <span className="lcs-co-summary-label">Subtotal ({getCartItemsCount()} productos):</span>
+                  <span className="lcs-co-summary-value">${subtotal.toFixed(2)} MXN</span>
                 </div>
                 
-                <div className="co-summary-row">
-                  <span className="co-summary-label">IVA (16%):</span>
-                  <span className="co-summary-value">${tax.toFixed(2)} MXN</span>
+                <div className="lcs-co-summary-row">
+                  <span className="lcs-co-summary-label">IVA (16%):</span>
+                  <span className="lcs-co-summary-value">${tax.toFixed(2)} MXN</span>
                 </div>
                 
-                <div className="co-summary-row">
-                  <span className="co-summary-label">Envío:</span>
-                  <span className="co-summary-value">
+                <div className="lcs-co-summary-row">
+                  <span className="lcs-co-summary-label">Envío:</span>
+                  <span className="lcs-co-summary-value">
                     {subtotal >= 1000 ? (
-                      <span className="co-free-shipping-text">GRATIS</span>
+                      <span className="lcs-co-free-shipping-text">GRATIS</span>
                     ) : (
-                      <span className="co-shipping-cost-text">$150.00 MXN</span>
+                      <span className="lcs-co-shipping-cost-text">$150.00 MXN</span>
                     )}
                   </span>
                 </div>
                 
-                {subtotal < 1000 && (
-                  <div className="co-minimum-notice">
-                    <div className="co-minimum-notice-content">
-                      <span className="co-notice-icon">🎁</span>
-                      <div className="co-notice-text">
-                        <strong>¡Envío gratis disponible!</strong>
-                        <span>Faltan ${(1000 - subtotal).toFixed(2)} MXN</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="co-summary-divider"></div>
-                <div className="co-summary-row co-total">
-                  <span className="co-total-label">Total:</span>
-                  <span className="co-total-amount">${total.toFixed(2)} MXN</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="co-benefits">
-              <h4 className="co-benefits-title">Beneficios de tu compra</h4>
-              <div className="co-benefit-item">
-                <span className="co-benefit-icon">🚚</span>
-                <div className="co-benefit-text">
-                  <strong>Envío gratis</strong> en compras mayores a $1,000 MXN
-                </div>
-              </div>
-              <div className="co-benefit-item">
-                <span className="co-benefit-icon">💳</span>
-                <div className="co-benefit-text">
-                  <strong>Pago seguro</strong> con Mercado Pago
-                </div>
-              </div>
-              <div className="co-benefit-item">
-                <span className="co-benefit-icon">↩️</span>
-                <div className="co-benefit-text">
-                  <strong>30 días</strong> para devoluciones
-                </div>
-              </div>
-              <div className="co-benefit-item">
-                <span className="co-benefit-icon">🛡️</span>
-                <div className="co-benefit-text">
-                  <strong>Garantía</strong> incluida en todos los productos
+                <div className="lcs-co-summary-divider"></div>
+                <div className="lcs-co-summary-row lcs-co-total">
+                  <span className="lcs-co-total-label">Total:</span>
+                  <span className="lcs-co-total-amount">${total.toFixed(2)} MXN</span>
                 </div>
               </div>
             </div>
@@ -628,25 +494,189 @@ const Checkout = () => {
   );
 };
 
+// ✅ COMPONENTE DE ITEM PARA CHECKOUT - MISMAS FUNCIONALIDADES QUE EL CARRITO
 const CheckoutOrderItem = ({ item }) => {
   const [imageStatus, setImageStatus] = useState('loading');
   const [currentImageUrl, setCurrentImageUrl] = useState('');
+  const [imageError, setImageError] = useState(false);
   const imgRef = useRef(null);
   const retryCountRef = useRef(0);
 
+  // ✅ EXACTAMENTE LA MISMA LÓGICA QUE EL CARRITO
   useEffect(() => {
-    if (!item.codigo) {
+    console.log('🖼️ CheckoutOrderItem - Iniciando carga para:', {
+      nombre: item.nombre,
+      codigo: item.codigo,
+      id: item.id
+    });
+
+    if (!item.codigo || item.codigo === 'N/A') {
+      console.warn('⚠️ No hay código válido para:', item.nombre);
       setImageStatus('error');
       return;
     }
 
     retryCountRef.current = 0;
     setImageStatus('loading');
+    setImageError(false);
     
+    // ✅ EXACTAMENTE LA MISMA URL QUE USA EL CARRITO
+    const url = `${IMAGE_BASE_URL}/${item.codigo}?size=full&t=${Date.now()}`;
+    console.log('🔗 URL generada (igual que carrito):', url);
+    setCurrentImageUrl(url);
+  }, [item.codigo, item.nombre, item.id]);
+
+  // ✅ EXACTAMENTE EL MISMO MANEJO DE IMAGENES QUE EL CARRITO
+  useEffect(() => {
+    if (!imgRef.current || !currentImageUrl) return;
+
+    const img = imgRef.current;
+    let isMounted = true;
+    
+    const handleLoad = () => {
+      if (!isMounted) return;
+      console.log('✅ Imagen cargada exitosamente:', currentImageUrl);
+      setImageStatus('loaded');
+    };
+
+    const handleError = () => {
+      if (!isMounted) return;
+      
+      console.error('❌ Error cargando imagen:', {
+        url: currentImageUrl,
+        codigo: item.codigo,
+        retryCount: retryCountRef.current
+      });
+      
+      if (retryCountRef.current < 2) {
+        retryCountRef.current += 1;
+        
+        setTimeout(() => {
+          if (!isMounted) return;
+          const sizes = ['full', 'medium', 'small', ''];
+          const retrySize = sizes[retryCountRef.current] || 'full';
+          const retryUrl = `${IMAGE_BASE_URL}/${item.codigo}${retrySize ? `?size=${retrySize}` : ''}&t=${Date.now()}&retry=${retryCountRef.current}`;
+          console.log('🔄 Reintento', retryCountRef.current, 'con URL:', retryUrl);
+          setCurrentImageUrl(retryUrl);
+          setImageStatus('loading');
+        }, 500);
+      } else {
+        setImageError(true);
+        setImageStatus('error');
+      }
+    };
+
+    img.addEventListener('load', handleLoad);
+    img.addEventListener('error', handleError);
+
+    img.src = currentImageUrl;
+
+    return () => {
+      isMounted = false;
+      img.removeEventListener('load', handleLoad);
+      img.removeEventListener('error', handleError);
+    };
+  }, [currentImageUrl, item.codigo]);
+
+  // ✅ MISMOS ESTILOS Y ESTRUCTURA QUE EL CARRITO
+  const renderImage = () => {
+    if (imageStatus === 'error' || imageError) {
+      return (
+        <div className="lcs-co-order-item-image-error">
+          <div className="lcs-co-error-icon">📷</div>
+          <div className="lcs-co-error-text">Imagen no disponible</div>
+          <small className="lcs-co-error-code">{item.codigo || 'Sin código'}</small>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <img 
+          ref={imgRef}
+          src={currentImageUrl}
+          alt={item.nombre || 'Producto'}
+          className={`lcs-co-order-item-image-img ${imageStatus === 'loaded' ? 'lcs-co-loaded' : 'lcs-co-loading'}`}
+          crossOrigin="anonymous"
+          loading="lazy"
+        />
+        
+        {imageStatus === 'loading' && (
+          <div className="lcs-co-image-loading">
+            <div className="lcs-co-loading-spinner"></div>
+            {retryCountRef.current > 0 && (
+              <div className="lcs-co-retry-text">Intento {retryCountRef.current}</div>
+            )}
+          </div>
+        )}
+      </>
+    );
+  };
+
+  return (
+    <div className="lcs-co-order-item">
+      <div className="lcs-co-order-item-image">
+        {renderImage()}
+      </div>
+
+      <div className="lcs-co-order-item-details">
+        <h4 className="lcs-co-order-item-name">
+          {item.nombre || 'Producto sin nombre'}
+        </h4>
+        <p className="lcs-co-order-item-brand">{item.marca || 'Sin marca'}</p>
+        <p className="lcs-co-order-item-code">Código: {item.codigo || 'N/A'}</p>
+        
+        {item.promociones && item.promociones.length > 0 && (
+          <div className="lcs-co-item-promo">
+            <span className="lcs-co-promo-badge">🔥 Oferta especial</span>
+          </div>
+        )}
+      </div>
+
+      <div className="lcs-co-order-item-quantity">
+        <span className="lcs-co-order-quantity-label">Cantidad:</span>
+        <span className="lcs-co-order-quantity-value">{item.quantity}</span>
+      </div>
+
+      <div className="lcs-co-order-item-total">
+        <div className="lcs-co-order-total-price">
+          ${((item.precioFinal || item.precio) * item.quantity).toFixed(2)} MXN
+        </div>
+        {item.precioFinal !== item.precio && (
+          <div className="lcs-co-order-unit-price">
+            ${(item.precioFinal || item.precio).toFixed(2)} c/u
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ✅ COMPONENTE DE PREVIEW - MISMAS FUNCIONALIDADES QUE EL DROPDOWN DEL CARRITO
+const CheckoutPreviewItem = ({ item }) => {
+  const [imageStatus, setImageStatus] = useState('loading');
+  const [currentImageUrl, setCurrentImageUrl] = useState('');
+  const [imageError, setImageError] = useState(false);
+  const imgRef = useRef(null);
+  const retryCountRef = useRef(0);
+
+  // ✅ EXACTAMENTE LA MISMA LÓGICA QUE EL DROPDOWN DEL CARRITO
+  useEffect(() => {
+    if (!item.codigo || item.codigo === 'N/A') {
+      setImageStatus('error');
+      return;
+    }
+
+    retryCountRef.current = 0;
+    setImageStatus('loading');
+    setImageError(false);
+    
+    // ✅ MISMA URL QUE USA EL DROPDOWN DEL CARRITO
     const url = `${IMAGE_BASE_URL}/${item.codigo}?size=full&t=${Date.now()}`;
     setCurrentImageUrl(url);
   }, [item.codigo]);
 
+  // ✅ EXACTAMENTE EL MISMO MANEJO QUE EL DROPDOWN DEL CARRITO
   useEffect(() => {
     if (!imgRef.current || !currentImageUrl) return;
 
@@ -673,6 +703,7 @@ const CheckoutOrderItem = ({ item }) => {
           setImageStatus('loading');
         }, 500);
       } else {
+        setImageError(true);
         setImageStatus('error');
       }
     };
@@ -689,13 +720,13 @@ const CheckoutOrderItem = ({ item }) => {
     };
   }, [currentImageUrl, item.codigo]);
 
+  // ✅ MISMOS ESTILOS Y ESTRUCTURA QUE EL DROPDOWN DEL CARRITO
   const renderImage = () => {
-    if (imageStatus === 'error') {
+    if (imageStatus === 'error' || imageError) {
       return (
-        <div className="co-order-item-image-error">
-          <div className="co-error-icon">📷</div>
-          <div className="co-error-text">Imagen no disponible</div>
-          <small className="co-error-code">{item.codigo || 'Sin código'}</small>
+        <div className="lcs-co-preview-item-image-error">
+          <div className="lcs-co-error-icon-small">📷</div>
+          <small className="lcs-co-error-text-small">Sin imagen</small>
         </div>
       );
     }
@@ -705,17 +736,17 @@ const CheckoutOrderItem = ({ item }) => {
         <img 
           ref={imgRef}
           src={currentImageUrl}
-          alt={item.nombre || 'Producto Lucesa'}
-          className={`co-order-item-image-img ${imageStatus === 'loaded' ? 'co-loaded' : 'co-loading'}`}
+          alt={item.nombre || 'Producto'}
+          className={`lcs-co-preview-item-image ${imageStatus === 'loaded' ? 'lcs-co-loaded' : 'lcs-co-loading'}`}
           crossOrigin="anonymous"
           loading="lazy"
         />
         
         {imageStatus === 'loading' && (
-          <div className="co-image-loading">
-            <div className="co-loading-spinner"></div>
+          <div className="lcs-co-image-loading-small">
+            <div className="lcs-co-loading-spinner-small"></div>
             {retryCountRef.current > 0 && (
-              <div className="co-retry-text">Intento {retryCountRef.current}</div>
+              <div className="lcs-co-retry-text-small">Intento {retryCountRef.current}</div>
             )}
           </div>
         )}
@@ -723,204 +754,58 @@ const CheckoutOrderItem = ({ item }) => {
     );
   };
 
-  // ✅ Función para generar nombre amigable si no hay nombre
-  const getProductName = () => {
-    if (item.nombre && item.nombre.trim() !== '') {
-      return item.nombre;
-    }
-    
-    if (item.descripcion && item.descripcion.trim() !== '') {
-      return item.descripcion.substring(0, 60) + '...';
-    }
-    
-    if (item.codigo) {
-      return `Producto ${item.codigo}`;
-    }
-    
-    if (item.marca && item.marca.trim() !== '') {
-      return `Producto ${item.marca}`;
-    }
-    
-    return 'Producto Lucesa';
-  };
-
-  // ✅ Función para generar código amigable si no hay código
-  const getProductCode = () => {
-    if (item.codigo && item.codigo.trim() !== '') {
-      return item.codigo;
-    }
-    
-    if (item.id) {
-      return `ID-${item.id}`;
-    }
-    
-    return 'N/A';
-  };
-
   return (
-    <div className="co-order-item">
-      <div className="co-order-item-image">
+    <div className="lcs-co-preview-item">
+      <div className="lcs-co-preview-item-image-container">
         {renderImage()}
       </div>
-
-      <div className="co-order-item-details">
-        <h4 className="co-order-item-name">{getProductName()}</h4>
-        <p className="co-order-item-brand">{item.marca || 'Sin marca'}</p>
-        <p className="co-order-item-code">Código: {getProductCode()}</p>
-        
-        {(!item.nombre || !item.codigo) && (
-          <div className="co-order-item-info">
-            <span className="co-auto-generated-badge">🔄 Nombre generado automáticamente</span>
-          </div>
-        )}
-        
-        {item.promociones && item.promociones.length > 0 && (
-          <div className="co-order-item-promo">
-            <span className="co-order-promo-badge">🔥 Oferta especial</span>
-          </div>
-        )}
+      <div className="lcs-co-preview-info">
+        <span className="lcs-co-preview-name">{item.nombre || `Producto ${item.codigo}`}</span>
+        <span className="lcs-co-preview-brand">{item.marca || 'Sin marca'}</span>
+        <span className="lcs-co-preview-quantity">x{item.quantity}</span>
       </div>
-
-      <div className="co-order-item-quantity">
-        <span className="co-order-quantity-label">Cantidad:</span>
-        <span className="co-order-quantity-value">{item.quantity}</span>
-      </div>
-
-      <div className="co-order-item-total">
-        <div className="co-order-total-price">
-          ${((item.precioFinal || item.precio) * item.quantity).toFixed(2)} MXN
-        </div>
-        <div className="co-order-unit-price">
-          ${typeof item.precioFinal === 'number' ? item.precioFinal.toFixed(2) : parseFloat(item.precioFinal || 0).toFixed(2)} c/u
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const CheckoutPreviewItem = ({ item }) => {
-  const [imageStatus, setImageStatus] = useState('loading');
-  const [currentImageUrl, setCurrentImageUrl] = useState('');
-  const imgRef = useRef(null);
-  const retryCountRef = useRef(0);
-
-  useEffect(() => {
-    if (!item.codigo) {
-      setImageStatus('error');
-      return;
-    }
-
-    retryCountRef.current = 0;
-    setImageStatus('loading');
-    
-    const url = `${IMAGE_BASE_URL}/${item.codigo}?size=small&t=${Date.now()}`;
-    setCurrentImageUrl(url);
-  }, [item.codigo]);
-
-  useEffect(() => {
-    if (!imgRef.current || !currentImageUrl) return;
-
-    const img = imgRef.current;
-    let isMounted = true;
-    
-    const handleLoad = () => {
-      if (!isMounted) return;
-      setImageStatus('loaded');
-    };
-
-    const handleError = () => {
-      if (!isMounted) return;
-      
-      if (retryCountRef.current < 2) {
-        retryCountRef.current += 1;
-        
-        setTimeout(() => {
-          if (!isMounted) return;
-          const sizes = ['small', 'full', 'medium', ''];
-          const retrySize = sizes[retryCountRef.current] || 'small';
-          const retryUrl = `${IMAGE_BASE_URL}/${item.codigo}${retrySize ? `?size=${retrySize}` : ''}&t=${Date.now()}&retry=${retryCountRef.current}`;
-          setCurrentImageUrl(retryUrl);
-          setImageStatus('loading');
-        }, 500);
-      } else {
-        setImageStatus('error');
-      }
-    };
-
-    img.addEventListener('load', handleLoad);
-    img.addEventListener('error', handleError);
-
-    img.src = currentImageUrl;
-
-    return () => {
-      isMounted = false;
-      img.removeEventListener('load', handleLoad);
-      img.removeEventListener('error', handleError);
-    };
-  }, [currentImageUrl, item.codigo]);
-
-  const renderImage = () => {
-    if (imageStatus === 'error') {
-      return (
-        <div className="co-preview-item-image-error">
-          <div className="co-error-icon-small">📷</div>
-        </div>
-      );
-    }
-
-    return (
-      <>
-        <img 
-          ref={imgRef}
-          src={currentImageUrl}
-          alt={item.nombre || 'Producto Lucesa'}
-          className={`co-preview-item-image ${imageStatus === 'loaded' ? 'co-loaded' : 'co-loading'}`}
-          crossOrigin="anonymous"
-          loading="lazy"
-        />
-        
-        {imageStatus === 'loading' && (
-          <div className="co-image-loading-small">
-            <div className="co-loading-spinner-small"></div>
-          </div>
-        )}
-      </>
-    );
-  };
-
-  // ✅ Función para generar nombre amigable si no hay nombre
-  const getProductName = () => {
-    if (item.nombre && item.nombre.trim() !== '') {
-      return item.nombre;
-    }
-    
-    if (item.descripcion && item.descripcion.trim() !== '') {
-      return item.descripcion.substring(0, 30) + '...';
-    }
-    
-    if (item.codigo) {
-      return `Producto ${item.codigo}`;
-    }
-    
-    return 'Producto Lucesa';
-  };
-
-  return (
-    <div className="co-preview-item">
-      <div className="co-preview-item-image-container">
-        {renderImage()}
-      </div>
-      <div className="co-preview-info">
-        <span className="co-preview-name">{getProductName()}</span>
-        <span className="co-preview-brand">{item.marca || 'Sin marca'}</span>
-        <span className="co-preview-code">Código: {item.codigo || 'N/A'}</span>
-        <span className="co-preview-quantity">x{item.quantity}</span>
-      </div>
-      <span className="co-preview-price">
+      <span className="lcs-co-preview-price">
         ${((item.precioFinal || item.precio) * item.quantity).toFixed(2)}
       </span>
     </div>
   );
 };
+
+// ✅ FUNCIÓN DE DEBUG PARA VERIFICAR
+if (process.env.NODE_ENV === 'development') {
+  window.debugCheckoutImages = () => {
+    const cart = JSON.parse(localStorage.getItem('ctonline_cart') || '[]');
+    
+    console.log('🐛 DEBUG CHECKOUT IMAGES');
+    console.log('📦 Total items en carrito:', cart.length);
+    
+    cart.forEach((item, index) => {
+      console.log(`📦 Item ${index + 1}:`, {
+        nombre: item.nombre,
+        codigo: item.codigo,
+        id: item.id,
+        idProducto: item.idProducto,
+        // URL que debería funcionar
+        testUrl: `${IMAGE_BASE_URL}/${item.codigo}`,
+        // Todas las propiedades disponibles
+        propiedades: Object.keys(item).filter(key => 
+          !['addedAt', 'imagen', 'imagenFecha'].includes(key)
+        )
+      });
+      
+      // Probar la URL directamente
+      if (item.codigo) {
+        const testUrl = `${IMAGE_BASE_URL}/${item.codigo}`;
+        console.log(`   🔗 Test URL: ${testUrl}`);
+        
+        // Crear imagen de prueba
+        const img = new Image();
+        img.onload = () => console.log(`   ✅ URL funciona: ${testUrl}`);
+        img.onerror = () => console.log(`   ❌ URL falla: ${testUrl}`);
+        img.src = testUrl;
+      }
+    });
+  };
+}
 
 export default Checkout;
