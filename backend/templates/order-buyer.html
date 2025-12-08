@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Pedido - Lucesa</title>
+    <style>
+        /* Reset CSS */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .greeting {
+            margin-bottom: 30px;
+        }
+        
+        .greeting h2 {
+            color: #333333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .order-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #555555;
+        }
+        
+        .info-value {
+            color: #333333;
+        }
+        
+        .products-section {
+            margin: 30px 0;
+        }
+        
+        .products-section h3 {
+            color: #333333;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .product-item:last-child {
+            border-bottom: none;
+        }
+        
+        .product-name {
+            flex: 2;
+            font-weight: 500;
+        }
+        
+        .product-details {
+            flex: 2;
+            color: #666666;
+            font-size: 14px;
+        }
+        
+        .product-quantity {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .product-price {
+            flex: 1;
+            text-align: right;
+            font-weight: 600;
+        }
+        
+        .total-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .grand-total {
+            font-size: 20px;
+            font-weight: 700;
+            color: #2E7D32;
+            border-top: 2px solid #e0e0e0;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+        
+        .cta-button:hover {
+            background: #3d8b40;
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 40px 0 30px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #666666;
+            font-size: 14px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .footer p {
+            margin: 5px 0;
+        }
+        
+        .footer a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                border-radius: 0;
+            }
+            
+            .content {
+                padding: 20px 15px;
+            }
+            
+            .product-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            
+            .product-quantity, .product-price {
+                text-align: left;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ ¡Pedido Confirmado!</h1>
+            <p>Gracias por tu compra en Lucesa Distribucion.</p>
+        </div>
+        
+        <div class="content">
+            <div class="greeting">
+                <h2>Hola {{buyerName}},</h2>
+                <p>Tu pedido ha sido confirmado exitosamente. A continuación encontrarás el resumen de tu compra.</p>
+            </div>
+            
+            <div class="order-info">
+                <div class="info-row">
+                    <span class="info-label">Número de orden:</span>
+                    <span class="info-value">{{orderNumber}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Fecha:</span>
+                    <span class="info-value">{{orderDate}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Estado:</span>
+                    <span class="info-value" style="color: #4CAF50; font-weight: 600;">Confirmado</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Método de pago:</span>
+                    <span class="info-value">{{paymentMethod}}</span>
+                </div>
+            </div>
+            
+            {{#if products.length}}
+            <div class="products-section">
+                <h3>Productos comprados:</h3>
+                {{#each products}}
+                <div class="product-item">
+                    <span class="product-name">{{this.name}}</span>
+                    <span class="product-quantity">Cantidad: {{this.quantity}}</span>
+                    <span class="product-price">${{this.totalPrice}}</span>
+                </div>
+                {{/each}}
+            </div>
+            {{/if}}
+            
+            <div class="total-section">
+                <div class="total-row grand-total">
+                    <span>Total:</span>
+                    <span>${{totalAmount}} MXN</span>
+                </div>
+            </div>
+            
+            {% comment %} <div class="button-container">
+                <a href="{{orderLink}}" class="cta-button">Ver detalle de mi pedido</a>
+            </div> {% endcomment %}
+            
+            <p style="color: #666666; font-size: 14px; text-align: center; margin-top: 20px;">
+                Si tienes alguna pregunta sobre tu pedido, no dudes en contactarnos.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; {{currentYear}} Lucesa Distribucion. Todos los derechos reservados.</p>
+            <p>Este es un mensaje automático, por favor no respondas a este correo.</p>
+            <p><a href="{{frontendUrl}}">Visita nuestra tienda</a></p>
+        </div>
+    </div>
+</body>
+</html>

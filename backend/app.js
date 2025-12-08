@@ -13,17 +13,15 @@ const logger = require('./utils/logger');
 const imageProxyRoutes = require('./routes/imageProxy');
 const categoriasRoutes = require('./routes/categorias');
 const orderRoutes = require('./routes/ordersG');
-const paymentsRoutes = require('./routes/paymentsG'); // ✅ Asegúrate que esta línea esté presente
+const paymentsRoutes = require('./routes/paymentsG');
 const warrantyRoutes = require('./routes/warranties');
 const returnRoutes = require('./routes/returns');
 const favoritesRoutesG = require('./routes/favoritesRoutesG');
-
-// Importar las rutas principales que tenías en serverG.js
 const mainRoutesG = require('./routes/mainRoutesG');
 
 const app = express();
 
-// Configuración CORS (manteniendo tu configuración actual)
+// Configuración CORS
 app.use(cors({
   origin: [
     'http://localhost:5173',
@@ -38,7 +36,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
-// Middlewares básicos (incluyendo los límites que tenías en serverG.js)
+// Middlewares básicos
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -57,7 +55,7 @@ app.use('/api/images', imageProxyRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/orders', orderRoutes);
-app.use('/api/payments', paymentsRoutes); // ✅ Asegúrate que esta línea esté presente
+app.use('/api/payments', paymentsRoutes);
 app.use('/api/warranties', warrantyRoutes);
 app.use('/api/returns', returnRoutes);
 app.use('/api/favorites', favoritesRoutesG);
@@ -65,7 +63,7 @@ app.use('/api/favorites', favoritesRoutesG);
 // Agregar las rutas principales de serverG.js bajo el prefijo /api
 app.use('/api', mainRoutesG);
 
-// Ruta de health check (mejorada)
+// Ruta de health check
 app.get('/', (req, res) => {
   res.json({
     message: 'API Server funcionando',
@@ -76,13 +74,14 @@ app.get('/', (req, res) => {
       ctonline: '/api/ctonline',
       debug: '/api/debug',
       usuarios: '/api/usuarios',
-      payments: '/api/payments', // ✅ Añadir payments a la lista
+      orders: '/api/orders',
+      payments: '/api/payments',
       main: '/api'
     }
   });
 });
 
-// Mantener la ruta de prueba de serverG.js en la misma ubicación
+// Ruta de prueba
 app.get('/api/test', (req, res) => {
   res.json({
     message: 'API funcionando correctamente',
@@ -90,7 +89,7 @@ app.get('/api/test', (req, res) => {
   });
 });
 
-// Manejo de errores (debe ir al final)
+// Manejo de errores
 app.use(errorHandler.notFound);
 app.use(errorHandler.general);
 

@@ -6,11 +6,11 @@ const app = require('./app');
 const ftpService = require('./services/ftpService');
 const logger = require('./utils/logger');
 
-// Importar y ejecutar la conexión a la base de datos (de serverG.js)
+// Importar y ejecutar la conexión a la base de datos
 const db = require('./config/db');
 
 // Configuración
-const PORT = process.env.PORT || 3000; // Cambiado a 3000 como en serverG.js
+const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Variables globales para manejo graceful shutdown
@@ -104,7 +104,7 @@ function setupGracefulShutdown() {
   // Manejar diferentes señales de terminación
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
-  process.on('SIGUSR2', () => shutdown('SIGUSR2')); // Para nodemon
+  process.on('SIGUSR2', () => shutdown('SIGUSR2'));
   
   // Manejar uncaught exceptions
   process.on('uncaughtException', (error) => {
@@ -160,7 +160,7 @@ async function startServer() {
       logger.success(`📍 Test Route: http://${HOST}:${PORT}/api/test`);
       logger.success(`${'='.repeat(50)}`);
       
-      // Mostrar rutas disponibles (actualizado)
+      // Mostrar rutas disponibles
       logger.info('📋 ENDPOINTS DISPONIBLES:');
       logger.info(`   GET  /                              - Health check`);
       logger.info(`   GET  /api/test                      - Ruta de prueba`);
@@ -172,7 +172,9 @@ async function startServer() {
       logger.info(`   GET  /api/ctonline/almacenes        - Almacenes`);
       logger.info(`   GET  /api/ctonline/producto/:codigo/:almacen - Detalle producto`);
       logger.info(`   GET  /api/ctonline/promocion/:codigo - Promoción por código`);
-      // Agregar aquí las rutas de mainRoutesG si las conoces
+      logger.info(`   GET  /api/orders/history            - Historial de órdenes`);
+      logger.info(`   POST /api/orders                    - Crear orden`);
+      logger.info(`   POST /api/payments/create-preference - Crear preferencia MP`);
       logger.info(`${'='.repeat(50)}`);
     });
 
@@ -230,7 +232,7 @@ function checkDependencies() {
 
 // Iniciar aplicación
 if (require.main === module) {
-  // Cargar variables de entorno (como en serverG.js)
+  // Cargar variables de entorno
   require('dotenv').config();
   
   // Verificar dependencias primero

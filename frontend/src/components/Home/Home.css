@@ -47,7 +47,7 @@
     text-align: center;
     font-size: 2.5rem;
     font-weight: 700;
-    color: #ffffff;
+    color: #16395C;
     margin-bottom: 1rem;
     position: relative;
 }
@@ -80,7 +80,7 @@
 
 .categorias-home {
     padding: 5rem 0;
-    background: linear-gradient(135deg, #ffffff 0%, #0f4780 100%);
+    background: #ffffff;
     position: relative;
     overflow: hidden;
     margin-top: 0;
@@ -456,7 +456,6 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, #4895CF, #7CCBDD);;
 }
 
 .mas-productos-home {
@@ -560,7 +559,7 @@
 
 .beneficios-compactos-home {
     padding: 5rem 0;
-    background: linear-gradient(135deg, #ffffff 0%, #0f4780 100%);
+   
     position: relative;
 }
 

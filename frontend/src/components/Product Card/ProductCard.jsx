@@ -574,12 +574,12 @@ const ProductCard = ({ product, onQuickView, onAddToCart }) => {
                     >
                         Vista Rápida
                     </button>
-                    <button 
+                    {/* <button 
                         className="btn-mobile-pcard btn-details-mobile-pcard"
                         onClick={handleViewDetailsPcard}
                     >
                         Ver Detalles
-                    </button>
+                    </button> */}
                 </div>
             </div>
         </div>

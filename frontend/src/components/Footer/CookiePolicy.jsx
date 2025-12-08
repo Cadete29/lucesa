@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './LegalPages.css';
+import './Cok.css';
 
 const CookiePolicy = () => {
   const [showDetails, setShowDetails] = useState({
