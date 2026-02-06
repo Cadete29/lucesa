@@ -3,23 +3,121 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import './OrderConfirmation.css';
 
+/**
+ * ORDER CONFIRMATION COMPONENT
+ * 
+ * Componente para mostrar la confirmación de un pedido exitoso.
+ * Maneja la visualización de detalles de la orden, envío de correos de confirmación
+ * y proporciona herramientas de depuración para desarrollo.
+ * 
+ * Características principales:
+ * - Visualización detallada de pedidos confirmados
+ * - Sistema de envío de correos de confirmación al comprador y vendedor
+ * - Recuperación de órdenes desde múltiples fuentes (state, localStorage, API)
+ * - Herramientas de depuración y diagnóstico para desarrollo
+ * - Manejo de errores y estados de carga
+ * 
+ * @component
+ * @example
+ * // Redirección después de pago exitoso
+ * navigate('/order-confirmation', { state: orderData });
+ */
+
+/**
+ * URL base de la API según entorno
+ * @constant {string} API_BASE_URL
+ */
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://testpaginaweb.shop/api'
+  ? 'https://lucesademexico-shop.com.mx/api'
   : 'http://localhost:4004/api';
 
+/**
+ * Componente OrderConfirmation - Confirmación de pedido
+ * 
+ * Este componente maneja:
+ * 1. Recuperación de datos de orden desde múltiples fuentes
+ * 2. Envío de correos de confirmación al comprador y vendedor
+ * 3. Visualización detallada de productos y totales
+ * 4. Herramientas de depuración para diagnóstico
+ * 5. Estados de error y recuperación
+ * 
+ * @returns {JSX.Element} Componente de confirmación de orden
+ */
 const OrderConfirmation = () => {
+  // ==========================================================================
+  // HOOKS DE RUTA Y CONTEXTO
+  // ==========================================================================
+  
+  /**
+   * Hook de ubicación de React Router
+   * @const {Object} location - Objeto de ubicación actual con state
+   */
   const location = useLocation();
+  
+  /**
+   * Hook de navegación de React Router
+   * @const {function} navigate - Función para navegar entre rutas
+   */
   const navigate = useNavigate();
+  
+  /**
+   * Contexto de autenticación
+   * @const {Object} authContext - Contexto de autenticación
+   * @const {Object} user - Usuario autenticado
+   */
   const { user } = useAuth();
+  
+  // ==========================================================================
+  // ESTADOS DEL COMPONENTE
+  // ==========================================================================
+  
+  /**
+   * @state {Object|null} orderData - Datos completos de la orden
+   */
   const [orderData, setOrderData] = useState(null);
+  
+  /**
+   * @state {boolean} loading - Estado de carga inicial
+   */
   const [loading, setLoading] = useState(true);
+  
+  /**
+   * @state {string|null} error - Mensaje de error si ocurre
+   */
   const [error, setError] = useState(null);
+  
+  /**
+   * @state {Object} emailStatus - Estado de envío de correos
+   * @property {string} buyer - Estado para correo del comprador
+   * @property {string} seller - Estado para correo del vendedor
+   * Valores: 'pending', 'sending', 'sent', 'failed'
+   */
   const [emailStatus, setEmailStatus] = useState({
     buyer: 'pending',
     seller: 'pending'
   });
+  
+  /**
+   * @state {Object|null} debugInfo - Información de depuración
+   */
   const [debugInfo, setDebugInfo] = useState(null);
-
+  
+  // ==========================================================================
+  // EFECTO PRINCIPAL: CARGA DE DATOS Y ENVÍO DE CORREOS
+  // ==========================================================================
+  
+  /**
+   * Efecto principal que se ejecuta al montar el componente
+   * Busca datos de orden en múltiples fuentes y envía correos de confirmación
+   * 
+   * Orden de búsqueda:
+   * 1. State de la ruta (location.state)
+   * 2. localStorage (almacenamiento local)
+   * 3. API del backend (última orden del usuario)
+   * 
+   * @effect
+   * @dependencies [location.state, user] - Se ejecuta al cambiar estos valores
+   */
   useEffect(() => {
     console.log('🔍 OrderConfirmation - Montando componente');
     console.log('📍 Location state:', location.state);
@@ -119,7 +217,19 @@ const OrderConfirmation = () => {
 
     fetchOrderDetails();
   }, [location.state, user]);
-
+  
+  // ==========================================================================
+  // FUNCIONES DE ENVÍO DE CORREOS
+  // ==========================================================================
+  
+  /**
+   * Envía correos de confirmación al comprador y notificación al vendedor
+   * 
+   * @async
+   * @function sendOrderConfirmationEmails
+   * @param {Object} order - Datos de la orden a confirmar
+   * @throws {Error} Si falla el envío de correos
+   */
   const sendOrderConfirmationEmails = async (order) => {
     try {
       console.log('='.repeat(60));
@@ -230,8 +340,13 @@ const OrderConfirmation = () => {
       setEmailStatus({ buyer: 'failed', seller: 'failed' });
     }
   };
-
-  // Función para forzar envío de correos después de un tiempo
+  
+  /**
+   * Envía correos después de un timeout si no se enviaron inicialmente
+   * 
+   * @effect
+   * @dependencies [orderData, user, emailStatus.buyer]
+   */
   useEffect(() => {
     const forceSendEmailsTimer = setTimeout(() => {
       if (orderData && user && emailStatus.buyer === 'pending') {
@@ -242,7 +357,18 @@ const OrderConfirmation = () => {
 
     return () => clearTimeout(forceSendEmailsTimer);
   }, [orderData, user, emailStatus.buyer]);
-
+  
+  // ==========================================================================
+  // FUNCIONES DE DIAGNÓSTICO Y DEPURACIÓN
+  // ==========================================================================
+  
+  /**
+   * Ejecuta un diagnóstico de los datos de correo
+   * Envía los datos al backend para análisis y muestra los resultados
+   * 
+   * @async
+   * @function testEmailDataDiagnostic
+   */
   const testEmailDataDiagnostic = async () => {
     try {
       const token = localStorage.getItem('lucesa-token');
@@ -307,7 +433,14 @@ const OrderConfirmation = () => {
       alert('Error de conexión en diagnóstico');
     }
   };
-
+  
+  /**
+   * Reenvía los correos de confirmación
+   * Útil cuando falla el envío inicial
+   * 
+   * @async
+   * @function resendEmails
+   */
   const resendEmails = async () => {
     if (!orderData || !user) {
       alert('No hay datos de orden o usuario');
@@ -369,7 +502,13 @@ const OrderConfirmation = () => {
       setEmailStatus({ buyer: 'failed', seller: 'failed' });
     }
   };
-
+  
+  /**
+   * Prueba el servicio de correos enviando un correo de prueba
+   * 
+   * @async
+   * @function testEmailService
+   */
   const testEmailService = async () => {
     try {
       const token = localStorage.getItem('lucesa-token');
@@ -406,7 +545,13 @@ const OrderConfirmation = () => {
       alert('Error de conexión');
     }
   };
-
+  
+  /**
+   * Muestra información detallada de depuración en consola
+   * Guarda los datos en localStorage para análisis posterior
+   * 
+   * @function debugOrder
+   */
   const debugOrder = () => {
     if (!orderData) {
       alert('No hay datos de orden');
@@ -447,7 +592,14 @@ const OrderConfirmation = () => {
     
     alert('✅ Datos de orden guardados en consola y localStorage\n\nRevisa la consola del navegador (F12) para ver los detalles.');
   };
-
+  
+  // ==========================================================================
+  // ESTADOS DE CARGA
+  // ==========================================================================
+  
+  /**
+   * Estado de carga: muestra spinner y mensaje
+   */
   if (loading) {
     return (
       <div className="oc-page">
@@ -461,7 +613,14 @@ const OrderConfirmation = () => {
       </div>
     );
   }
-
+  
+  // ==========================================================================
+  // ESTADOS DE ERROR
+  // ==========================================================================
+  
+  /**
+   * Estado de error: muestra mensaje y opciones de recuperación
+   */
   if (error) {
     return (
       <div className="oc-page">
@@ -482,7 +641,10 @@ const OrderConfirmation = () => {
       </div>
     );
   }
-
+  
+  /**
+   * Estado sin datos de orden: guía al usuario
+   */
   if (!orderData) {
     return (
       <div className="oc-page">
@@ -506,8 +668,14 @@ const OrderConfirmation = () => {
       </div>
     );
   }
-
-  // Extraer datos con valores por defecto
+  
+  // ==========================================================================
+  // EXTRACCIÓN Y FORMATEO DE DATOS
+  // ==========================================================================
+  
+  /**
+   * Extrae y formatea datos de la orden para renderizado
+   */
   const orderNumber = orderData.order_number || orderData.orderNumber || orderData.orderId || 'N/A';
   const total = orderData.total || orderData.total_amount || 0;
   const subtotal = orderData.subtotal || orderData.subtotal || 0;
@@ -524,66 +692,36 @@ const OrderConfirmation = () => {
     itemsCount: cartItems.length,
     emailStatus
   });
-
+  
+  // ==========================================================================
+  // RENDERIZADO PRINCIPAL
+  // ==========================================================================
+  
   return (
     <div className="oc-page">
       <div className="oc-container">
         <div className="oc-card">
+          {/* ENCABEZADO DE CONFIRMACIÓN */}
           <div className="oc-header">
             <div className="oc-success-icon">✅</div>
             <h1 className="oc-title">¡Pedido Confirmado!</h1>
             <p className="oc-order-number">Número de orden: <strong>{orderNumber}</strong></p>
             
-            {/* Estado de correos */}
-            {/* <div className="oc-email-status">
-              <div className={`oc-email-status-item ${emailStatus.buyer}`}>
-                <span className="oc-email-status-icon">
-                  {emailStatus.buyer === 'sent' ? '✅' : 
-                   emailStatus.buyer === 'sending' ? '⏳' : 
-                   emailStatus.buyer === 'failed' ? '❌' : '📧'}
-                </span>
-                <span className="oc-email-status-text">
-                  {emailStatus.buyer === 'sent' ? 'Correo enviado al comprador' : 
-                   emailStatus.buyer === 'sending' ? 'Enviando correo...' : 
-                   emailStatus.buyer === 'failed' ? 'Error enviando correo' : 'Correo pendiente'}
-                </span>
-              </div>
-              
-              {emailStatus.seller === 'sent' && (
-                <div className="oc-email-status-item sent">
-                  <span className="oc-email-status-icon">✅</span>
-                  <span className="oc-email-status-text">Notificación enviada al vendedor</span>
-                </div>
-              )}
-              
-              {(emailStatus.buyer === 'failed' || emailStatus.seller === 'failed') && (
-                <button 
-                  onClick={resendEmails}
-                  className="oc-resend-btn"
-                  disabled={emailStatus.buyer === 'sending' || emailStatus.seller === 'sending'}
-                >
-                  {emailStatus.buyer === 'sending' ? 'Enviando...' : 'Reenviar correos'}
-                </button>
-              )}
-            </div> */}
+            {/* Estado de correos (comentado por ahora) */}
+            {/* <div className="oc-email-status">...</div> */}
             
+            {/* Información de depuración (comentado por ahora) */}
             {/* {debugInfo && (
-              <div className="oc-debug-info">
-                <details>
-                  <summary>📊 Información de depuración</summary>
-                  <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-                </details>
-              </div>
+              <div className="oc-debug-info">...</div>
             )} */}
             
+            {/* Badge LUCESA (comentado por ahora) */}
             {/* {orderNumber.startsWith('LUCESA-') && (
-              <div className="oc-lucesa-badge">
-                <span className="oc-lucesa-icon">🏭</span>
-                <span className="oc-lucesa-text">Orden LUCESA</span>
-              </div>
+              <div className="oc-lucesa-badge">...</div>
             )} */}
           </div>
 
+          {/* DETALLES DE LA ORDEN */}
           <div className="oc-details">
             {/* Sección de productos */}
             <div className="oc-products-section">
@@ -709,7 +847,7 @@ const OrderConfirmation = () => {
             </div>
           </div>
 
-          {/* Acciones */}
+          {/* ACCIONES */}
           <div className="oc-actions">
             <Link to="/products" className="oc-btn oc-btn-primary">
               Seguir Comprando
@@ -718,61 +856,11 @@ const OrderConfirmation = () => {
               Ver Mis Pedidos
             </Link>
             
-            <div className="oc-debug-actions">
-              {/* <button 
-                onClick={debugOrder}
-                className="oc-btn oc-btn-tertiary"
-                title="Ver datos técnicos de la orden"
-              >
-                Depurar Orden
-              </button>
-              
-              <button 
-                onClick={testEmailDataDiagnostic}
-                className="oc-btn oc-btn-diagnostic"
-                style={{ 
-                  background: '#00cec9', 
-                  color: 'white',
-                  fontSize: '0.9em',
-                  padding: '8px 16px'
-                }}
-                title="Diagnosticar datos de correo"
-              >
-                🧪 Diagnosticar
-              </button>
-              
-              <button 
-                onClick={testEmailService}
-                className="oc-btn oc-btn-test-email"
-                style={{ 
-                  background: '#6c5ce7', 
-                  color: 'white',
-                  fontSize: '0.9em',
-                  padding: '8px 16px'
-                }}
-                title="Probar servicio de correos"
-              >
-                📧 Probar Correo
-              </button> */}
-              
-              {(emailStatus.buyer === 'failed' || emailStatus.seller === 'failed') && (
-                <button 
-                  onClick={resendEmails}
-                  className="oc-btn oc-btn-emergency"
-                  style={{ 
-                    background: '#ff6b6b', 
-                    color: 'white',
-                    fontSize: '0.9em',
-                    padding: '8px 16px'
-                  }}
-                >
-                  🔄 Reenviar
-                </button>
-              )}
-            </div>
+            {/* Acciones de depuración (comentadas por ahora) */}
+            {/* <div className="oc-debug-actions">...</div> */}
           </div>
 
-          {/* Información adicional */}
+          {/* INFORMACIÓN ADICIONAL */}
           <div className="oc-additional-info">
             <div className="oc-info-item">
               <span className="oc-info-icon">🚚</span>

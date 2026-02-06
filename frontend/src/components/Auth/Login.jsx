@@ -6,26 +6,109 @@ import { useAuth } from '../../context/AuthContext';
 import './Auth.css';
 
 /**
- * Componente de inicio de sesión
- * Maneja autenticación con credenciales y redes sociales
+ * LOGIN COMPONENT
+ * 
+ * Componente de inicio de sesión para la aplicación Lucesa.
+ * Maneja autenticación tradicional con email/contraseña y opcionalmente
+ * integración con proveedores OAuth (Google, Facebook).
+ * 
+ * Características principales:
+ * - Formulario de login con email y contraseña
+ * - Validación de campos en tiempo real
+ * - Manejo de estados de carga y errores
+ * - Redirección inteligente a la página anterior
+ * - Opción para credenciales de demo (modo desarrollo)
+ * - Enlaces para recuperación de contraseña y registro
+ * - Diseño responsive y accesible
+ * 
+ * @component
+ * @example
+ * // Uso en rutas públicas
+ * <Route path="/login" element={<Login />} />
+ */
+
+/**
+ * Componente Login - Página de inicio de sesión
+ * 
+ * Este componente maneja:
+ * 1. Autenticación tradicional con email y contraseña
+ * 2. Integración opcional con proveedores sociales (OAuth)
+ * 3. Redirección post-login a la página anterior
+ * 4. Manejo de estados de carga y errores
+ * 5. Formulario con validación básica
+ * 
+ * @returns {JSX.Element} Componente de página de login
  */
 const Login = () => {
+  // ==========================================================================
+  // ESTADOS DEL COMPONENTE
+  // ==========================================================================
+  
+  /**
+   * @state {Object} formData - Datos del formulario de login
+   * @property {string} email - Email del usuario
+   * @property {string} password - Contraseña del usuario
+   */
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  
+  /**
+   * @state {string} error - Mensaje de error para mostrar al usuario
+   */
   const [error, setError] = useState('');
+  
+  /**
+   * @state {boolean} loading - Estado de carga durante autenticación
+   */
   const [loading, setLoading] = useState(false);
 
+  // ==========================================================================
+  // HOOKS DE ROUTER Y CONTEXTO
+  // ==========================================================================
+  
+  /**
+   * Contexto de autenticación para funciones de login
+   * @const {Object} authContext - Contexto de autenticación
+   * @const {function} login - Función para login tradicional
+   * @const {function} socialLogin - Función para login con redes sociales
+   */
   const { login, socialLogin } = useAuth();
+  
+  /**
+   * Hook de navegación para redirigir después del login
+   * @const {function} navigate - Función de navegación de React Router
+   */
   const navigate = useNavigate();
+  
+  /**
+   * Hook para obtener la ubicación actual y estado de navegación
+   * @const {Object} location - Objeto de ubicación de React Router
+   */
   const location = useLocation();
 
-  // Obtener la ruta previa o redirigir al home
+  // ==========================================================================
+  // LÓGICA DE REDIRECCIÓN
+  // ==========================================================================
+  
+  /**
+   * Determina a dónde redirigir después del login exitoso
+   * Intenta redirigir a la página anterior, o al home por defecto
+   * @constant {string} from - Ruta de destino post-login
+   */
   const from = location.state?.from?.pathname || '/';
 
+  // ==========================================================================
+  // MANEJADORES DE EVENTOS
+  // ==========================================================================
+  
   /**
    * Maneja cambios en los campos del formulario
+   * Actualiza el estado del formulario y limpia errores
+   * 
+   * @function handleChange
+   * @param {Object} e - Evento del input
    */
   const handleChange = (e) => {
     setFormData({
@@ -36,32 +119,45 @@ const Login = () => {
   };
 
   /**
-   * Maneja el envío del formulario de login
+   * Maneja el envío del formulario de login tradicional
+   * Valida campos, ejecuta login y maneja resultados
+   * 
+   * @async
+   * @function handleSubmit
+   * @param {Object} e - Evento del formulario
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    // Validaciones básicas
+    // Validaciones básicas del formulario
     if (!formData.email || !formData.password) {
       setError('Por favor completa todos los campos');
       setLoading(false);
       return;
     }
 
+    // Intentar login con las credenciales proporcionadas
     const result = await login(formData.email, formData.password);
     
     if (result.success) {
+      // Redirigir a la página anterior o al home
       navigate(from, { replace: true });
     } else {
+      // Mostrar error al usuario
       setError(result.error);
     }
     setLoading(false);
   };
 
   /**
-   * Maneja login con redes sociales
+   * Maneja login con proveedores sociales (OAuth)
+   * Ejecuta flujo de autenticación social y maneja resultados
+   * 
+   * @async
+   * @function handleSocialLogin
+   * @param {string} provider - Proveedor social ('google' o 'facebook')
    */
   const handleSocialLogin = async (provider) => {
     setLoading(true);
@@ -79,6 +175,8 @@ const Login = () => {
 
   /**
    * Rellena automáticamente las credenciales de demo
+   * Útil para desarrollo y pruebas
+   * @function fillDemoCredentials
    */
   const fillDemoCredentials = () => {
     setFormData({
@@ -87,19 +185,25 @@ const Login = () => {
     });
   };
 
+  // ==========================================================================
+  // RENDERIZADO PRINCIPAL
+  // ==========================================================================
+  
   return (
     <main className="auth-main">
       <section className="auth-section">
         <div className="container">
+          {/* Tarjeta principal de autenticación */}
           <div className="auth-card-compact">
-            {/* Header de la tarjeta */}
+            
+            {/* Header de la tarjeta con icono y título */}
             <div className="auth-header">
               <div className="auth-icon">🔐</div>
               <h2 className="auth-title">Iniciar Sesión</h2>
               <p className="auth-subtitle">Bienvenido de nuevo a Lucesa</p>
             </div>
 
-            {/* Mostrar errores */}
+            {/* Mostrar mensajes de error si existen */}
             {error && (
               <div className="auth-error-compact">
                 <span className="error-icon">⚠️</span>
@@ -107,7 +211,8 @@ const Login = () => {
               </div>
             )}
 
-            {/* Botón de credenciales demo */}
+            {/* Botón de credenciales demo (comentado en producción) */}
+            {/* 
             <div className="demo-credentials">
               <button 
                 type="button" 
@@ -115,12 +220,14 @@ const Login = () => {
                 className="btn-demo"
                 disabled={loading}
               >
-                Usar Credenciales de Demo
+                Usar Credenciales de Demo (Solo pruebas)
               </button>
             </div>
+            */}
 
-            {/* Formulario de login */}
+            {/* Formulario de login con email y contraseña */}
             <form onSubmit={handleSubmit} className="auth-form">
+              {/* Campo de email */}
               <div className="form-group">
                 <input
                   type="email"
@@ -134,6 +241,7 @@ const Login = () => {
                 />
               </div>
 
+              {/* Campo de contraseña */}
               <div className="form-group">
                 <input
                   type="password"
@@ -147,14 +255,14 @@ const Login = () => {
                 />
               </div>
 
-              {/* Opciones adicionales */}
+              {/* Opciones adicionales del formulario */}
               <div className="auth-options">
                 <Link to="/forgot-password" className="forgot-password">
                   ¿Olvidaste tu contraseña?
                 </Link>
               </div>
 
-              {/* Botón de submit */}
+              {/* Botón de envío del formulario */}
               <button 
                 type="submit" 
                 className="btn-auth-primary"
@@ -171,15 +279,18 @@ const Login = () => {
               </button>
             </form>
 
-            {/* Separador para login social */}
-            {/* <div className="auth-separator-corrected">
+            {/* Separador para login social (comentado en producción) */}
+            {/*
+            <div className="auth-separator-corrected">
               <div className="separator-line"></div>
               <div className="separator-text">o continúa con</div>
               <div className="separator-line"></div>
-            </div> */}
+            </div>
+            */}
 
-            {/* Botones de redes sociales */}
-            {/* <div className="social-buttons-compact">
+            {/* Botones de redes sociales (comentado en producción) */}
+            {/*
+            <div className="social-buttons-compact">
               <button
                 type="button"
                 onClick={() => handleSocialLogin('google')}
@@ -206,9 +317,10 @@ const Login = () => {
                 </svg>
                 Facebook
               </button>
-            </div> */}
+            </div>
+            */}
 
-            {/* Enlace a registro */}
+            {/* Pie de página con enlace a registro */}
             <div className="auth-footer">
               <p>
                 ¿No tienes cuenta?{' '}

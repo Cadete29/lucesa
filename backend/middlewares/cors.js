@@ -15,7 +15,7 @@ const corsOptions = {
       'http://localhost:3000', // React dev server
       'http://127.0.0.1:5173',
       'http://127.0.0.1:3000',
-      'https://testpaginaweb.shop', // En producción
+      'https://lucesademexico-shop.com.mx', // En producción
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {

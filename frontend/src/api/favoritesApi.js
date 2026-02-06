@@ -1,6 +1,6 @@
 // Configuración base de la API - Desarrollo y Producción
 const API_BASE_URL = (process.env.NODE_ENV === 'production' 
-  ? 'https://testpaginaweb.shop/api'
+  ? 'https://lucesademexico-shop.com.mx/api'
   : 'http://localhost:4004/api');
 
 // Headers comunes para las requests

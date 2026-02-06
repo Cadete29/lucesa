@@ -2,7 +2,7 @@
 
 // ✅ Configuración de URLs por entorno
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://testpaginaweb.shop/api'
+  ? 'https://lucesademexico-shop.com.mx/api'
   : 'http://localhost:4004/api';
 
 // Helper para hacer requests

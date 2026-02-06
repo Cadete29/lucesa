@@ -12,13 +12,13 @@ import './ProductDetails.css';
 
 // ✅ Configuración de URLs por entorno
 const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://testpaginaweb.shop/api/images/code'
+  ? 'https://lucesademexico-shop.com.mx/api/images/code'
   : 'http://localhost:4004/api/images/code';
 
-// ✅ CONFIGURACIÓN DEL PORCENTAJE ADICIONAL
+// ✅ CONFIGURACIÓN DEL PORCENTAJE ADICIONAL (SINCRONIZADA)
 const PORCENTAJE_ADICIONAL = 10; // 10% adicional a todos los productos
 
-// ✅ Función para agregar el porcentaje adicional (SINCRONIZADA CON PRODUCTS.JSX)
+// ✅ Función para agregar el porcentaje adicional (SINCRONIZADA)
 const agregarPorcentajeAdicional = (precio) => {
   if (!precio || typeof precio !== 'number' || isNaN(precio) || precio <= 0) {
     return 0;
@@ -26,291 +26,138 @@ const agregarPorcentajeAdicional = (precio) => {
   return precio * (1 + (PORCENTAJE_ADICIONAL / 100));
 };
 
-// ✅ FUNCIONES OPTIMIZADAS CON MEMOIZACIÓN (SINCRONIZADAS)
-const isDevelopment = process.env.NODE_ENV === 'development';
-const log = (...args) => isDevelopment && console.log(...args);
-const warn = (...args) => isDevelopment && console.warn(...args);
-
-// ✅ CACHE GLOBAL PARA EVITAR CÁLCULOS REPETIDOS (SINCRONIZADO)
-const precioCacheDetails = new Map();
-const promocionCacheDetails = new Map();
-const procesamientoCacheDetails = new Map();
-
-// ✅ OPTIMIZAR: Usar fecha estática durante la sesión (SINCRONIZADO)
-const fechaActualDetails = new Date();
-
-// ✅ OPTIMIZAR: Función rápida para obtener precio con descuento (SINCRONIZADA)
-const esPromocionVigenteDetails = (promocion) => {
-  if (!promocion || !promocion.vigencia) return false;
-  
-  const inicio = new Date(promocion.vigencia.inicio);
-  const fin = new Date(promocion.vigencia.fin);
-  
-  if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
-    return false;
-  }
-  
-  return fechaActualDetails >= inicio && fechaActualDetails <= fin;
-};
-
-// ✅ OPTIMIZAR: Función rápida para obtener precio con descuento (SINCRONIZADA)
-const obtenerPrecioConDescuentoDetails = (producto, promocion) => {
-  const cacheKey = `descuento_details_${producto.codigo}_${JSON.stringify(promocion)}`;
-  if (precioCacheDetails.has(cacheKey)) {
-    return precioCacheDetails.get(cacheKey);
-  }
-  
-  if (!promocion) {
-    precioCacheDetails.set(cacheKey, null);
-    return null;
-  }
-  
-  const precioOriginal = producto.precio || 0;
-  let precioConDescuento = null;
-  
-  // Precio directo
-  if (promocion.promocion !== undefined && promocion.promocion !== null) {
-    const precioPromocional = parseFloat(promocion.promocion);
-    if (!isNaN(precioPromocional) && precioPromocional > 0 && precioPromocional < precioOriginal) {
-      precioConDescuento = precioPromocional;
-    }
-  }
-  
-  // Porcentaje
-  if (!precioConDescuento && promocion.tipo === 'porcentaje' && promocion.porcentaje) {
-    const porcentaje = parseFloat(promocion.porcentaje);
-    if (!isNaN(porcentaje) && porcentaje > 0 && porcentaje < 100) {
-      const descuento = (precioOriginal * porcentaje) / 100;
-      precioConDescuento = precioOriginal - descuento;
-    }
-  }
-  
-  precioCacheDetails.set(cacheKey, precioConDescuento);
-  return precioConDescuento;
-};
-
-// ✅ OPTIMIZAR: Formateador memoizado (SINCRONIZADO)
-const formatearPrecioDetails = (precio) => {
-  if (typeof precio !== 'number' || isNaN(precio)) return '0.00';
-  return precio.toLocaleString('es-MX', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-};
-
-// ✅ OPTIMIZAR: Función de cálculo de precios ultra-rápida CON 10% ADICIONAL (SINCRONIZADA)
-const calcularPreciosConDescuentoDetails = (producto) => {
-  const cacheKey = `calculo_details_${producto.codigo}_${producto.precio}_${producto.precioPromocion}_${producto.promociones?.length || 0}_${PORCENTAJE_ADICIONAL}_${producto.moneda}`;
-  
-  if (promocionCacheDetails.has(cacheKey)) {
-    return promocionCacheDetails.get(cacheKey);
-  }
+// ✅ FUNCIÓN DE CÁLCULO DE PRECIOS SINCRONIZADA
+const calcularPreciosConDescuentoSincronizado = (producto) => {
+  console.log('🧮 ProductDetails - Iniciando cálculo sincronizado para:', producto?.codigo);
   
   if (!producto) {
-    const resultado = {
+    return {
       tienePromocionActiva: false,
-      currentPromotion: null,
       precioBaseMXN: '0.00',
       precioPromoMXN: null,
       discountPercentage: 0,
       precioFinalMXN: '0.00',
       ahorroMXN: '0.00',
-      tipoPromocion: null,
       porcentajeAdicional: PORCENTAJE_ADICIONAL,
-      precioOriginalBase: 0,
-      precioOriginalPromo: null,
-      precioBaseUSD: 0,
-      precioPromoUSD: null,
-      monedaOriginal: 'USD',
-      tipoCambio: 18.4
+      monedaOriginal: 'USD'
     };
-    promocionCacheDetails.set(cacheKey, resultado);
-    return resultado;
   }
-
-  let promocionActiva = null;
-  let mejorDescuento = 0;
-  let precioConDescuentoUSD = null;
-  let tipoPromocion = null;
-
-  // Verificar promociones en array (solo si existe)
-  if (producto.promociones && Array.isArray(producto.promociones)) {
-    for (let i = 0; i < producto.promociones.length; i++) {
-      const promocion = producto.promociones[i];
-      if (esPromocionVigenteDetails(promocion)) {
-        const precioDesc = obtenerPrecioConDescuentoDetails(producto, promocion);
-        if (precioDesc !== null) {
-          const descuento = ((producto.precio - precioDesc) / producto.precio) * 100;
-          if (descuento > mejorDescuento) {
-            mejorDescuento = descuento;
-            promocionActiva = promocion;
-            precioConDescuentoUSD = precioDesc;
-            tipoPromocion = promocion.tipo || 'directo';
+  
+  // ✅ 1. PRECIO BASE EN MXN (del backend) + 10%
+  const precioMXNOriginal = producto.precioMXN || 0;
+  const precioBaseCon10 = agregarPorcentajeAdicional(precioMXNOriginal);
+  
+  // ✅ 2. DETECCIÓN DE PROMOCIONES - LÓGICA COMPLETAMENTE SINCRONIZADA
+  let precioPromoCon10 = null;
+  let tienePromocionActiva = false;
+  let discountPercentage = 0;
+  
+  // A. VERIFICAR SI HAY PROMOCIONES EN EL ARRAY
+  if (producto.promociones && producto.promociones.length > 0) {
+    // Tomar la primera promoción activa
+    const promocionActiva = producto.promociones[0];
+    
+    if (promocionActiva) {
+      // ✅ CORRECCIÓN CRÍTICA: Interpretar correctamente el campo "promocion"
+      // Si "tipo" es "porcentaje", entonces "promocion" es el porcentaje (ej: 5 para 5%)
+      // Si "tipo" no existe o es otro, "promocion" es el precio directo
+      
+      if (promocionActiva.tipo === 'porcentaje') {
+        // ES PORCENTAJE: calcular descuento porcentual
+        const porcentajeDescuento = promocionActiva.promocion;
+        
+        if (porcentajeDescuento > 0 && porcentajeDescuento < 100) {
+          const descuento = (precioMXNOriginal * porcentajeDescuento) / 100;
+          const precioConDescuento = precioMXNOriginal - descuento;
+          
+          // Aplicar 10% adicional al precio con descuento
+          precioPromoCon10 = agregarPorcentajeAdicional(precioConDescuento);
+          tienePromocionActiva = precioPromoCon10 < precioBaseCon10;
+          
+          if (tienePromocionActiva) {
+            discountPercentage = Math.round(((precioBaseCon10 - precioPromoCon10) / precioBaseCon10) * 100);
+          }
+        }
+      } else {
+        // ES PRECIO DIRECTO: usar el valor como precio promocional
+        const precioPromocionalDirecto = promocionActiva.promocion;
+        
+        if (precioPromocionalDirecto > 0 && precioPromocionalDirecto < precioMXNOriginal) {
+          const porcentajePromocion = (precioPromocionalDirecto / precioMXNOriginal) * 100;
+          
+          // ✅ IGNORAR PROMOCIONES SOSPECHOSAS
+          if (porcentajePromocion >= 10 && porcentajePromocion <= 90) {
+            precioPromoCon10 = agregarPorcentajeAdicional(precioPromocionalDirecto);
+            tienePromocionActiva = true;
+            discountPercentage = Math.round(((precioBaseCon10 - precioPromoCon10) / precioBaseCon10) * 100);
           }
         }
       }
     }
   }
-
-  // Precio promocional directo
-  if (!promocionActiva && producto.precioPromocion && producto.precioPromocion > 0) {
-    if (producto.precioPromocion < producto.precio) {
-      promocionActiva = { tipo: 'directo' };
-      precioConDescuentoUSD = producto.precioPromocion;
-      mejorDescuento = ((producto.precio - producto.precioPromocion) / producto.precio) * 100;
-      tipoPromocion = 'directo';
-    }
-  }
-
-  const tienePromocionActiva = precioConDescuentoUSD !== null && precioConDescuentoUSD < producto.precio;
   
-  // ✅ CORRECCIÓN: CONVERTIR A MXN SI ES NECESARIO
-  const tipoCambio = producto.tipo_cambio || producto.tipoCambio || 18.4;
-  
-  // Convertir precios base a MXN
-  const precioBaseOriginalUSD = producto.precio || 0;
-  let precioBaseOriginalMXN = producto.precioMXN || 0;
-  
-  // Si no tenemos precioMXN del backend, convertir de USD
-  if (!producto.precioMXN && producto.moneda === 'USD' && precioBaseOriginalUSD > 0) {
-    precioBaseOriginalMXN = precioBaseOriginalUSD * tipoCambio;
-  }
-  
-  const precioBaseMXN = agregarPorcentajeAdicional(precioBaseOriginalMXN);
-  
-  // Convertir precio promocional a MXN
-  let precioPromoOriginalMXN = null;
-  if (tienePromocionActiva) {
-    if (producto.moneda === 'USD') {
-      // Convertir de USD a MXN
-      precioPromoOriginalMXN = precioConDescuentoUSD * tipoCambio;
-    } else {
-      // Ya está en MXN
-      precioPromoOriginalMXN = precioConDescuentoUSD;
+  // B. VERIFICAR precioPromocionMXN del backend
+  if (!tienePromocionActiva && 
+      producto.precioPromocionMXN !== undefined && 
+      producto.precioPromocionMXN !== null && 
+      producto.precioPromocionMXN > 0 &&
+      producto.precioPromocionMXN < precioMXNOriginal) {
+    
+    const porcentajePromocion = (producto.precioPromocionMXN / precioMXNOriginal) * 100;
+    
+    // ✅ IGNORAR PROMOCIONES SOSPECHOSAS
+    if (porcentajePromocion >= 10 && porcentajePromocion <= 90) {
+      precioPromoCon10 = agregarPorcentajeAdicional(producto.precioPromocionMXN);
+      tienePromocionActiva = true;
+      discountPercentage = Math.round(((precioBaseCon10 - precioPromoCon10) / precioBaseCon10) * 100);
     }
   }
   
-  const precioPromoMXN = tienePromocionActiva ? agregarPorcentajeAdicional(precioPromoOriginalMXN) : null;
-  
-  const discountPercentage = tienePromocionActiva ? Math.round(mejorDescuento) : 0;
-  const ahorroMXN = tienePromocionActiva ? (precioBaseMXN - precioPromoMXN) : 0;
+  // C. VERIFICAR precioPromocion directo
+  if (!tienePromocionActiva && 
+      producto.precioPromocion && 
+      producto.precioPromocion > 0 &&
+      producto.precioPromocion < precioMXNOriginal) {
+    
+    const porcentajePromocion = (producto.precioPromocion / precioMXNOriginal) * 100;
+    
+    if (porcentajePromocion >= 10 && porcentajePromocion <= 90) {
+      precioPromoCon10 = agregarPorcentajeAdicional(producto.precioPromocion);
+      tienePromocionActiva = true;
+      discountPercentage = Math.round(((precioBaseCon10 - precioPromoCon10) / precioBaseCon10) * 100);
+    }
+  }
 
-  const resultado = {
+  // ✅ 3. Formatear precios
+  const formatearPrecio = (precio) => {
+    if (typeof precio !== 'number' || isNaN(precio) || precio <= 0) return '0.00';
+    return precio.toLocaleString('es-MX', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  // ✅ 4. Calcular ahorro
+  const ahorroMXN = tienePromocionActiva && precioPromoCon10 ? 
+      (precioBaseCon10 - precioPromoCon10) : 0;
+
+  // ✅ 5. Determinar precio final
+  const precioFinalMXNValor = tienePromocionActiva && precioPromoCon10 ? 
+      precioPromoCon10 : precioBaseCon10;
+
+  return {
     tienePromocionActiva,
-    currentPromotion: promocionActiva,
-    precioBaseMXN: formatearPrecioDetails(precioBaseMXN),
-    precioPromoMXN: tienePromocionActiva ? formatearPrecioDetails(precioPromoMXN) : null,
+    precioBaseMXN: formatearPrecio(precioBaseCon10),
+    precioPromoMXN: tienePromocionActiva ? formatearPrecio(precioPromoCon10) : null,
     discountPercentage,
-    precioFinalMXN: tienePromocionActiva ? formatearPrecioDetails(precioPromoMXN) : formatearPrecioDetails(precioBaseMXN),
-    ahorroMXN: formatearPrecioDetails(ahorroMXN),
-    tipoPromocion,
+    precioFinalMXN: formatearPrecio(precioFinalMXNValor),
+    ahorroMXN: formatearPrecio(ahorroMXN),
     porcentajeAdicional: PORCENTAJE_ADICIONAL,
-    // Precios originales (antes del 10%)
-    precioOriginalBase: precioBaseOriginalMXN,
-    precioOriginalPromo: precioPromoOriginalMXN,
-    precioBaseConIncremento: precioBaseMXN,
-    precioPromoConIncremento: precioPromoMXN,
-    // Precios en USD para referencia
-    precioBaseUSD: precioBaseOriginalUSD,
-    precioPromoUSD: precioConDescuentoUSD,
-    monedaOriginal: producto.moneda || 'USD',
-    tipoCambio: tipoCambio
+    monedaOriginal: producto.moneda || 'USD'
   };
-  
-  promocionCacheDetails.set(cacheKey, resultado);
-  return resultado;
 };
 
-// ✅ OPTIMIZAR: Procesamiento de producto ultra-rápido CON 10% ADICIONAL (SINCRONIZADO)
-const procesarProductoDetails = (product) => {
-  if (!product) return null;
-  
-  const cacheKey = `producto_details_${product.codigo}_${product.precio}_${product.precioPromocion}_${product.moneda}_${PORCENTAJE_ADICIONAL}`;
-  if (procesamientoCacheDetails.has(cacheKey)) {
-    return procesamientoCacheDetails.get(cacheKey);
-  }
-  
-  // Extraer valores una sola vez
-  const precio = typeof product.precio === 'number' ? product.precio : 
-                typeof product.precio === 'string' ? parseFloat(product.precio) || 0 : 0;
-  
-  const precioPromocion = typeof product.precioPromocion === 'number' ? product.precioPromocion : 
-                         typeof product.precioPromocion === 'string' ? parseFloat(product.precioPromocion) || 0 : 0;
-  
-  const existencia = typeof product.existencia === 'number' ? product.existencia : 
-                    typeof product.existencia === 'string' ? parseInt(product.existencia) || 0 : 
-                    typeof product.existenciaTotal === 'number' ? product.existenciaTotal : 
-                    typeof product.existenciaTotal === 'string' ? parseInt(product.existenciaTotal) || 0 : 0;
-  
-  const existenciaTotal = product.existenciaTotal || existencia || 0;
-  const tieneExistencia = existenciaTotal > 0;
-  
-  const moneda = product.moneda || 'USD';
-  const tipoCambio = product.tipo_cambio || product.tipoCambio || 18.4;
-  
-  // ✅ CORRECCIÓN: CONVERTIR A MXN SI ES NECESARIO
-  let precioMXNOriginal = product.precioMXN || 0;
-  
-  // Si no tenemos precioMXN del backend y el precio está en USD, convertirlo
-  if (!product.precioMXN && moneda === 'USD' && precio > 0) {
-    precioMXNOriginal = precio * tipoCambio;
-  }
-  
-  const precioMXNCon10 = agregarPorcentajeAdicional(precioMXNOriginal);
-  
-  const productoProcesado = {
-    id: product.id || product.idProducto || product.codigo || `prod_${Date.now()}`,
-    codigo: product.codigo || 'N/A',
-    nombre: product.nombre || 'Producto sin nombre',
-    modelo: product.modelo || product.numParte || product.no_parte || '',
-    marca: product.marca || 'Sin marca',
-    categoria: product.categoria || 'General',
-    subcategoria: product.subcategoria || '',
-    descripcion_corta: product.descripcion_corta || product.descripcion || '',
-    imagen: product.imagen || '',
-    precio, // Precio original en su moneda original
-    precioPromocion,
-    moneda,
-    // ✅ PRECIO MXN YA CON 10% ADICIONAL APLICADO (SINCRONIZADO)
-    precioMXN: precioMXNCon10,
-    precioMXNOriginal: precioMXNOriginal, // Para referencia
-    tipo_cambio: tipoCambio,
-    especificaciones: Array.isArray(product.especificaciones) ? product.especificaciones : [],
-    existencia,
-    disponible: product.disponible !== undefined ? Boolean(product.disponible) : tieneExistencia,
-    stock: typeof product.stock === 'number' ? product.stock : existencia,
-    promociones: Array.isArray(product.promociones) ? product.promociones : [],
-    existenciaTotal,
-    tieneExistencia,
-    imagenFecha: product.imagenFecha || '',
-    upc: product.upc || '',
-    ean: product.ean || '',
-    sustituto: product.sustituto || '',
-    status: product.status || (product.activo === 1 ? 'Activo' : 'Inactivo'),
-    fuente: product.fuente || 'unknown',
-    ultimaActualizacion: product.ultimaActualizacion || new Date().toISOString(),
-    almacenes: product.almacenes || {},
-    sinStock: existenciaTotal === 0,
-    stockBajo: existenciaTotal > 0 && existenciaTotal <= 5,
-    stockSuficiente: existenciaTotal > 5,
-    porcentajeAdicional: PORCENTAJE_ADICIONAL
-  };
-  
-  // Calcular promoción (ya incluye 10% en precioMXN)
-  const calculosPromocion = calcularPreciosConDescuentoDetails(productoProcesado);
-  
-  productoProcesado.tienePromocion = calculosPromocion.tienePromocionActiva;
-  productoProcesado.porcentajeDescuento = calculosPromocion.discountPercentage;
-  productoProcesado.precioFinal = calculosPromocion.tienePromocionActiva ? 
-    parseFloat(calculosPromocion.precioFinalMXN.replace(/,/g, '')) : precioMXNCon10;
-  productoProcesado.precioBaseUSD = calculosPromocion.precioBaseUSD;
-  productoProcesado.precioPromoUSD = calculosPromocion.precioPromoUSD;
-  
-  procesamientoCacheDetails.set(cacheKey, productoProcesado);
-  return productoProcesado;
-};
-
-// ✅ HOOK: Obtener múltiples imágenes de un producto (VERSIÓN SIMPLIFICADA)
+// ✅ HOOK: Obtener múltiples imágenes de un producto
 const useProductImages = (codigo) => {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -328,8 +175,6 @@ const useProductImages = (codigo) => {
         setLoading(true);
         setError(null);
         
-        console.log('🔍 ProductDetails - Buscando imágenes para:', codigo);
-        
         // SOLUCIÓN SIMPLE: Primero intentar obtener todas las imágenes
         const allImagesResponse = await fetch(`${IMAGE_BASE_URL}/${codigo}/all`);
         
@@ -339,41 +184,31 @@ const useProductImages = (codigo) => {
         
         const allImagesData = await allImagesResponse.json();
         
-        console.log('📸 ProductDetails - Datos de imágenes recibidos:', {
-          success: allImagesData.success,
-          count: allImagesData.count,
-          availableImages: allImagesData.availableImages?.length || 0
-        });
-        
         if (allImagesData.success && allImagesData.availableImages && allImagesData.availableImages.length > 0) {
           // ✅ SOLUCIÓN DEFINITIVA: Usar la misma imagen para URL y miniatura
-          // Pero crear URLs diferentes para mantener la estructura
           const imageUrls = allImagesData.availableImages.map(img => {
-            // URL para imagen grande (misma para todas)
             const imageUrl = `${IMAGE_BASE_URL}/${codigo}?index=${img.index}`;
             
             return {
-              url: imageUrl, // Imagen grande
-              thumbnailUrl: imageUrl, // MISMA URL para miniatura (se escala con CSS)
+              url: imageUrl,
+              thumbnailUrl: imageUrl,
               index: img.index,
               isProxy: true,
-              hasThumbnail: false // Indicar que no tenemos miniatura separada
+              hasThumbnail: false
             };
           });
           
-          console.log('✅ ProductDetails - URLs procesadas:', imageUrls.length, 'imágenes');
           setImages(imageUrls);
         } else {
           // Si no hay imágenes múltiples, usar solo la principal
           const singleImage = {
             url: `${IMAGE_BASE_URL}/${codigo}`,
-            thumbnailUrl: `${IMAGE_BASE_URL}/${codigo}`, // Misma URL
+            thumbnailUrl: `${IMAGE_BASE_URL}/${codigo}`,
             index: 0,
             isProxy: true,
             hasThumbnail: false
           };
           
-          console.log('✅ ProductDetails - Solo imagen principal:', singleImage);
           setImages([singleImage]);
         }
       } catch (err) {
@@ -432,113 +267,128 @@ const ProductDetails = () => {
     const [isAddingToFavorites, setIsAddingToFavorites] = useState(false);
     const [zoomImage, setZoomImage] = useState(false);
     const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+    const [sidebarState, setSidebarState] = useState({ expanded: true, hidden: false });
 
     // Usar contextos
     const { addToCart, openCart } = useCart();
     const { isFavorite, toggleFavorite } = useFavorites();
 
-    // ✅ USAR EL HOOK COMBIANDO (RECOMENDADO) - TRAE DATOS DE XML+JSON
+    // ✅ DETECTAR ESTADO DEL SIDEBAR
+    useEffect(() => {
+        const checkSidebarState = () => {
+            const sidebar = document.querySelector('.sidebar-categories');
+            if (sidebar) {
+                const isExpanded = sidebar.classList.contains('expanded');
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                const isHidden = sidebar.style.display === 'none' || 
+                                sidebar.style.visibility === 'hidden' ||
+                                window.getComputedStyle(sidebar).display === 'none';
+                
+                setSidebarState({
+                    expanded: isExpanded && !isHidden,
+                    collapsed: isCollapsed && !isHidden,
+                    hidden: isHidden
+                });
+            }
+        };
+
+        // Verificar inicialmente
+        checkSidebarState();
+
+        // Configurar observador para cambios en el sidebar
+        const observer = new MutationObserver(checkSidebarState);
+        const sidebar = document.querySelector('.sidebar-categories');
+        
+        if (sidebar) {
+            observer.observe(sidebar, { 
+                attributes: true, 
+                attributeFilter: ['class', 'style'] 
+            });
+        }
+
+        // Verificar en redimensiones de ventana
+        window.addEventListener('resize', checkSidebarState);
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('resize', checkSidebarState);
+        };
+    }, []);
+
+    // ✅ USAR EL HOOK COMBIANDO
     const { data: productResponse, loading, error } = useProductoCombinado(productId);
     
-    // ✅ Normalizar el producto con la función sincronizada
-    const productoProcesado = useMemo(() => {
-        log('🔄 ProductDetails - Procesando producto desde API:', {
-            id: productId,
-            tieneData: !!productResponse?.data,
-            data: productResponse?.data
-        });
-        
+    // ✅ Normalizar el producto
+    const productoNormalizado = useMemo(() => {
         if (!productResponse?.data) return null;
         
-        const normalized = normalizarProducto(productResponse.data);
-        const procesadoCon10 = procesarProductoDetails(normalized);
+        const normalizado = normalizarProducto(productResponse.data);
         
-        log('✅ ProductDetails - Producto procesado con 10%:', {
-            id: procesadoCon10.id,
-            codigo: procesadoCon10.codigo,
-            nombre: procesadoCon10.nombre,
-            moneda: procesadoCon10.moneda,
-            precioOriginal: procesadoCon10.precio,
-            precioMXNOriginal: procesadoCon10.precioMXNOriginal,
-            precioMXNCon10: procesadoCon10.precioMXN,
-            existencia: procesadoCon10.existencia,
-            especificaciones: procesadoCon10.especificaciones?.length || 0,
-            promociones: procesadoCon10.promociones?.length || 0,
-            porcentajeAdicional: PORCENTAJE_ADICIONAL
-        });
+        // ✅ Asegurar que el código esté en mayúsculas
+        if (normalizado && normalizado.codigo) {
+            normalizado.codigo = normalizado.codigo.trim().toUpperCase();
+        }
         
-        return procesadoCon10;
+        return normalizado;
     }, [productResponse, productId]);
 
     // ✅ Obtener todas las imágenes del producto
-    const { images: productImages, loading: imagesLoading } = useProductImages(productoProcesado?.codigo);
+    const { images: productImages, loading: imagesLoading } = useProductImages(productoNormalizado?.codigo);
 
-    // ✅ CALCULOS DE PRECIOS (USANDO FUNCIONES SINCRONIZADAS)
+    // ✅ CALCULOS DE PRECIOS (USANDO FUNCIÓN SINCRONIZADA)
     const productCalculations = useMemo(() => {
-        if (!productoProcesado) {
+        if (!productoNormalizado) {
             return {
                 tienePromocionActiva: false,
-                currentPromotion: null,
                 precioBaseMXN: '0.00',
                 precioPromoMXN: null,
                 discountPercentage: 0,
                 precioFinalMXN: '0.00',
                 ahorroMXN: '0.00',
                 porcentajeAdicional: PORCENTAJE_ADICIONAL,
-                precioBaseUSD: 0,
-                precioPromoUSD: null,
-                monedaOriginal: 'USD',
-                tipoCambio: 18.4
+                monedaOriginal: 'USD'
             };
         }
         
-        return calcularPreciosConDescuentoDetails(productoProcesado);
-    }, [productoProcesado]);
+        return calcularPreciosConDescuentoSincronizado(productoNormalizado);
+    }, [productoNormalizado]);
 
     const {
         tienePromocionActiva,
-        currentPromotion,
         precioBaseMXN,
         precioPromoMXN,
         discountPercentage,
         precioFinalMXN,
         ahorroMXN,
         porcentajeAdicional,
-        precioBaseUSD,
-        precioPromoUSD,
-        monedaOriginal,
-        tipoCambio
+        monedaOriginal
     } = productCalculations;
 
     // ✅ VERIFICAR SI ES FAVORITO
     const productIsFavorite = useMemo(() => {
-        if (!productoProcesado) return false;
-        return isFavorite(productoProcesado.id);
-    }, [productoProcesado, isFavorite]);
+        if (!productoNormalizado) return false;
+        return isFavorite(productoNormalizado.id);
+    }, [productoNormalizado, isFavorite]);
 
     // ✅ MANEJAR FAVORITOS
     const handleToggleFavorite = useCallback(async () => {
-        if (!productoProcesado || isAddingToFavorites) return;
+        if (!productoNormalizado || isAddingToFavorites) return;
         
         setIsAddingToFavorites(true);
         try {
-            await toggleFavorite(productoProcesado);
-            log('❤️ ProductDetails - Favorito actualizado:', {
-                producto: productoProcesado.nombre,
-                ahoraEsFavorito: !productIsFavorite
-            });
+            await toggleFavorite(productoNormalizado);
         } catch (error) {
             console.error('❌ ProductDetails - Error al actualizar favorito:', error);
             alert('Error al actualizar favoritos: ' + error.message);
         } finally {
             setIsAddingToFavorites(false);
         }
-    }, [productoProcesado, toggleFavorite, productIsFavorite, isAddingToFavorites]);
+    }, [productoNormalizado, toggleFavorite, productIsFavorite, isAddingToFavorites]);
 
     // ✅ USAR HOOK DE PRODUCTOS RELACIONADOS
     const { data: relatedProductsData, loading: loadingRelated } = useProductosRelacionados(
-        productoProcesado, 
-        4
+        productoNormalizado, 
+        5
     );
 
     const relatedProducts = useMemo(() => {
@@ -546,18 +396,17 @@ const ProductDetails = () => {
         
         const procesados = relatedProductsData.data.map(product => {
             const normalizado = normalizarProducto(product);
-            return procesarProductoDetails(normalizado);
+            return normalizado;
         }).filter(Boolean);
         
-        log('✅ ProductDetails - Productos relacionados procesados:', procesados.length);
         return procesados;
     }, [relatedProductsData]);
 
     // ✅ STOCK TOTAL
     const getTotalStock = useCallback(() => {
-        if (!productoProcesado) return 0;
+        if (!productoNormalizado) return 0;
 
-        const existencia = productoProcesado.existencia || 0;
+        const existencia = productoNormalizado.existencia || 0;
         
         if (existencia === undefined || existencia === null || existencia === '') {
             return 0;
@@ -587,7 +436,7 @@ const ProductDetails = () => {
         }
 
         return stockCalculado;
-    }, [productoProcesado]);
+    }, [productoNormalizado]);
 
     const totalStock = useMemo(() => getTotalStock(), [getTotalStock]);
 
@@ -642,46 +491,29 @@ const ProductDetails = () => {
 
     // ✅ AGREGAR AL CARRITO (CON 10% INCLUIDO)
     const handleAddToCart = useCallback(() => {
-        if (!productoProcesado) return;
+        if (!productoNormalizado) return;
         
         const precioFinalNumerico = tienePromocionActiva && precioPromoMXN ? 
             parseFloat(precioPromoMXN.replace(/,/g, '')) : 
             parseFloat(precioFinalMXN.replace(/,/g, ''));
         
         const cartItem = {
-            ...productoProcesado,
+            ...productoNormalizado,
             quantity,
             precioFinal: precioFinalNumerico,
-            precioCon10Porciento: precioFinalNumerico, // Ya incluye el 10%
-            id: productoProcesado.id,
-            codigo: productoProcesado.codigo,
-            nombre: productoProcesado.nombre,
+            precioCon10Porciento: precioFinalNumerico,
+            id: productoNormalizado.id,
+            codigo: productoNormalizado.codigo,
+            nombre: productoNormalizado.nombre,
             precio: precioFinalNumerico,
-            precioOriginal: productoProcesado.precio,
+            precioOriginal: productoNormalizado.precio,
             tienePromocion: tienePromocionActiva,
             porcentajeDescuento: discountPercentage,
             stock: totalStock,
-            disponible: productoProcesado.disponible,
+            disponible: productoNormalizado.disponible,
             porcentajeAdicional: PORCENTAJE_ADICIONAL,
-            // Información adicional para debug
-            precioMXNOriginal: productoProcesado.precioMXNOriginal,
-            precioMXNCon10: productoProcesado.precioMXN,
-            precioBaseUSD: precioBaseUSD,
-            precioPromoUSD: precioPromoUSD,
-            monedaOriginal: monedaOriginal,
-            tipoCambio: tipoCambio
+            monedaOriginal: monedaOriginal
         };
-        
-        log('🛒 ProductDetails - Agregando al carrito:', {
-            producto: cartItem.nombre,
-            cantidad: cartItem.quantity,
-            precio: cartItem.precioFinal,
-            codigo: cartItem.codigo,
-            con10Porciento: PORCENTAJE_ADICIONAL + '%',
-            promocion: tienePromocionActiva ? `-${discountPercentage}%` : 'No',
-            moneda: monedaOriginal,
-            tipoCambio: tipoCambio
-        });
         
         // Usar la función del contexto
         addToCart(cartItem, quantity);
@@ -689,7 +521,7 @@ const ProductDetails = () => {
         // Mostrar notificación
         setShowCartNotification(true);
         setTimeout(() => setShowCartNotification(false), 3000);
-    }, [productoProcesado, quantity, tienePromocionActiva, precioPromoMXN, precioFinalMXN, discountPercentage, totalStock, addToCart, precioBaseUSD, precioPromoUSD, monedaOriginal, tipoCambio]);
+    }, [productoNormalizado, quantity, tienePromocionActiva, precioPromoMXN, precioFinalMXN, discountPercentage, totalStock, addToCart, monedaOriginal]);
 
     // ✅ COMPRAR AHORA
     const handleBuyNow = useCallback(() => {
@@ -697,7 +529,7 @@ const ProductDetails = () => {
         navigate('/cart');
     }, [handleAddToCart, navigate]);
 
-    // ✅ MANEJO DE IMÁGENES (SIMPLIFICADO)
+    // ✅ MANEJO DE IMÁGENES
     const handleImageSelect = useCallback((index) => {
         setSelectedImage(index);
         setZoomImage(false);
@@ -718,37 +550,27 @@ const ProductDetails = () => {
     }, [productImages.length]);
 
     const handleImageError = useCallback((e, imageIndex) => {
-        console.log('❌ ProductDetails - Error cargando imagen:', e.target.src);
-        
         setImageErrors(prev => {
             const newErrors = new Set(prev);
             newErrors.add(imageIndex);
             return newErrors;
         });
         
-        e.target.src = 'data:image/svg+xml;base64,' + btoa(generateFallbackSVG(productoProcesado?.codigo || 'N/A'));
+        e.target.src = 'data:image/svg+xml;base64,' + btoa(generateFallbackSVG(productoNormalizado?.codigo || 'N/A'));
         e.target.onerror = null;
-    }, [productoProcesado?.codigo]);
+    }, [productoNormalizado?.codigo]);
 
-    // ✅ MANEJO DE ERRORES EN MINIATURAS (SOLUCIÓN SIMPLE)
+    // ✅ MANEJO DE ERRORES EN MINIATURAS
     const handleThumbnailError = useCallback((e, img, index) => {
-        console.log('❌ ProductDetails - Error en miniatura:', {
-            src: e.target.src,
-            index,
-            hasFallback: img.isFallback
-        });
-        
         // Si es una imagen de fallback, no hacer nada
         if (img.isFallback) return;
         
         // Intentar usar la URL principal si la miniatura falla
         if (e.target.src !== img.url) {
-            console.log('🔄 Intentando con URL principal...');
             e.target.src = img.url;
-            e.target.onerror = null; // Prevenir loop infinito
+            e.target.onerror = null;
         } else {
             // Si también falla la imagen principal, mostrar fallback
-            console.log('⚠️ Mostrando fallback SVG');
             e.target.style.display = 'none';
             const parent = e.target.parentElement;
             if (parent) {
@@ -779,67 +601,24 @@ const ProductDetails = () => {
 
     // ✅ COMPARTIR PRODUCTO
     const handleShareProduct = useCallback(() => {
-        if (!productoProcesado) return;
+        if (!productoNormalizado) return;
         
         const shareUrl = window.location.href;
-        const shareText = `Mira este producto: ${productoProcesado.nombre} - $${precioFinalMXN} MXN`;
+        const shareText = `Mira este producto: ${productoNormalizado.nombre} - $${precioFinalMXN} MXN`;
         
         if (navigator.share) {
             navigator.share({
-                title: productoProcesado.nombre,
+                title: productoNormalizado.nombre,
                 text: shareText,
                 url: shareUrl,
             })
             .then(() => console.log('✅ Producto compartido'))
             .catch((error) => console.log('❌ Error compartiendo:', error));
         } else {
-            // Copiar al portapapeles como fallback
             navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
             alert('✅ Enlace copiado al portapapeles');
         }
-    }, [productoProcesado, precioFinalMXN]);
-
-    // ✅ IMPRIMIR DETALLES
-    const handlePrintDetails = useCallback(() => {
-        const printContent = document.querySelector('.prod-details-container');
-        const originalContent = document.body.innerHTML;
-        
-        document.body.innerHTML = printContent.innerHTML;
-        window.print();
-        document.body.innerHTML = originalContent;
-        window.location.reload();
-    }, []);
-
-    // ✅ DEBUG LOGS
-    useEffect(() => {
-        if (productoProcesado) {
-            log('📊 ProductDetails - Información del producto:', {
-                id: productoProcesado.id,
-                codigo: productoProcesado.codigo,
-                nombre: productoProcesado.nombre,
-                moneda: productoProcesado.moneda,
-                precioOriginalUSD: productoProcesado.precio,
-                precioMXNOriginal: productoProcesado.precioMXNOriginal,
-                precioCon10: precioFinalMXN,
-                existencia: productoProcesado.existencia,
-                stock: totalStock,
-                porcentajeAdicional: PORCENTAJE_ADICIONAL,
-                esFavorito: productIsFavorite,
-                tienePromocion: tienePromocionActiva,
-                descuento: tienePromocionActiva ? `${discountPercentage}%` : 'No',
-                tipoCambio: tipoCambio,
-                precioBaseUSD: precioBaseUSD,
-                precioPromoUSD: precioPromoUSD,
-                imagenes: productImages.length,
-                urlsImagenes: productImages.map(img => ({
-                    url: img.url,
-                    thumbnailUrl: img.thumbnailUrl,
-                    hasThumbnail: img.hasThumbnail,
-                    isFallback: img.isFallback
-                }))
-            });
-        }
-    }, [productoProcesado, totalStock, productIsFavorite, precioFinalMXN, tienePromocionActiva, discountPercentage, productImages.length, productImages, tipoCambio, precioBaseUSD, precioPromoUSD]);
+    }, [productoNormalizado, precioFinalMXN]);
 
     // ✅ RENDERIZADO CONDICIONAL
     if (loading) {
@@ -852,7 +631,7 @@ const ProductDetails = () => {
         );
     }
 
-    if (error || !productoProcesado) {
+    if (error || !productoNormalizado) {
         return (
             <div className="prod-details-not-found">
                 <div className="prod-details-error-icon">❌</div>
@@ -871,7 +650,7 @@ const ProductDetails = () => {
     }
 
     return (
-        <div className="prod-details-page">
+        <div className={`prod-details-page ${sidebarState.hidden ? 'sidebar-hidden' : ''} ${sidebarState.expanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
             {/* Notificación de carrito */}
             {showCartNotification && (
                 <div className="cart-notification">
@@ -879,7 +658,7 @@ const ProductDetails = () => {
                         <span className="cart-notification-icon">✅</span>
                         <div className="cart-notification-text">
                             <strong>¡Producto agregado!</strong>
-                            <span>{quantity} x {productoProcesado.nombre} agregado al carrito</span>
+                            <span>{quantity} x {productoNormalizado.nombre} agregado al carrito</span>
                             <small>Precio incluye {PORCENTAJE_ADICIONAL}% adicional</small>
                         </div>
                         <button 
@@ -908,15 +687,15 @@ const ProductDetails = () => {
                     <span> / </span>
                     <Link to="/products">Productos</Link>
                     <span> / </span>
-                    <Link to={`/products?category=${encodeURIComponent(productoProcesado.categoria || 'todos')}`}>
-                        {productoProcesado.categoria || 'Categoría'}
+                    <Link to={`/products?category=${encodeURIComponent(productoNormalizado.categoria || 'todos')}`}>
+                        {productoNormalizado.categoria || 'Categoría'}
                     </Link>
                     <span> / </span>
-                    <span className="prod-details-current">{productoProcesado.nombre}</span>
+                    <span className="prod-details-current">{productoNormalizado.nombre}</span>
                 </nav>
 
                 <div className="prod-details-content">
-                    {/* ✅ Galería de imágenes - SOLUCIÓN SIMPLIFICADA */}
+                    {/* ✅ Galería de imágenes */}
                     <div className="prod-details-gallery">
                         <div className="prod-details-main-image-container">
                             {/* Controles de navegación si hay múltiples imágenes */}
@@ -958,13 +737,6 @@ const ProductDetails = () => {
                                 >
                                     📤
                                 </button>
-                                {/* <button 
-                                    className="prod-details-image-action-btn"
-                                    onClick={handlePrintDetails}
-                                    title="Imprimir detalles"
-                                >
-                                    🖨️
-                                </button> */}
                             </div>
                             
                             <div 
@@ -981,7 +753,7 @@ const ProductDetails = () => {
                                     <>
                                         <img 
                                             src={productImages[selectedImage]?.url} 
-                                            alt={`${productoProcesado.nombre} - Imagen ${selectedImage + 1}`}
+                                            alt={`${productoNormalizado.nombre} - Imagen ${selectedImage + 1}`}
                                             onError={(e) => handleImageError(e, selectedImage)}
                                             crossOrigin="anonymous"
                                             loading="lazy"
@@ -992,36 +764,24 @@ const ProductDetails = () => {
                                         />
                                         {zoomImage && (
                                             <div className="prod-details-zoom-hint">
-                                                🔍 Mueve el cursor para explorar la imagen
+                                                 Mueve el cursor para explorar la imagen
                                             </div>
                                         )}
                                     </>
                                 ) : (
                                     <div className="prod-details-no-image">
-                                        <div className="prod-details-no-image-icon">📷</div>
+                                        <div className="prod-details-no-image-icon"></div>
                                         <p>Imagen no disponible</p>
-                                        <small>{productoProcesado.codigo}</small>
-                                    </div>
-                                )}
-                                
-                                {/* ✅ Badge de múltiples imágenes */}
-                                {productImages.length > 1 && (
-                                    <div className="prod-details-multiple-images-badge">
-                                        📸 {productImages.length} imágenes
+                                        <small>{productoNormalizado.codigo}</small>
                                     </div>
                                 )}
                                 
                                 {/* ✅ Badge de promoción */}
-                                {tienePromocionActiva && (
-                                    <div className="prod-details-promotion-badge-large">
-                                        -{discountPercentage}% OFF
+                                {tienePromocionActiva && discountPercentage > 0 && discountPercentage < 99 && (
+                                    <div className="prod-details-promotion-badge-large" title={`Descuento del ${discountPercentage}%`}>
+                                        -{discountPercentage}%
                                     </div>
                                 )}
-                                
-                                {/* ✅ Badge de 10% adicional */}
-                                {/* <div className="prod-details-additional-badge">
-                                    +{PORCENTAJE_ADICIONAL}%
-                                </div> */}
                                 
                                 {/* ✅ Badge de agotado */}
                                 {totalStock <= 0 && (
@@ -1052,12 +812,10 @@ const ProductDetails = () => {
                             </div>
                         </div>
                         
-                        {/* ✅ Miniaturas - SOLUCIÓN DEFINITIVA */}
+                        {/* ✅ Miniaturas */}
                         {productImages.length > 1 && (
                             <div className="prod-details-image-thumbnails">
                                 {productImages.map((img, index) => {
-                                    // ✅ USAR LA MISMA IMAGEN PARA MINIATURAS
-                                    // Esto resuelve el problema de que las miniaturas no se cargan
                                     const imageToUse = img.isFallback ? img.thumbnailUrl : img.url;
                                     
                                     return (
@@ -1069,7 +827,7 @@ const ProductDetails = () => {
                                         >
                                             {img.isFallback ? (
                                                 <div className="prod-details-thumbnail-fallback">
-                                                    <span>📷</span>
+                                                    <span></span>
                                                     <small>{index + 1}</small>
                                                 </div>
                                             ) : (
@@ -1100,57 +858,40 @@ const ProductDetails = () => {
                         )}
                     </div>
 
-                    {/* ✅ Información principal del producto */}
+                    {/* ✅ Información principal del producto - MANTENIENDO EL DISEÑO ORIGINAL */}
                     <div className="prod-details-info-main">
-                        {/* ✅ Encabezado */}
+                        {/* ✅ Encabezado - DISEÑO ORIGINAL */}
                         <div className="prod-details-header">
-                            <span className="prod-details-brand">{productoProcesado.marca}</span>
-                            <h1 className="prod-details-title">{productoProcesado.nombre}</h1>
+                            <span className="prod-details-brand">{productoNormalizado.marca}</span>
+                            <h1 className="prod-details-title">{productoNormalizado.nombre}</h1>
                             <div className="prod-details-codes">
-                                <span><strong>Código:</strong> {productoProcesado.codigo}</span>
-                                {productoProcesado.modelo && productoProcesado.modelo !== productoProcesado.codigo && (
-                                    <span><strong>Modelo:</strong> {productoProcesado.modelo}</span>
-                                )}
+                                <span><strong>Clave:</strong> {productoNormalizado.codigo}</span>
+                                {productoNormalizado.numParte && <span><strong>Número de parte:</strong> {productoNormalizado.numParte}</span>}
                             </div>
                         </div>
 
-                        {/* ✅ Categorías */}
+                        {/* ✅ Categorías - DISEÑO ORIGINAL */}
                         <div className="prod-details-categories">
                             <span className="prod-details-category-badge">
-                                {productoProcesado.categoria}
+                                {productoNormalizado.categoria}
                             </span>
-                            {productoProcesado.subcategoria && productoProcesado.subcategoria !== productoProcesado.categoria && (
+                            {productoNormalizado.subcategoria && productoNormalizado.subcategoria !== productoNormalizado.categoria && (
                                 <span className="prod-details-category-badge">
-                                    {productoProcesado.subcategoria}
+                                    {productoNormalizado.subcategoria}
                                 </span>
                             )}
                         </div>
 
-                        {/* ✅ Precios (SINCRONIZADO CON PRODUCTS.JSX) */}
+                        {/* ✅ Precios - DISEÑO ORIGINAL pero con precios sincronizados */}
                         <div className="prod-details-pricing">
-                            {/* <div className="prod-details-price-info">
-                                {productoProcesado.moneda === 'USD' && (
-                                    <span className="prod-details-currency-note">
-                                        Precio original: ${precioBaseUSD?.toFixed(2) || '0.00'} USD 
-                                        (Tipo de cambio: {tipoCambio} MXN/USD) + {PORCENTAJE_ADICIONAL}%
-                                    </span>
-                                )}
-                                {productoProcesado.moneda === 'MXN' && (
-                                    <span className="prod-details-currency-note">
-                                        Precio en MXN + {PORCENTAJE_ADICIONAL}%
-                                    </span>
-                                )}
-                            </div> */}
-                            
-                            {tienePromocionActiva ? (
+                            {tienePromocionActiva && discountPercentage > 0 && discountPercentage < 99 && precioPromoMXN ? (
                                 <div className="prod-details-pricing-with-promo">
                                     <div className="prod-details-current-price">
                                         <span className="prod-details-currency">MXN </span>
                                         <span className="prod-details-price">${precioPromoMXN}</span>
-                                        {/* <span className="prod-details-additional-tag">+{PORCENTAJE_ADICIONAL}%</span> */}
                                     </div>
                                     <div className="prod-details-original-price">
-                                        <span className="prod-details-price">${precioBaseMXN} MXN</span>
+                                        <span className="prod-details-price">${precioBaseMXN}</span>
                                         <span className="prod-details-discount">-{discountPercentage}%</span>
                                     </div>
                                     <div className="prod-details-savings-info">
@@ -1161,40 +902,38 @@ const ProductDetails = () => {
                                 <div className="prod-details-pricing-normal">
                                     <span className="prod-details-currency">MXN </span>
                                     <span className="prod-details-price">${precioFinalMXN}</span>
-                                    {/* <span className="prod-details-additional-tag">+{PORCENTAJE_ADICIONAL}%</span> */}
                                 </div>
                             )}
-                        </div>
-
-                        {/* ✅ Descripción corta */}
-                        <div className="prod-details-description-short">
-                            <p>{productoProcesado.descripcion_corta || productoProcesado.descripcion}</p>
-                        </div>
-
-                        {/* ✅ Stock */}
-                        <div className="prod-details-stock-info">
-                            <div className="prod-details-stock-status">
-                                {totalStock > 0 ? (
-                                    <>
-                                        <span className="prod-details-in-stock">✓ Disponible</span>
-                                        <span className="prod-details-stock-quantity">
-                                            ({totalStock} {totalStock === 1 ? 'unidad' : 'unidades'})
-                                        </span>
-                                    </>
-                                ) : (
-                                    <span className="prod-details-out-of-stock">✗ Agotado</span>
-                                )}
-                            </div>
                             
-                            {/* ✅ Distribución por almacén */}
-                            {productoProcesado.almacenes && typeof productoProcesado.almacenes === 'object' && totalStock > 0 && (
+                            {/* ✅ Información del porcentaje adicional */}
+                            {/* <div className="prod-details-additional-percentage">
+                                <small>
+                                    <em>(Incluye {PORCENTAJE_ADICIONAL}% adicional)</em>
+                                </small>
+                            </div> */}
+                        </div>
+
+                        {/* ✅ Descripción corta - DISEÑO ORIGINAL */}
+                        <div className="prod-details-description-short">
+                            <p>{productoNormalizado.descripcion || productoNormalizado.descripcion_corta || 'Descripción no disponible'}</p>
+                        </div>
+
+                        {/* ✅ Stock - DISEÑO ORIGINAL */}
+                        <div className="prod-details-stock-info">
+                            {totalStock > 0 ? (
+                                <span className="prod-details-in-stock">✓ En stock ({totalStock} disponibles)</span>
+                            ) : (
+                                <span className="prod-details-out-of-stock">✗ Agotado</span>
+                            )}
+                            
+                            {totalStock > 0 && productoNormalizado.existencia && typeof productoNormalizado.existencia === 'object' && (
                                 <div className="prod-details-stock-locations">
                                     <details>
                                         <summary>
-                                            <strong>📦 Disponible en {Object.keys(productoProcesado.almacenes).length} almacén(es)</strong>
+                                            <strong>Disponible en:</strong>
                                         </summary>
                                         <div className="prod-details-locations-list">
-                                            {Object.entries(productoProcesado.almacenes).map(([location, stock]) => {
+                                            {Object.entries(productoNormalizado.existencia).map(([location, stock]) => {
                                                 const stockNum = Number(stock) || 0;
                                                 return stockNum > 0 ? (
                                                     <div key={location} className="prod-details-location-item">
@@ -1209,16 +948,15 @@ const ProductDetails = () => {
                             )}
                         </div>
 
-                        {/* ✅ Cantidad y acciones */}
+                        {/* ✅ Cantidad y acciones - DISEÑO ORIGINAL */}
                         <div className="prod-details-actions">
                             <div className="prod-details-quantity-selector">
                                 <label>Cantidad:</label>
                                 <div className="prod-details-quantity-controls">
                                     <button 
-                                        onClick={handleDecrement}
+                                        onClick={() => handleQuantityChange(quantity - 1)}
                                         disabled={quantity <= 1 || totalStock === 0}
                                         className="prod-details-quantity-btn"
-                                        type="button"
                                     >
                                         -
                                     </button>
@@ -1227,16 +965,14 @@ const ProductDetails = () => {
                                         value={quantity}
                                         min="1"
                                         max={totalStock}
-                                        onChange={handleInputChange}
-                                        onBlur={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
+                                        onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
                                         disabled={totalStock === 0}
                                         className="prod-details-quantity-input"
                                     />
                                     <button 
-                                        onClick={handleIncrement}
+                                        onClick={() => handleQuantityChange(quantity + 1)}
                                         disabled={quantity >= totalStock || totalStock === 0}
                                         className="prod-details-quantity-btn"
-                                        type="button"
                                     >
                                         +
                                     </button>
@@ -1245,70 +981,69 @@ const ProductDetails = () => {
 
                             <div className="prod-details-action-buttons">
                                 <button 
-                                    className="prod-details-btn-add-cart"
+                                    className={`prod-details-btn-add-cart ${totalStock === 0 ? 'disabled' : ''}`}
                                     onClick={handleAddToCart}
                                     disabled={totalStock === 0}
                                 >
-                                    <span className="prod-details-btn-icon">🛒</span>
-                                    Agregar al Carrito
-                                    {/* <small>(+{PORCENTAJE_ADICIONAL}%)</small> */}
+                                    {totalStock === 0 ? (
+                                        'Agotado'
+                                    ) : (
+                                        ' Agregar al Carrito'
+                                    )}
                                 </button>
                                 <button 
                                     className="prod-details-btn-buy-now"
                                     onClick={handleBuyNow}
                                     disabled={totalStock === 0}
                                 >
-                                    <span className="prod-details-btn-icon">⚡</span>
                                     Comprar Ahora
-                                    {/* <small>(+{PORCENTAJE_ADICIONAL}%)</small> */}
                                 </button>
+                            </div>
+                            
+                            {/* ✅ Botón de favoritos en línea con los otros botones */}
+                            <div className="prod-details-wishlist-container">
                                 <button 
-                                    className="prod-details-btn-wishlist"
+                                    className={`prod-details-btn-wishlist ${productIsFavorite ? 'active' : ''}`}
                                     onClick={handleToggleFavorite}
                                     disabled={isAddingToFavorites}
                                 >
-                                    <span className="prod-details-btn-icon">
-                                        {isAddingToFavorites ? (
-                                            <div className="prod-details-favorite-spinner-small"></div>
-                                        ) : productIsFavorite ? '❤️' : '🤍'}
-                                    </span>
-                                    {productIsFavorite ? 'En Favoritos' : 'Añadir a Favoritos'}
+                                    {isAddingToFavorites ? (
+                                        <div className="prod-details-favorite-spinner-small"></div>
+                                    ) : productIsFavorite ? (
+                                        ' En Favoritos'
+                                    ) : (
+                                        ' Añadir a Favoritos'
+                                    )}
                                 </button>
                             </div>
                         </div>
 
-                        {/* ✅ Información adicional */}
+                        {/* ✅ Información adicional - DISEÑO ORIGINAL */}
                         <div className="prod-details-meta-info">
-                            {productoProcesado.ultimaActualizacion && (
+                            {productoNormalizado.ultimaActualizacion && (
                                 <div className="prod-details-update-info">
                                     <strong>Última actualización:</strong>{' '}
-                                    {formatDate(productoProcesado.ultimaActualizacion)}
+                                    {formatDate(productoNormalizado.ultimaActualizacion)}
                                 </div>
                             )}
-                            
-                            {/* {productoProcesado.fuente && (
-                                <div className="prod-details-source-info">
-                                    <strong>Fuente:</strong> {productoProcesado.fuente}
-                                </div>
-                            )} */}
                         </div>
 
-                        {/* ✅ Envío y garantías */}
+                        {/* ✅ Envío y garantías - DISEÑO ORIGINAL */}
                         <div className="prod-details-shipping-preview">
                             <div className="prod-details-shipping-item">
-                                <span className="prod-details-shipping-icon">🚚</span>
+                                
                                 <div>
                                     <strong>Envío gratis</strong> en compras mayores a $1000 MXN
                                 </div>
                             </div>
                             <div className="prod-details-shipping-item">
-                                <span className="prod-details-shipping-icon">↩️</span>
+                                
                                 <div>
                                     <strong>30 días</strong> para devoluciones
                                 </div>
                             </div>
                             <div className="prod-details-shipping-item">
-                                <span className="prod-details-shipping-icon">🛡️</span>
+                                {/* <span className="prod-details-shipping-icon"></span> */}
                                 <div>
                                     <strong>Garantía</strong> incluida
                                 </div>
@@ -1317,7 +1052,7 @@ const ProductDetails = () => {
                     </div>
                 </div>
 
-                {/* ✅ Tabs de información detallada */}
+                {/* ✅ Tabs de información detallada - DISEÑO ORIGINAL */}
                 <div className="prod-details-tabs">
                     <div className="prod-details-tab-headers">
                         <button 
@@ -1353,28 +1088,21 @@ const ProductDetails = () => {
                     </div>
 
                     <div className="prod-details-tab-content">
-                        {/* ✅ Descripción */}
+                        {/* ✅ Descripción - DISEÑO ORIGINAL */}
                         {activeTab === 'description' && (
                             <div className="prod-details-tab-panel">
                                 <h3>Descripción del Producto</h3>
-                                <p>{productoProcesado.descripcion_corta || productoProcesado.descripcion}</p>
-                                
-                                {productoProcesado.descripcion && productoProcesado.descripcion !== productoProcesado.descripcion_corta && (
-                                    <div className="prod-details-description-full">
-                                        <h4>Descripción completa:</h4>
-                                        <p>{productoProcesado.descripcion}</p>
-                                    </div>
-                                )}
+                                <p>{productoNormalizado.descripcion || productoNormalizado.descripcion_corta || 'Descripción no disponible'}</p>
                             </div>
                         )}
 
-                        {/* ✅ Especificaciones */}
+                        {/* ✅ Especificaciones - DISEÑO ORIGINAL */}
                         {activeTab === 'specifications' && (
                             <div className="prod-details-tab-panel">
                                 <h3>Especificaciones Técnicas</h3>
                                 <div className="prod-details-specifications-grid">
-                                    {productoProcesado.especificaciones && productoProcesado.especificaciones.length > 0 ? (
-                                        productoProcesado.especificaciones.map((spec, index) => (
+                                    {productoNormalizado.especificaciones && productoNormalizado.especificaciones.length > 0 ? (
+                                        productoNormalizado.especificaciones.map((spec, index) => (
                                             <div key={index} className="prod-details-spec-item">
                                                 <span className="prod-details-spec-label">{spec.tipo || `Especificación ${index + 1}`}:</span>
                                                 <span className="prod-details-spec-value">{spec.valor}</span>
@@ -1383,127 +1111,55 @@ const ProductDetails = () => {
                                     ) : (
                                         <div className="prod-details-no-specifications">
                                             <p>No hay especificaciones técnicas disponibles para este producto.</p>
-                                            <div className="prod-details-default-specs">
-                                                {productoProcesado.modelo && (
-                                                    <div className="prod-details-spec-item">
-                                                        <span className="prod-details-spec-label">Modelo:</span>
-                                                        <span className="prod-details-spec-value">{productoProcesado.modelo}</span>
-                                                    </div>
-                                                )}
-                                                {productoProcesado.marca && (
-                                                    <div className="prod-details-spec-item">
-                                                        <span className="prod-details-spec-label">Marca:</span>
-                                                        <span className="prod-details-spec-value">{productoProcesado.marca}</span>
-                                                    </div>
-                                                )}
-                                                {productoProcesado.categoria && (
-                                                    <div className="prod-details-spec-item">
-                                                        <span className="prod-details-spec-label">Categoría:</span>
-                                                        <span className="prod-details-spec-value">{productoProcesado.categoria}</span>
-                                                    </div>
-                                                )}
-                                            </div>
                                         </div>
                                     )}
                                 </div>
                             </div>
                         )}
 
-                        {/* ✅ Detalles */}
+                        {/* ✅ Detalles - DISEÑO ORIGINAL */}
                         {activeTab === 'details' && (
                             <div className="prod-details-tab-panel">
                                 <h3>Detalles del Producto</h3>
                                 <div className="prod-details-details-grid">
                                     <div className="prod-details-detail-item">
                                         <span className="prod-details-detail-label">Código:</span>
-                                        <span className="prod-details-detail-value">{productoProcesado.codigo}</span>
+                                        <span className="prod-details-detail-value">{productoNormalizado.codigo}</span>
                                     </div>
-                                    {productoProcesado.ean && (
+                                    {productoNormalizado.ean && (
                                         <div className="prod-details-detail-item">
                                             <span className="prod-details-detail-label">EAN:</span>
-                                            <span className="prod-details-detail-value">{productoProcesado.ean}</span>
+                                            <span className="prod-details-detail-value">{productoNormalizado.ean}</span>
                                         </div>
                                     )}
-                                    {productoProcesado.upc && (
+                                    {productoNormalizado.upc && (
                                         <div className="prod-details-detail-item">
                                             <span className="prod-details-detail-label">UPC:</span>
-                                            <span className="prod-details-detail-value">{productoProcesado.upc}</span>
+                                            <span className="prod-details-detail-value">{productoNormalizado.upc}</span>
                                         </div>
                                     )}
-                                    {productoProcesado.sustituto && (
+                                    {productoNormalizado.sustituto && (
                                         <div className="prod-details-detail-item">
                                             <span className="prod-details-detail-label">Sustituto:</span>
-                                            <span className="prod-details-detail-value">{productoProcesado.sustituto}</span>
+                                            <span className="prod-details-detail-value">{productoNormalizado.sustituto}</span>
                                         </div>
                                     )}
                                     <div className="prod-details-detail-item">
                                         <span className="prod-details-detail-label">Estado:</span>
                                         <span className="prod-details-detail-value">
-                                            {productoProcesado.disponible ? '🟢 Disponible' : '🔴 Agotado'}
+                                            {productoNormalizado.disponible ? ' Disponible' : ' Agotado'}
                                         </span>
                                     </div>
-                                    {/* {productoProcesado.fuente && (
-                                        <div className="prod-details-detail-item">
-                                            <span className="prod-details-detail-label">Fuente de datos:</span>
-                                            <span className="prod-details-detail-value">{productoProcesado.fuente}</span>
-                                        </div>
-                                    )} */}
                                 </div>
                             </div>
                         )}
 
-                        {/* ✅ Precios */}
+                        {/* ✅ Precios - DISEÑO ORIGINAL con información mejorada */}
                         {activeTab === 'pricing' && (
                             <div className="prod-details-tab-panel">
                                 <h3>Detalles de Precios</h3>
                                 <div className="prod-details-pricing-breakdown">
-                                    {/* <div className="prod-details-pricing-item">
-                                        <span className="prod-details-pricing-label">Moneda original:</span>
-                                        <span className="prod-details-pricing-value">{productoProcesado.moneda}</span>
-                                    </div> */}
-                                    
-                                    {/* {productoProcesado.moneda === 'USD' && (
-                                        <>
-                                            <div className="prod-details-pricing-item">
-                                                <span className="prod-details-pricing-label">Precio original (USD):</span>
-                                                <span className="prod-details-pricing-value">
-                                                    ${precioBaseUSD?.toFixed(2) || '0.00'} USD
-                                                </span>
-                                            </div>
-                                            
-                                            <div className="prod-details-pricing-item">
-                                                <span className="prod-details-pricing-label">Tipo de cambio:</span>
-                                                <span className="prod-details-pricing-value">
-                                                    {tipoCambio} MXN/USD
-                                                </span>
-                                            </div>
-                                            
-                                            <div className="prod-details-pricing-item">
-                                                <span className="prod-details-pricing-label">Precio en MXN (convertido):</span>
-                                                <span className="prod-details-pricing-value">
-                                                    ${productoProcesado.precioMXNOriginal?.toFixed(2) || '0.00'} MXN
-                                                </span>
-                                            </div>
-                                        </>
-                                    )} */}
-                                    
-                                    {/* {productoProcesado.moneda === 'MXN' && (
-                                        <div className="prod-details-pricing-item">
-                                            <span className="prod-details-pricing-label">Precio original (MXN):</span>
-                                            <span className="prod-details-pricing-value">
-                                                ${productoProcesado.precioMXNOriginal?.toFixed(2) || '0.00'} MXN
-                                            </span>
-                                        </div>
-                                    )} */}
-                                    
-                                    {/* <div className="prod-details-pricing-item">
-                                        <span className="prod-details-pricing-label">Porcentaje adicional:</span>
-                                        <span className="prod-details-pricing-value">
-                                            +{PORCENTAJE_ADICIONAL}%
-                                        </span>
-                                    </div> */}
-                                    
-                                    <div className="prod-details-pricing-item total">
+                                    <div className="prod-details-pricing-item">
                                         <span className="prod-details-pricing-label">Precio final:</span>
                                         <span className="prod-details-pricing-value">
                                             ${precioFinalMXN} MXN
@@ -1519,28 +1175,26 @@ const ProductDetails = () => {
                                                 </span>
                                             </div>
                                             
-                                            <div className="prod-details-pricing-item savings">
+                                            <div className="prod-details-pricing-item prod-details-pricing-savings">
                                                 <span className="prod-details-pricing-label">Total ahorrado:</span>
                                                 <span className="prod-details-pricing-value">
                                                     ${ahorroMXN} MXN
                                                 </span>
                                             </div>
-                                            
-                                            {/* {productoProcesado.moneda === 'USD' && precioPromoUSD && (
-                                                <div className="prod-details-pricing-item">
-                                                    <span className="prod-details-pricing-label">Precio promocional (USD):</span>
-                                                    <span className="prod-details-pricing-value">
-                                                        ${precioPromoUSD?.toFixed(2) || '0.00'} USD
-                                                    </span>
-                                                </div>
-                                            )} */}
                                         </>
                                     )}
+                                    
+                                    <div className="prod-details-pricing-item prod-details-pricing-info">
+                                        <span className="prod-details-pricing-label">Información:</span>
+                                        <span className="prod-details-pricing-value">
+                                            Todos los precios incluyen un {PORCENTAJE_ADICIONAL}% adicional
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* ✅ Imágenes */}
+                        {/* ✅ Imágenes - DISEÑO ORIGINAL */}
                         {activeTab === 'images' && (
                             <div className="prod-details-tab-panel">
                                 <h3>Galería de Imágenes ({productImages.length})</h3>
@@ -1549,17 +1203,6 @@ const ProductDetails = () => {
                                     <div className="prod-details-no-images-message">
                                         <div className="prod-details-no-images-icon">📷</div>
                                         <p>Este producto no tiene imágenes disponibles</p>
-                                    </div>
-                                ) : productImages.length === 1 ? (
-                                    <div className="prod-details-single-image-view">
-                                        <p>Este producto tiene <strong>1 imagen</strong> disponible:</p>
-                                        <div className="prod-details-single-image-preview">
-                                            <img 
-                                                src={productImages[0].url} 
-                                                alt={productoProcesado.nombre}
-                                                className="prod-details-fullsize-image"
-                                            />
-                                        </div>
                                     </div>
                                 ) : (
                                     <div className="prod-details-images-grid">
@@ -1572,8 +1215,8 @@ const ProductDetails = () => {
                                                     onClick={() => handleImageSelect(index)}
                                                 >
                                                     <img 
-                                                        src={img.url} // Usar siempre la URL principal
-                                                        alt={`${productoProcesado.nombre} ${index + 1}`}
+                                                        src={img.url}
+                                                        alt={`${productoNormalizado.nombre} ${index + 1}`}
                                                         loading="lazy"
                                                     />
                                                     <div className="prod-details-image-number">
@@ -1589,13 +1232,10 @@ const ProductDetails = () => {
                     </div>
                 </div>
 
-                {/* ✅ Productos relacionados */}
+                {/* ✅ Productos relacionados - DISEÑO ORIGINAL */}
                 {!loadingRelated && relatedProducts.length > 0 && (
                     <div className="prod-details-related-products">
                         <h2>📦 Productos Relacionados</h2>
-                        <p className="prod-details-related-note">
-                            (Todos los productos incluyen {PORCENTAJE_ADICIONAL}% adicional)
-                        </p>
                         <div className="prod-details-related-products-grid">
                             {relatedProducts.map(relatedProduct => (
                                 <ProductCard 
@@ -1608,7 +1248,7 @@ const ProductDetails = () => {
                     </div>
                 )}
 
-                {/* ✅ Información de contacto */}
+                {/* ✅ Información de contacto - DISEÑO ORIGINAL */}
                 <div className="prod-details-contact-info">
                     <h3>❓ ¿Tienes dudas sobre este producto?</h3>
                     <div className="prod-details-contact-options">
@@ -1624,7 +1264,7 @@ const ProductDetails = () => {
                             <span className="prod-details-contact-icon">✉️</span>
                             <div>
                                 <strong>Escíbenos</strong>
-                                <p>luis.lucio@lucesademexico.com</p>
+                                <p>atenciónclientes@lucesademexico.com</p>
                                 <small>Respuesta en menos de 24h</small>
                             </div>
                         </div>

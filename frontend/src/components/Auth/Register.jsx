@@ -6,10 +6,53 @@ import { useAuth } from '../../context/AuthContext';
 import './Auth.css';
 
 /**
- * Componente de registro de usuario
- * Maneja la creación de nuevas cuentas sin campo username visible
+ * REGISTER COMPONENT
+ * 
+ * Componente de registro de nuevos usuarios para la aplicación Lucesa.
+ * Permite crear cuentas mediante email/contraseña con generación automática
+ * de username y opcional registro con redes sociales.
+ * 
+ * Características principales:
+ * - Formulario de registro simplificado sin campo username visible
+ * - Generación automática de username desde el email
+ * - Validación completa de campos en frontend
+ * - Aceptación de términos y condiciones
+ * - Opción de registro con redes sociales (OAuth)
+ * - Datos demo para pruebas de desarrollo
+ * - Manejo de estados de carga y errores
+ * 
+ * @component
+ * @example
+ * // Uso en rutas públicas
+ * <Route path="/register" element={<Register />} />
+ */
+
+/**
+ * Componente Register - Página de registro de usuario
+ * 
+ * Este componente maneja:
+ * 1. Creación de nuevas cuentas con email y contraseña
+ * 2. Generación automática de username (parte antes del @ del email)
+ * 3. Validación completa del formulario en frontend
+ * 4. Integración opcional con proveedores OAuth
+ * 5. Redirección automática post-registro
+ * 6. Manejo de estados de carga y errores
+ * 
+ * @returns {JSX.Element} Componente de página de registro
  */
 const Register = () => {
+  // ==========================================================================
+  // ESTADOS DEL COMPONENTE
+  // ==========================================================================
+  
+  /**
+   * @state {Object} formData - Datos del formulario de registro
+   * @property {string} email - Email del usuario (obligatorio)
+   * @property {string} password - Contraseña del usuario (obligatorio)
+   * @property {string} confirmPassword - Confirmación de contraseña (obligatorio)
+   * @property {string} nombre - Nombre completo del usuario (opcional)
+   * @property {boolean} acceptTerms - Aceptación de términos (obligatorio)
+   */
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -17,14 +60,46 @@ const Register = () => {
     nombre: '',    // Campo para nombre completo (opcional)
     acceptTerms: false
   });
+  
+  /**
+   * @state {string} error - Mensaje de error para mostrar al usuario
+   */
   const [error, setError] = useState('');
+  
+  /**
+   * @state {boolean} loading - Estado de carga durante el registro
+   */
   const [loading, setLoading] = useState(false);
 
+  // ==========================================================================
+  // HOOKS DE ROUTER Y CONTEXTO
+  // ==========================================================================
+  
+  /**
+   * Contexto de autenticación para funciones de registro
+   * @const {Object} authContext - Contexto de autenticación
+   * @const {function} register - Función para registro tradicional
+   * @const {function} socialLogin - Función para registro con redes sociales
+   */
   const { register, socialLogin } = useAuth();
+  
+  /**
+   * Hook de navegación para redirigir después del registro exitoso
+   * @const {function} navigate - Función de navegación de React Router
+   */
   const navigate = useNavigate();
 
+  // ==========================================================================
+  // MANEJADORES DE EVENTOS
+  // ==========================================================================
+  
   /**
    * Maneja cambios en los campos del formulario
+   * Soporta diferentes tipos de input (text, checkbox, etc.)
+   * Limpia errores automáticamente al modificar campos
+   * 
+   * @function handleChange
+   * @param {Object} e - Evento del input
    */
   const handleChange = (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -36,39 +111,51 @@ const Register = () => {
   };
 
   /**
-   * Maneja el envío del formulario de registro
+   * Maneja el envío del formulario de registro tradicional
+   * Realiza validaciones completas en frontend antes de enviar al backend
+   * 
+   * @async
+   * @function handleSubmit
+   * @param {Object} e - Evento del formulario
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    // Validaciones del frontend
+    // ========================================================================
+    // VALIDACIONES DEL FRONTEND
+    // ========================================================================
+    
+    // Validar campos obligatorios
     if (!formData.email || !formData.password) {
       setError('Por favor completa todos los campos obligatorios');
       setLoading(false);
       return;
     }
 
+    // Validar coincidencia de contraseñas
     if (formData.password !== formData.confirmPassword) {
       setError('Las contraseñas no coinciden');
       setLoading(false);
       return;
     }
 
+    // Validar longitud mínima de contraseña
     if (formData.password.length < 6) {
       setError('La contraseña debe tener al menos 6 caracteres');
       setLoading(false);
       return;
     }
 
+    // Validar aceptación de términos
     if (!formData.acceptTerms) {
       setError('Debes aceptar los términos y condiciones');
       setLoading(false);
       return;
     }
 
-    // Validar formato de email
+    // Validar formato de email con regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setError('Por favor ingresa un email válido');
@@ -76,9 +163,15 @@ const Register = () => {
       return;
     }
 
-    // Preparar datos para enviar al backend
+    // ========================================================================
+    // PREPARACIÓN DE DATOS PARA BACKEND
+    // ========================================================================
+    
     // Generar username automáticamente desde el email
-    const username = formData.email.split('@')[0]; // Usar la parte antes del @ como username
+    // Ejemplo: "usuario@ejemplo.com" → "usuario"
+    const username = formData.email.split('@')[0];
+    
+    // Construir objeto de datos para enviar al backend
     const userData = {
       username: username,
       email: formData.email,
@@ -88,18 +181,29 @@ const Register = () => {
 
     console.log('Enviando datos de registro:', userData);
 
+    // ========================================================================
+    // LLAMADA AL BACKEND
+    // ========================================================================
+    
     const result = await register(userData);
     
     if (result.success) {
+      // Redirigir al home después de registro exitoso
       navigate('/');
     } else {
+      // Mostrar error del backend al usuario
       setError(result.error);
     }
     setLoading(false);
   };
 
   /**
-   * Maneja registro con redes sociales
+   * Maneja registro con proveedores sociales (OAuth)
+   * Ejecuta flujo de autenticación social y maneja resultados
+   * 
+   * @async
+   * @function handleSocialLogin
+   * @param {string} provider - Proveedor social ('google' o 'facebook')
    */
   const handleSocialLogin = async (provider) => {
     setLoading(true);
@@ -116,7 +220,9 @@ const Register = () => {
   };
 
   /**
-   * Rellena automáticamente datos de demo
+   * Rellena automáticamente el formulario con datos de demo
+   * Útil para desarrollo, testing y demostraciones
+   * @function fillDemoData
    */
   const fillDemoData = () => {
     setFormData({
@@ -128,19 +234,25 @@ const Register = () => {
     });
   };
 
+  // ==========================================================================
+  // RENDERIZADO PRINCIPAL
+  // ==========================================================================
+  
   return (
     <main className="auth-main">
       <section className="auth-section">
         <div className="container">
+          {/* Tarjeta principal de registro */}
           <div className="auth-card-compact">
-            {/* Header de la tarjeta */}
+            
+            {/* Header de la tarjeta con icono y título */}
             <div className="auth-header">
               <div className="auth-icon">👤</div>
               <h2 className="auth-title">Crear Cuenta</h2>
               <p className="auth-subtitle">Únete a la comunidad Lucesa</p>
             </div>
 
-            {/* Mostrar errores */}
+            {/* Mostrar mensajes de error si existen */}
             {error && (
               <div className="auth-error-compact">
                 <span className="error-icon">⚠️</span>
@@ -148,7 +260,7 @@ const Register = () => {
               </div>
             )}
 
-            {/* Botón de datos demo */}
+            {/* Botón de datos demo (útil para desarrollo) */}
             <div className="demo-credentials">
               <button 
                 type="button" 
@@ -160,8 +272,9 @@ const Register = () => {
               </button>
             </div>
 
-            {/* Formulario de registro */}
+            {/* Formulario principal de registro */}
             <form onSubmit={handleSubmit} className="auth-form">
+              
               {/* Campo Nombre Completo (opcional) */}
               <div className="form-group">
                 <input
@@ -202,6 +315,7 @@ const Register = () => {
                   disabled={loading}
                   minLength="6"
                 />
+                {/* Texto de ayuda para longitud mínima */}
                 <small className="input-help">Mínimo 6 caracteres</small>
               </div>
 
@@ -220,7 +334,7 @@ const Register = () => {
                 />
               </div>
 
-              {/* Checkbox Términos y Condiciones */}
+              {/* Checkbox Términos y Condiciones (obligatorio) */}
               <div className="form-checkbox-compact">
                 <label>
                   <input
@@ -231,11 +345,14 @@ const Register = () => {
                     required
                     disabled={loading}
                   />
-                  <span>Acepto los <Link to="/terms" className="auth-link">términos y condiciones</Link> y la <Link to="/privacy" className="auth-link">política de privacidad</Link></span>
+                  <span>
+                    Acepto los <Link to="/terms" className="auth-link">términos y condiciones</Link> 
+                    y la <Link to="/privacy" className="auth-link">política de privacidad</Link>
+                  </span>
                 </label>
               </div>
 
-              {/* Botón de registro */}
+              {/* Botón principal de envío del formulario */}
               <button 
                 type="submit" 
                 className="btn-auth-primary"
@@ -252,15 +369,18 @@ const Register = () => {
               </button>
             </form>
 
-            {/* Separador para registro social */}
-            {/* <div className="auth-separator-corrected">
+            {/* Separador para registro social (comentado en producción) */}
+            {/*
+            <div className="auth-separator-corrected">
               <div className="separator-line"></div>
               <div className="separator-text">o regístrate con</div>
               <div className="separator-line"></div>
-            </div> */}
+            </div>
+            */}
 
-            {/* Botones de redes sociales */}
-            {/* <div className="social-buttons-compact">
+            {/* Botones de redes sociales (comentado en producción) */}
+            {/*
+            <div className="social-buttons-compact">
               <button
                 type="button"
                 onClick={() => handleSocialLogin('google')}
@@ -287,9 +407,10 @@ const Register = () => {
                 </svg>
                 Facebook
               </button>
-            </div> */}
+            </div>
+            */}
 
-            {/* Enlace a login */}
+            {/* Pie de página con enlace a login */}
             <div className="auth-footer">
               <p>
                 ¿Ya tienes cuenta?{' '}

@@ -18,7 +18,7 @@ const OrderManagement = () => {
   const selectedRowRef = useRef(null);
 
   const API_BASE_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://testpaginaweb.shop/api'
+    ? 'https://lucesademexico-shop.com.mx/api'
     : 'http://localhost:4004/api';
 
   // Función para abrir detalles con scroll automático
@@ -204,7 +204,7 @@ const OrderManagement = () => {
             unit_price: 1200,
             total_price: 1200,
             product_brand: 'GamingBrand',
-            product_image_url: 'https://testpaginaweb.shop/api/images/code/PROD001?size=small'
+            product_image_url: 'https://lucesademexico-shop.com.mx/api/images/code/PROD001?size=small'
           },
           { 
             id: 2,
@@ -214,7 +214,7 @@ const OrderManagement = () => {
             unit_price: 45.99,
             total_price: 91.98,
             product_brand: 'TechCorp',
-            product_image_url: 'https://testpaginaweb.shop/api/images/code/PROD005?size=small'
+            product_image_url: 'https://lucesademexico-shop.com.mx/api/images/code/PROD005?size=small'
           }
         ]
       },
@@ -246,7 +246,7 @@ const OrderManagement = () => {
             unit_price: 89.99,
             total_price: 89.99,
             product_brand: 'KeyboardPro',
-            product_image_url: 'https://testpaginaweb.shop/api/images/code/PROD006?size=small'
+            product_image_url: 'https://lucesademexico-shop.com.mx/api/images/code/PROD006?size=small'
           }
         ]
       },
@@ -278,7 +278,7 @@ const OrderManagement = () => {
             unit_price: 199.99,
             total_price: 199.99,
             product_brand: 'DisplayTech',
-            product_image_url: 'https://testpaginaweb.shop/api/images/code/PROD007?size=small'
+            product_image_url: 'https://lucesademexico-shop.com.mx/api/images/code/PROD007?size=small'
           },
           { 
             id: 5,
@@ -288,7 +288,7 @@ const OrderManagement = () => {
             unit_price: 45.51,
             total_price: 45.51,
             product_brand: 'CameraPro',
-            product_image_url: 'https://testpaginaweb.shop/api/images/code/PROD008?size=small'
+            product_image_url: 'https://lucesademexico-shop.com.mx/api/images/code/PROD008?size=small'
           }
         ]
       },
@@ -320,7 +320,7 @@ const OrderManagement = () => {
             unit_price: 78.20,
             total_price: 78.20,
             product_brand: 'AudioTech',
-            product_image_url: 'https://testpaginaweb.shop/api/images/code/PROD009?size=small'
+            product_image_url: 'lucesademexico-shop.com.mx'
           }
         ]
       },
@@ -352,7 +352,7 @@ const OrderManagement = () => {
             unit_price: 325.75,
             total_price: 325.75,
             product_brand: 'TabletPro',
-            product_image_url: 'https://testpaginaweb.shop/api/images/code/PROD010?size=small'
+            product_image_url: 'lucesademexico-shop.com.mx'
           }
         ]
       }
@@ -738,7 +738,7 @@ const OrderManagement = () => {
                           <br />
                           <small>{order.customer_email || order.shipping_address?.email || 'Sin email'}</small>
                           {(order.customer_phone || order.shipping_address?.telefono) && (
-                            <div><small>📞 {order.customer_phone || order.shipping_address?.telefono}</small></div>
+                            <div><small> {order.customer_phone || order.shipping_address?.telefono}</small></div>
                           )}
                         </div>
                       </td>
@@ -823,11 +823,11 @@ const OrderManagement = () => {
                                   onClick={() => handleStatusUpdate(order.id, status)}
                                   title={`Cambiar a ${getStatusLabel(status)}`}
                                 >
-                                  {status === 'cancelled' ? '❌ Cancelar' : 
-                                   status === 'processing' ? '🚚 Procesar' : 
-                                   status === 'shipped' ? '📦 Enviar' :
-                                   status === 'delivered' ? '✅ Entregar' : 
-                                   '↩️ Reabrir'}
+                                  {status === 'cancelled' ? ' Cancelar' : 
+                                   status === 'processing' ? ' Procesar' : 
+                                   status === 'shipped' ? ' Enviar' :
+                                   status === 'delivered' ? ' Entregar' : 
+                                   '↩ Reabrir'}
                                 </button>
                               ))}
                             </div>
@@ -855,7 +855,7 @@ const OrderManagement = () => {
                     <div className="card-order-number">
                       <strong>{order.order_number}</strong>
                       {order.order_number?.startsWith('LUCESA-') && (
-                        <span className="lucesa-badge-small">🏭</span>
+                        {/* <span className="lucesa-badge-small">🏭</span> */}
                       )}
                     </div>
                     <span 
@@ -873,7 +873,7 @@ const OrderManagement = () => {
                         <strong>{order.customer_name || order.shipping_address?.nombre || 'Cliente'}</strong>
                         <small>{order.customer_email || order.shipping_address?.email || 'Sin email'}</small>
                         {(order.customer_phone || order.shipping_address?.telefono) && (
-                          <small>📞 {order.customer_phone || order.shipping_address?.telefono}</small>
+                          <small> {order.customer_phone || order.shipping_address?.telefono}</small>
                         )}
                       </div>
                     </div>
@@ -976,7 +976,7 @@ const OrderManagement = () => {
                 onClick={loadAllOrders}
                 className="btn-primary"
               >
-                🔄 Reintentar Carga
+                 Reintentar Carga
               </button>
             </div>
           )}
@@ -1042,9 +1042,9 @@ const OrderManagement = () => {
                                 }}
                               />
                             ) : null}
-                            <div className="image-placeholder">
+                            {/* <div className="image-placeholder">
                               📦
-                            </div>
+                            </div> */}
                           </div>
                           <div className="product-info">
                             <strong>{item.product_name}</strong>
@@ -1082,7 +1082,7 @@ const OrderManagement = () => {
                       ) : (
                         <div className="summary-row">
                           <span>Envío:</span>
-                          <span className="free-shipping">🎉 GRATIS</span>
+                          <span className="free-shipping">GRATIS</span>
                         </div>
                       )}
                       <div className="summary-row total">
@@ -1135,7 +1135,7 @@ const OrderManagement = () => {
 
                 <div className="order-detail-footer">
                   <div className="timestamps">
-                    <small>📅 Creado: {formatDate(selectedOrder.created_at)}</small>
+                    <small> Creado: {formatDate(selectedOrder.created_at)}</small>
                   </div>
                   {/* <button 
                     className="btn-secondary"
@@ -1148,7 +1148,7 @@ const OrderManagement = () => {
                     onClick={closeOrderDetails}
                     title="Volver a la tabla"
                   >
-                    ↩️ Volver a la tabla
+                    ↩ Volver a la tabla
                   </button>
                 </div>
               </div>
@@ -1160,4 +1160,4 @@ const OrderManagement = () => {
   );
 };
 
-export default OrderManagement;
+export default OrderManagement

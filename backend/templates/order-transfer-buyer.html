@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instrucciones de Transferencia - Lucesa</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.95;
+            font-size: 18px;
+        }
+        
+        .transfer-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+        
+        .content {
+            padding: 40px 30px;
+        }
+        
+        .order-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .info-item {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .info-label {
+            display: block;
+            color: #666666;
+            font-size: 13px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        .info-value {
+            display: block;
+            font-weight: 600;
+            color: #333333;
+            font-size: 16px;
+        }
+        
+        .bank-section {
+            background: #e8f4fd;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 30px 0;
+            border: 2px solid #3498db;
+        }
+        
+        .bank-title {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .bank-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #b3d7ff;
+        }
+        
+        .bank-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .bank-label {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .bank-value {
+            color: #2c3e50;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #3498db;
+        }
+        
+        .instructions {
+            background: #fff8e1;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 30px 0;
+            border-left: 5px solid #ff9800;
+        }
+        
+        .instructions-title {
+            color: #ff9800;
+            margin-bottom: 20px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .steps {
+            counter-reset: step;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .steps li {
+            counter-increment: step;
+            margin-bottom: 15px;
+            padding-left: 40px;
+            position: relative;
+            list-style: none;
+        }
+        
+        .steps li:before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 28px;
+            height: 28px;
+            background: #3498db;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .contact-methods {
+            margin: 20px 0;
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .contact-method {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+        }
+        
+        .warning {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+            color: #d32f2f;
+        }
+        
+        .warning-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #666666;
+            font-size: 14px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .button {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            transition: background-color 0.3s;
+        }
+        
+        .button:hover {
+            background: #2980b9;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                border-radius: 0;
+            }
+            
+            .content {
+                padding: 20px 15px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .bank-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="transfer-icon">🏦</div>
+            <h1>¡Pedido Registrado para Transferencia!</h1>
+            <p>Orden #{{orderNumber}} - Pendiente de pago</p>
+        </div>
+        
+        <div class="content">
+            <div class="order-info">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Número de orden</span>
+                        <span class="info-value">{{orderNumber}}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Fecha</span>
+                        <span class="info-value">{{orderDate}}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Cliente</span>
+                        <span class="info-value">{{buyerName}}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Total a pagar</span>
+                        <span class="info-value" style="color: #e74c3c; font-size: 18px;">${{totalAmount}} MXN</span>
+                    </div>
+                </div>
+                
+                <div style="text-align: center;">
+                    <p><strong>Estado:</strong> ⏳ Pendiente de confirmación de pago</p>
+                    <p><strong>Método:</strong> 🏦 Transferencia Bancaria</p>
+                </div>
+            </div>
+            
+            <div class="bank-section">
+                <h2 class="bank-title">🏦 Información Bancaria</h2>
+                
+                <div class="bank-row">
+                    <span class="bank-label">Banco:</span>
+                    <span class="bank-value">{{bankInfo.bank_name}}</span>
+                </div>
+                <div class="bank-row">
+                    <span class="bank-label">Número de cuenta:</span>
+                    <span class="bank-value">{{bankInfo.account_number}}</span>
+                </div>
+                <div class="bank-row">
+                    <span class="bank-label">Titular:</span>
+                    <span class="bank-value">{{bankInfo.account_holder}}</span>
+                </div>
+                <div class="bank-row">
+                    <span class="bank-label">CLABE:</span>
+                    <span class="bank-value">{{bankInfo.clabe}}</span>
+                </div>
+                <div class="bank-row">
+                    <span class="bank-label">Referencia (IMPORTANTE):</span>
+                    <span class="bank-value" style="background: #fffacd; color: #d35400;">{{bankInfo.reference}}</span>
+                </div>
+            </div>
+            
+            <div class="instructions">
+                <h2 class="instructions-title">📋 Pasos a seguir</h2>
+                
+                <ol class="steps">
+                    <li>Realiza la transferencia por el monto exacto: <strong>${{totalAmount}} MXN</strong></li>
+                    <li>Usa la referencia proporcionada en el concepto de la transferencia</li>
+                    <li>Guarda el comprobante de transferencia (captura de pantalla o foto)</li>
+                    <li>Envía el comprobante por uno de estos medios:</li>
+                </ol>
+                
+                <div class="contact-methods">
+                    <div class="contact-method">
+                        <span style="color: #25D366; font-size: 20px;">📱</span>
+                        <div>
+                            <strong>WhatsApp:</strong><br>
+                            {{bankInfo.whatsapp}}
+                        </div>
+                    </div>
+                    <div class="contact-method">
+                        <span style="color: #EA4335; font-size: 20px;">✉️</span>
+                        <div>
+                            <strong>Email:</strong><br>
+                            {{bankInfo.email}}
+                        </div>
+                    </div>
+                </div>
+                
+                <p><strong>✍️ En tu mensaje incluye:</strong></p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Tu número de orden: <strong>{{orderNumber}}</strong></li>
+                    <li>Tu nombre: <strong>{{buyerName}}</strong></li>
+                    <li>Fecha de la transferencia</li>
+                </ul>
+            </div>
+            
+            <div class="warning">
+                <div class="warning-title">
+                    <span>⚠️</span>
+                    <span>Información Importante</span>
+                </div>
+                <p><strong>Tiempo límite:</strong> Tienes 72 horas para completar la transferencia. Después de este tiempo, tu orden será cancelada automáticamente.</p>
+                <p><strong>Confirmación:</strong> Tu pedido será procesado una vez confirmemos el pago (24-48 horas hábiles después de recibir el comprobante).</p>
+                <p><strong>Verificación:</strong> Asegúrate de usar la referencia correcta en la transferencia para una identificación rápida.</p>
+            </div>
+            
+            <div style="text-align: center; margin: 40px 0;">
+                <a href="{{orderLink}}" class="button">Ver detalle de mi pedido</a>
+                <p style="margin-top: 15px; font-size: 14px; color: #666;">
+                    O visita: <a href="{{frontendUrl}}/my-account" style="color: #3498db;">{{frontendUrl}}/my-account</a>
+                </p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>&copy; {{currentYear}} Lucesa. Todos los derechos reservados.</p>
+            <p>Este es un mensaje automático, por favor no respondas a este correo.</p>
+            <p>Si tienes dudas sobre tu pedido, contáctanos por WhatsApp.</p>
+        </div>
+    </div>
+</body>
+</html>

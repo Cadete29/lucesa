@@ -25,6 +25,9 @@ class FTPService {
     
     this.downloadInterval = null;
     this.isShuttingDown = false;
+    this.connectionState = 'disconnected'; // 'disconnected', 'connecting', 'connected', 'error'
+    this.activeDownload = false;
+    this.client = null;
     
     this.createDirectories();
   }
@@ -38,12 +41,71 @@ class FTPService {
   }
 
   async connect() {
-    this.client = new ftp.Client();
-    this.client.ftp.verbose = false;
-    await this.client.access(this.config);
+    try {
+      if (this.connectionState === 'connected' && this.client) {
+        logger.info('🔌 Usando conexión FTP existente');
+        return this.client;
+      }
+      
+      if (this.connectionState === 'connecting') {
+        logger.info('⏳ Conexión FTP ya en progreso, esperando...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (this.connectionState === 'connected') {
+          return this.client;
+        }
+      }
+      
+      this.connectionState = 'connecting';
+      logger.info('🔌 Conectando a servidor FTP...');
+      
+      // Cerrar cualquier conexión previa
+      await this.safeClose();
+      
+      this.client = new ftp.Client();
+      this.client.ftp.verbose = false;
+      this.client.timeout = 30000;
+      
+      await this.client.access(this.config);
+      this.connectionState = 'connected';
+      logger.info('✅ Conexión FTP establecida');
+      
+      return this.client;
+    } catch (error) {
+      this.connectionState = 'error';
+      logger.error('❌ Error conectando a FTP:', error.message);
+      this.client = null;
+      throw error;
+    }
+  }
+
+  async safeClose() {
+    try {
+      if (this.client && this.connectionState === 'connected') {
+        logger.info('🔌 Cerrando conexión FTP...');
+        this.client.close();
+        logger.info('✅ Conexión FTP cerrada');
+      }
+    } catch (error) {
+      logger.warn('⚠️  Error al cerrar conexión FTP:', error.message);
+    } finally {
+      this.client = null;
+      this.connectionState = 'disconnected';
+    }
   }
 
   async downloadFiles() {
+    if (this.activeDownload) {
+      logger.info('⏳ Descarga ya en progreso, omitiendo...');
+      return [];
+    }
+    
+    if (this.isShuttingDown) {
+      logger.info('⚠️  Servicio en proceso de cierre, omitiendo descarga');
+      return [];
+    }
+    
+    this.activeDownload = true;
+    
     try {
       await this.connect();
       
@@ -71,7 +133,7 @@ class FTPService {
         await this.client.cd('..');
       }
 
-      await this.client.close();
+      await this.safeClose();
 
       if (downloadedFiles.length > 0) {
         await this.processDownloadedFiles();
@@ -81,7 +143,10 @@ class FTPService {
 
     } catch (error) {
       logger.error('❌ Error en descarga FTP:', error);
+      await this.safeClose(); // Asegurar cierre en caso de error
       throw error;
+    } finally {
+      this.activeDownload = false;
     }
   }
 
@@ -195,7 +260,7 @@ class FTPService {
           precio: precio,
           moneda: producto.moneda || 'USD',
           tipo_cambio: tipoCambio,
-          precioMXN: precio * tipoCambio, // Precio calculado en pesos
+          precioMXN: precio * tipoCambio,
           existenciaTotal: this.calcularExistenciaTotalXML(producto.existencia),
           almacenes: this.extraerAlmacenesXML(producto.existencia),
           especificaciones: this.extraerEspecificacionesXML(producto.especificacion),
@@ -379,7 +444,7 @@ class FTPService {
           precio: precio,
           moneda: producto.moneda || 'USD',
           tipoCambio: tipoCambio,
-          precioMXN: precio * tipoCambio, // Precio calculado en pesos
+          precioMXN: precio * tipoCambio,
           existenciaTotal: this.calcularExistenciaTotalJSON(producto.existencia),
           existencia: this.calcularExistenciaTotalJSON(producto.existencia),
           almacenes: producto.existencia || {},
@@ -574,13 +639,21 @@ class FTPService {
       totalProducts: productosCache?.data?.length || 0,
       totalWithStock: existenciasCache?.data?.length || 0,
       files: fileInfo.summary,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      connectionState: this.connectionState,
+      activeDownload: this.activeDownload,
+      isShuttingDown: this.isShuttingDown
     };
   }
 
   scheduleDownloads() {
     this.downloadInterval = setInterval(async () => {
       try {
+        if (this.isShuttingDown) {
+          logger.info('⚠️  Servicio en proceso de cierre, omitiendo descarga programada');
+          return;
+        }
+        
         logger.info('🔄 Descarga automática iniciada...');
         await this.downloadFiles();
       } catch (error) {
@@ -607,14 +680,8 @@ class FTPService {
       logger.info('ℹ️ No hay descargas programadas activas para detener');
     }
     
-    if (this.client && typeof this.client.close === 'function') {
-      try {
-        this.client.close();
-        logger.info('🔌 Conexión FTP cerrada');
-      } catch (error) {
-        logger.error('❌ Error cerrando conexión FTP:', error);
-      }
-    }
+    // Cerrar conexión FTP de manera segura
+    this.safeClose();
   }
 
   restartScheduledDownloads() {
@@ -732,7 +799,9 @@ class FTPService {
         lastUpdate: cacheProductos?.lastUpdated || cacheExistencias?.lastUpdated
       },
       files: fileInfo.summary,
-      directories: this.dirs
+      directories: this.dirs,
+      connectionState: this.connectionState,
+      activeDownload: this.activeDownload
     };
   }
 }

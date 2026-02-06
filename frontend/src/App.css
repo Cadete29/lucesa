@@ -1,4 +1,8 @@
-/* App.css - Corregido para eliminar scroll horizontal */
+/* src/App.css - VERSIÓN PARA TU ESTRUCTURA ACTUAL */
+
+/* =========================================== */
+/* RESET Y CONFIGURACIÓN BÁSICA */
+/* =========================================== */
 
 * {
   margin: 0;
@@ -6,92 +10,366 @@
   box-sizing: border-box;
 }
 
-html, body {
+body, html {
   width: 100%;
-  max-width: 100%;
-  overflow-x: hidden; /* CRUCIAL: Elimina scroll horizontal */
-  position: relative;
-}
-
-body {
+  height: 100%;
+  overflow-x: hidden;
   font-family: 'Arial', sans-serif;
   line-height: 1.6;
   color: #333;
-  width: 100%;
-  overflow-x: hidden; /* Doble protección */
+  background: #f8f9fa;
 }
 
 .App {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
   width: 100%;
-  max-width: 100%;
-  overflow-x: hidden; /* Previene overflow en el contenedor principal */
+  background: #f8f9fa;
 }
 
-/* Estilos globales */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+/* =========================================== */
+/* HEADER - SIEMPRE ARRIBA */
+/* =========================================== */
+
+.header-hdr {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  z-index: 1100 !important;
+  height: 70px !important;
+  min-height: 70px !important;
+  max-height: 70px !important;
+  background: white;
+  box-shadow: 0 4px 20px rgba(44, 95, 142, 0.384);
+}
+
+/* =========================================== */
+/* CONTENEDOR PRINCIPAL CON SIDEBAR */
+/* =========================================== */
+
+.main-container-with-sidebar {
+  display: flex;
   width: 100%;
-  overflow-x: hidden; /* Asegura que no haya overflow */
+  min-height: calc(100vh - 70px);
+  margin-top: 70px;
+  position: relative;
+  z-index: 1;
 }
 
-.btn {
-  display: inline-block;
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  text-decoration: none;
-  border-radius: 5px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  white-space: nowrap; /* Evita que el texto del botón cause overflow */
+/* SidebarCategories - ahora RELATIVE, no FIXED */
+.sidebar-categories {
+  position: relative !important;
+  flex-shrink: 0;
+  height: auto !important;
+  min-height: calc(100vh - 70px) !important;
+  z-index: 1 !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+  border-right: 1px solid #e5e7eb;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.btn:hover {
-  background-color: #0056b3;
+.sidebar-categories.expanded {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
 }
 
-/* Reglas adicionales de seguridad */
-img, video, iframe, canvas, svg {
-  max-width: 100%;
-  height: auto;
+.sidebar-categories.collapsed {
+  width: 35px !important;
+  min-width: 35px !important;
+  max-width: 35px !important;
 }
 
-/* Prevenir overflow en elementos flexibles */
-.flex-container {
-  min-width: 0;
+/* Contenido principal que se expande */
+.content-with-sidebar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 70px);
+  width: 100%;
+  position: relative;
+  z-index: 2 !important; /* MÁS ALTO que sidebar */
+  background: #f8f9fa;
 }
 
-/* Media queries para mayor seguridad en móviles */
-@media (max-width: 768px) {
-  .container {
-    padding: 0 15px;
+/* Main content dentro del contenedor */
+.content-with-sidebar .main-content {
+  flex: 1;
+  width: 100% !important;
+  position: relative;
+  z-index: 1;
+  background: #f8f9fa;
+}
+
+/* Footer dentro del contenedor */
+.content-with-sidebar .footer-footer {
+  width: 100% !important;
+  position: relative;
+  z-index: 1;
+  background: #ffffff;
+  color: #374151;
+  padding: 4rem 0 1rem;
+  border-top: 1px solid #f1f5f9;
+  margin-top: auto;
+}
+
+/* =========================================== */
+/* PANELES FLOTANTES DEL SIDEBAR */
+/* =========================================== */
+
+/* Los paneles flotantes SÍ deben ser fixed y tener alto z-index */
+.sidebar-children-panel,
+.sidebar-subcategories-panel {
+  position: fixed !important;
+  z-index: 1200 !important; /* ALTO para paneles flotantes */
+}
+
+/* =========================================== */
+/* BANNER Y HOME - DENTRO DEL CONTENEDOR */
+/* =========================================== */
+
+.banner-bnr {
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #0f2642 !important;
+}
+
+.home-main {
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  background: #f8f9fa !important;
+}
+
+/* =========================================== */
+/* WHATSAPP BUTTON */
+/* =========================================== */
+
+.whatsapp-button {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  z-index: 1100 !important;
+}
+
+/* =========================================== */
+/* LOADING SPINNER */
+/* =========================================== */
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(72, 149, 207, 0.2);
+  border-radius: 50%;
+  border-top-color: #4895CF;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =========================================== */
+/* RESPONSIVE DESIGN */
+/* =========================================== */
+
+/* Tablets grandes (≤ 1024px) - Ocultar sidebar */
+@media (max-width: 1024px) {
+  .sidebar-categories {
+    display: none !important;
   }
   
-  body {
-    font-size: 14px; /* Ajuste opcional para mejor responsive */
+  .main-container-with-sidebar {
+    flex-direction: column;
+  }
+  
+  .content-with-sidebar {
+    width: 100% !important;
+  }
+  
+  .header-hdr {
+    height: 70px !important;
+  }
+  
+  .main-container-with-sidebar {
+    margin-top: 70px !important;
+  }
+}
+
+/* Tablets (≤ 768px) */
+@media (max-width: 768px) {
+  .header-hdr {
+    height: 60px !important;
+    min-height: 60px !important;
+    max-height: 60px !important;
+  }
+  
+  .main-container-with-sidebar {
+    margin-top: 60px !important;
+    min-height: calc(100vh - 60px);
+  }
+  
+  .sidebar-categories {
+    min-height: calc(100vh - 60px) !important;
+  }
+  
+  .content-with-sidebar {
+    min-height: calc(100vh - 60px);
+  }
+  
+  .footer-footer {
+    padding: 3rem 0 1rem;
+  }
+}
+
+/* Móviles grandes (≤ 480px) */
+@media (max-width: 480px) {
+  .header-hdr {
+    height: 55px !important;
+    min-height: 55px !important;
+    max-height: 55px !important;
+  }
+  
+  .main-container-with-sidebar {
+    margin-top: 55px !important;
+    min-height: calc(100vh - 55px);
+  }
+  
+  .sidebar-categories {
+    min-height: calc(100vh - 55px) !important;
+  }
+  
+  .content-with-sidebar {
+    min-height: calc(100vh - 55px);
+  }
+  
+  .footer-footer {
+    padding: 2rem 0 1rem;
+  }
+}
+
+/* Móviles pequeños (≤ 360px) */
+@media (max-width: 360px) {
+  .header-hdr {
+    height: 50px !important;
+    min-height: 50px !important;
+    max-height: 50px !important;
+  }
+  
+  .main-container-with-sidebar {
+    margin-top: 50px !important;
+    min-height: calc(100vh - 50px);
+  }
+  
+  .sidebar-categories {
+    min-height: calc(100vh - 50px) !important;
+  }
+}
+
+/* =========================================== */
+/* FIX PARA RUTAS SIN SIDEBAR */
+/* =========================================== */
+
+/* Cuando no hay sidebar (rutas como /login, /cart, etc.) */
+.main-content:not(.with-sidebar) {
+  margin-top: 70px !important;
+  min-height: calc(100vh - 70px);
+  width: 100% !important;
+}
+
+@media (max-width: 768px) {
+  .main-content:not(.with-sidebar) {
+    margin-top: 60px !important;
+    min-height: calc(100vh - 60px);
   }
 }
 
 @media (max-width: 480px) {
-  .container {
-    padding: 0 10px;
-  }
-  
-  .btn {
-    padding: 8px 16px;
-    font-size: 14px;
+  .main-content:not(.with-sidebar) {
+    margin-top: 55px !important;
+    min-height: calc(100vh - 55px);
   }
 }
 
-/* Debug: Descomenta temporalmente si el problema persiste */
+/* =========================================== */
+/* ASEGURAR QUE TODO ESTÉ VISIBLE */
+/* =========================================== */
+
+/* Asegurar que el contenido no tenga fondos transparentes */
+.main-content,
+.content-with-sidebar,
+.banner-bnr,
+.home-main {
+  background-color: transparent;
+}
+
+.content-with-sidebar {
+  background: #f8f9fa !important;
+}
+
+/* Asegurar que los márgenes sean consistentes */
+.main-content > div,
+.main-content > section {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+/* =========================================== */
+/* DEBUG - PARA VERIFICAR */
+/* =========================================== */
+
+/* Descomenta para ver las capas */
 /*
-* {
-  outline: 1px solid red !important;
+.sidebar-categories {
+  background: rgba(255, 0, 0, 0.1) !important;
+  border: 2px solid red !important;
+}
+
+.content-with-sidebar {
+  background: rgba(0, 255, 0, 0.1) !important;
+  border: 2px solid green !important;
+}
+
+.banner-bnr {
+  background: rgba(0, 0, 255, 0.1) !important;
+  border: 2px solid blue !important;
 }
 */
+
+/* =========================================== */
+/* REDUCED MOTION */
+/* =========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-categories,
+  .main-content,
+  .footer-footer,
+  .loading-spinner {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* =========================================== */
+/* FIX PARA SUPERPOSICIÓN DE PANELES */
+/* =========================================== */
+
+/* Asegurar que los paneles flotantes no se corten */
+.sidebar-children-panel,
+.sidebar-subcategories-panel {
+  pointer-events: auto !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Asegurar que el sidebar no interfiera con el contenido */
+.sidebar-categories {
+  overflow: visible !important;
+}

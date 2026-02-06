@@ -1,0 +1,117 @@
+/* src/components/Layout/MainLayout.css */
+
+/* Contenedor principal que se adapta automáticamente */
+.main-layout-container {
+  width: 100% !important;
+  background: #f8f9fa;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  position: relative;
+  z-index: 1 !important; /* Asegurar que esté encima */
+  min-height: calc(100vh - 70px - 150px);
+}
+
+/* Cuando hay sidebar activo */
+.with-sidebar {
+  /* Se ajusta automáticamente vía App.css */
+  z-index: 1 !important;
+}
+
+/* Sin sidebar */
+.without-sidebar {
+  margin-left: 0 !important;
+  width: 100% !important;
+}
+
+/* Contenedor interno */
+.main-layout-content {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0;
+  background: transparent;
+  position: relative;
+  z-index: 1 !important;
+}
+
+/* Contenedores internos */
+.main-layout-content .container-home,
+.main-layout-content .banner-container-bnr {
+  width: 100% !important;
+  max-width: calc(100% - 2rem) !important;
+  margin: 0 auto !important;
+  padding: 0 1rem !important;
+  box-sizing: border-box !important;
+  position: relative;
+  z-index: 1 !important;
+}
+
+/* Para pantallas grandes */
+@media (min-width: 1400px) {
+  .main-layout-content .container-home,
+  .main-layout-content .banner-container-bnr {
+    max-width: 1200px !important;
+  }
+}
+
+/* Asegurar que el banner no tenga márgenes extra */
+.banner-bnr {
+  position: relative !important;
+  z-index: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+/* Asegurar que el home no tenga márgenes extra */
+.home-main {
+  position: relative !important;
+  z-index: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .main-layout-content .container-home,
+  .main-layout-content .banner-container-bnr {
+    max-width: calc(100% - 1.5rem) !important;
+    padding: 0 0.75rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-layout-content .container-home,
+  .main-layout-content .banner-container-bnr {
+    max-width: calc(100% - 1rem) !important;
+    padding: 0 0.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-layout-content .container-home,
+  .main-layout-content .banner-container-bnr {
+    max-width: calc(100% - 0.8rem) !important;
+    padding: 0 0.4rem !important;
+  }
+}
+
+/* Asegurar que todo el contenido esté visible */
+.main-layout-container * {
+  position: relative;
+  z-index: 1;
+}
+
+/* FIX para superposición */
+.main-layout-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #f8f9fa;
+  z-index: -1;
+}

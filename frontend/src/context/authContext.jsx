@@ -2,8 +2,43 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../api/AuthService';
 import ordersService from '../api/ordersService';
 
+/**
+ * AUTH CONTEXT
+ * 
+ * Contexto de autenticación para manejar estado de usuario, tokens y operaciones de auth.
+ * Proporciona funciones para login, registro, logout, recuperación de contraseña,
+ * verificación de tokens y gestión de sesiones persistente.
+ * 
+ * Características principales:
+ * - Gestión completa del ciclo de autenticación
+ * - Persistencia de sesión en localStorage
+ * - Validación automática de tokens JWT
+ * - Funciones para recuperación de contraseña
+ * - Integración con servicio de órdenes
+ * - Soporte para roles de usuario (admin/user)
+ * - Intervalo de verificación de sesión
+ * 
+ * @context
+ * @example
+ * // Uso en el componente principal de la aplicación
+ * <AuthProvider>
+ *   <App />
+ * </AuthProvider>
+ */
+
+/**
+ * Crea el contexto de autenticación
+ * @type {React.Context}
+ */
 const AuthContext = createContext();
 
+/**
+ * Hook personalizado para acceder al contexto de autenticación
+ * 
+ * @function useAuth
+ * @returns {Object} Todas las funciones y estados del contexto
+ * @throws {Error} Si se usa fuera de un AuthProvider
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -12,6 +47,13 @@ export const useAuth = () => {
   return context;
 };
 
+/**
+ * Verifica la validez de un token JWT o token de demostración
+ * 
+ * @function checkTokenValidity
+ * @param {string} token - Token a verificar
+ * @returns {boolean} True si el token es válido
+ */
 const checkTokenValidity = (token) => {
   if (!token) {
     console.log('❌ No hay token para verificar');
@@ -19,22 +61,26 @@ const checkTokenValidity = (token) => {
   }
   
   try {
+    // Tokens de demostración o sociales son siempre válidos
     if (token.startsWith('demo-token-') || token.startsWith('social-token-') || token.startsWith('demo-jwt-token-')) {
       console.log('🔐 Token demo/social - considerado válido');
       return true;
     }
     
+    // Verificación de formato JWT estándar
     const parts = token.split('.');
     if (parts.length !== 3) {
       console.log('❌ Token no tiene formato JWT válido');
       return false;
     }
     
+    // Decodificar payload del JWT
     const payload = JSON.parse(atob(parts[1]));
     const expirationTime = payload.exp * 1000;
     const currentTime = Date.now();
     const timeUntilExpiration = expirationTime - currentTime;
     
+    // Log para debugging
     console.log('🔐 Token JWT Info:', {
       userId: payload.id,
       email: payload.email,
@@ -43,6 +89,7 @@ const checkTokenValidity = (token) => {
       estaExpirado: timeUntilExpiration <= 0
     });
     
+    // Considerar válido si expira en más de 5 minutos
     return timeUntilExpiration > 300000;
   } catch (error) {
     console.error('❌ Error verificando token:', error);
@@ -50,12 +97,48 @@ const checkTokenValidity = (token) => {
   }
 };
 
+/**
+ * Proveedor del contexto de autenticación
+ * 
+ * @component AuthProvider
+ * @param {Object} props - Props del componente
+ * @param {React.ReactNode} props.children - Componentes hijos
+ */
 export const AuthProvider = ({ children }) => {
+  // ==========================================================================
+  // ESTADOS DEL CONTEXTO
+  // ==========================================================================
+  
+  /**
+   * @state {Object|null} user - Datos del usuario autenticado
+   */
   const [user, setUser] = useState(null);
+  
+  /**
+   * @state {string|null} token - Token de autenticación JWT
+   */
   const [token, setToken] = useState(null);
+  
+  /**
+   * @state {boolean} loading - Estado de carga para operaciones asíncronas
+   */
   const [loading, setLoading] = useState(true);
+  
+  /**
+   * @state {boolean} initialized - Indica si el contexto se inicializó
+   */
   const [initialized, setInitialized] = useState(false);
 
+  // ==========================================================================
+  // EFECTO: INICIALIZACIÓN DE AUTENTICACIÓN
+  // ==========================================================================
+  
+  /**
+   * Efecto para inicializar el estado de autenticación desde localStorage
+   * 
+   * @effect
+   * @dependencies [initialized] - Se ejecuta solo una vez al montar
+   */
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -122,6 +205,19 @@ export const AuthProvider = ({ children }) => {
     }
   }, [initialized]);
 
+  // ==========================================================================
+  // FUNCIONES DE AUTENTICACIÓN
+  // ==========================================================================
+  
+  /**
+   * Inicia sesión con email y contraseña
+   * 
+   * @async
+   * @function login
+   * @param {string} email - Email del usuario
+   * @param {string} password - Contraseña del usuario
+   * @returns {Promise<Object>} Resultado de la operación
+   */
   const login = async (email, password) => {
     try {
       setLoading(true);
@@ -164,6 +260,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Registra un nuevo usuario
+   * 
+   * @async
+   * @function register
+   * @param {Object} userData - Datos del nuevo usuario
+   * @param {string} userData.email - Email del usuario
+   * @param {string} userData.password - Contraseña del usuario
+   * @param {string} userData.nombre - Nombre completo del usuario
+   * @returns {Promise<Object>} Resultado de la operación
+   */
   const register = async (userData) => {
     try {
       setLoading(true);
@@ -204,6 +311,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Cierra la sesión del usuario actual
+   * 
+   * @function logout
+   */
   const logout = () => {
     console.log('🚪 Cerrando sesión para:', user?.email);
     setUser(null);
@@ -214,6 +326,12 @@ export const AuthProvider = ({ children }) => {
     console.log('🧹 Sesión limpiada completamente');
   };
 
+  /**
+   * Verifica el estado de autenticación actual
+   * 
+   * @function checkAuth
+   * @returns {boolean} True si el usuario está autenticado
+   */
   const checkAuth = () => {
     try {
       const savedUser = localStorage.getItem('lucesa-user');
@@ -245,6 +363,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Actualiza el perfil del usuario actual
+   * 
+   * @async
+   * @function updateProfile
+   * @param {Object} profileData - Datos del perfil a actualizar
+   * @returns {Promise<Object>} Resultado de la operación
+   */
   const updateProfile = async (profileData) => {
     try {
       console.log('📝 Actualizando perfil para:', user?.email);
@@ -271,6 +397,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Solicita recuperación de contraseña
+   * 
+   * @async
+   * @function forgotPassword
+   * @param {string} email - Email del usuario que olvidó la contraseña
+   * @returns {Promise<Object>} Resultado de la operación
+   */
   const forgotPassword = async (email) => {
     try {
       setLoading(true);
@@ -293,6 +427,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Restablece la contraseña usando un token de recuperación
+   * 
+   * @async
+   * @function resetPassword
+   * @param {string} token - Token de recuperación de contraseña
+   * @param {string} newPassword - Nueva contraseña
+   * @returns {Promise<Object>} Resultado de la operación
+   */
   const resetPassword = async (token, newPassword) => {
     try {
       setLoading(true);
@@ -310,6 +453,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Verifica la validez de un token de recuperación de contraseña
+   * 
+   * @async
+   * @function verifyResetToken
+   * @param {string} token - Token de recuperación a verificar
+   * @returns {Promise<Object>} Resultado de la verificación
+   */
   const verifyResetToken = async (token) => {
     try {
       const response = await authService.verifyResetToken(token);
@@ -327,7 +478,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // NUEVA FUNCIÓN: Obtener historial de órdenes
+  // ==========================================================================
+  // FUNCIONES DE GESTIÓN DE ÓRDENES
+  // ==========================================================================
+  
+  /**
+   * Obtiene el historial de órdenes del usuario actual
+   * 
+   * @async
+   * @function getOrderHistory
+   * @returns {Promise<Array>} Lista de órdenes del usuario
+   */
   const getOrderHistory = async () => {
     try {
       console.log('📦 Obteniendo historial de órdenes...');
@@ -372,7 +533,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // NUEVA FUNCIÓN: Obtener detalles de una orden específica
+  /**
+   * Obtiene los detalles de una orden específica
+   * 
+   * @async
+   * @function getOrderDetails
+   * @param {string} orderId - ID de la orden a consultar
+   * @returns {Promise<Object>} Detalles completos de la orden
+   */
   const getOrderDetails = async (orderId) => {
     try {
       console.log('🔍 Obteniendo detalles de orden:', orderId);
@@ -403,6 +571,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ==========================================================================
+  // EFECTO: VERIFICACIÓN PERIÓDICA DE AUTENTICACIÓN
+  // ==========================================================================
+  
+  /**
+   * Efecto para verificar periódicamente la autenticación
+   * Se ejecuta cada 30 segundos cuando el contexto está inicializado
+   * 
+   * @effect
+   * @dependencies [initialized, user, token] - Dependencias del efecto
+   */
   useEffect(() => {
     const interval = setInterval(() => {
       if (initialized) {
@@ -413,13 +592,21 @@ export const AuthProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [initialized, user, token]);
 
+  // ==========================================================================
+  // VALOR DEL CONTEXTO
+  // ==========================================================================
+  
+  /**
+   * Objeto que contiene todos los valores y funciones del contexto
+   * @type {Object}
+   */
   const value = {
     // Estado
     user,
     token,
     loading,
     
-    // Acciones
+    // Acciones de autenticación
     login,
     register,
     logout,
@@ -433,12 +620,13 @@ export const AuthProvider = ({ children }) => {
     getOrderHistory,
     getOrderDetails,
     
-    // Computados
+    // Computados (getters)
     isAuthenticated: !!user && !!token && checkTokenValidity(token),
     isAdmin: user?.rol === 'admin',
     isUser: user?.rol === 'user' || !user?.rol,
   };
 
+  // Log del estado actual para debugging
   console.log('🔐 AuthContext State:', {
     user: user ? {
       email: user.email,

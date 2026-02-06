@@ -1,29 +1,31 @@
-/* ProductCard.css - Cards con tamaño normal y bien espaciadas */
+/* ProductCard.css - Cards ESTRECHAS con ESPACIADO REDUCIDO y botón restaurado */
 
 .product-card-pcard {
     background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     overflow: hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.25s ease;
     position: relative;
     border: 1px solid #f1f5f9;
     height: 100%;
     display: flex;
     flex-direction: column;
-    /* TAMAÑO NORMAL - SIN ESCALADO */
+    /* TAMAÑO MUY ESTRECHO con MARGEN REDUCIDO */
     transform: none;
-    margin: 0;
-    animation: fadeInUpPcard 0.6s ease-out;
-    /* Asegurar ancho adecuado */
-    min-width: 250px;
-    max-width: 100%;
+    animation: fadeInUpPcard 0.5s ease-out;
+    /* Ancho MUY ESTRECHO */
+    min-width: 140px;
+    max-width: 150px;
+    flex-shrink: 0;
+    /* MARGEN REDUCIDO entre cards */
+    margin: 2px !important; /* ¡MUY reducido! en lugar de 8-10px que solía tener */
 }
 
 @keyframes fadeInUpPcard {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(10px);
     }
     to {
         opacity: 1;
@@ -32,39 +34,39 @@
 }
 
 .product-card-pcard:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
     border-color: #4895CF;
 }
 
 /* Botón de Favoritos */
 .favorite-btn-pcard {
     position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 36px;
-    height: 36px;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
     border: none;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(6px);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.15s ease;
     z-index: 25;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
 .favorite-btn-pcard:hover {
     background: white;
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transform: scale(1.04);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
 }
 
 .favorite-btn-pcard:active {
-    transform: scale(0.95);
+    transform: scale(0.88);
 }
 
 .favorite-btn-pcard.favorite-active {
@@ -78,9 +80,9 @@
 }
 
 .favorite-icon {
-    width: 18px;
-    height: 18px;
-    transition: all 0.3s ease;
+    width: 11px;
+    height: 11px;
+    transition: all 0.15s ease;
 }
 
 .favorite-btn-pcard:not(.favorite-active) .favorite-icon {
@@ -97,12 +99,12 @@
 
 /* Spinner para loading */
 .favorite-spinner-pcard {
-    width: 16px;
-    height: 16px;
-    border: 2px solid transparent;
-    border-top: 2px solid currentColor;
+    width: 9px;
+    height: 9px;
+    border: 1px solid transparent;
+    border-top: 1px solid currentColor;
     border-radius: 50%;
-    animation: spinPcard 1s linear infinite;
+    animation: spinPcard 0.6s linear infinite;
 }
 
 @keyframes spinPcard {
@@ -114,22 +116,23 @@
     }
 }
 
-/* Badge de promoción - Colores originales restaurados */
+/* Badge de promoción */
 .promotion-badge-pcard {
     position: absolute;
-    top: 12px;
-    left: 12px;
+    top: 4px;
+    left: 4px;
     background: linear-gradient(135deg, #ef4444, #dc2626);
     color: white;
-    padding: 6px 10px;
-    border-radius: 8px;
-    font-size: 0.75rem;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 0.5rem;
     font-weight: 800;
     z-index: 20;
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-    letter-spacing: 0.5px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 1px 3px rgba(239, 68, 68, 0.4);
+    letter-spacing: 0.05px;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
     animation: pulsePcard 2s infinite;
+    white-space: nowrap;
 }
 
 @keyframes pulsePcard {
@@ -137,14 +140,14 @@
         transform: scale(1);
     }
     50% {
-        transform: scale(1.05);
+        transform: scale(1.01);
     }
 }
 
-/* Imagen del producto - Colores originales */
+/* Imagen del producto */
 .product-image-pcard {
     position: relative;
-    height: 220px; /* Más alta para mejor visualización */
+    height: 110px;
     overflow: hidden;
     background: linear-gradient(135deg, #f8fafc, #e2e8f0);
     display: flex;
@@ -152,19 +155,20 @@
     justify-content: center;
     isolation: isolate;
     flex-shrink: 0;
+    width: 100%;
 }
 
 .product-image-pcard img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 0.5rem;
+    transition: all 0.25s ease;
+    padding: 0.2rem;
     position: relative;
     z-index: 2;
 }
 
-/* Estados de imagen - Restaurados */
+/* Estados de imagen */
 .product-img-pcard.loading-pcard {
     opacity: 0;
     transform: scale(0.95);
@@ -188,19 +192,19 @@
 }
 
 .product-card-pcard:hover .product-image-pcard img.loaded-pcard {
-    transform: scale(1.08);
+    transform: scale(1.03);
 }
 
-/* Placeholder - Colores originales */
+/* Placeholder */
 .image-placeholder-pcard {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     color: #9ca3af;
-    font-size: 2.5rem;
+    font-size: 1rem;
     text-align: center;
-    padding: 2rem;
+    padding: 0.6rem;
     width: 100%;
     height: 100%;
     background: linear-gradient(135deg, #f8fafc, #e2e8f0);
@@ -208,25 +212,25 @@
 }
 
 .image-placeholder-pcard .placeholder-icon-pcard {
-    margin-bottom: 1rem;
+    margin-bottom: 0.3rem;
     opacity: 0.6;
 }
 
 .image-placeholder-pcard p {
-    font-size: 0.9rem;
-    margin: 0.5rem 0 0.25rem 0;
+    font-size: 0.6rem;
+    margin: 0.15rem 0 0.05rem 0;
     color: #6b7280;
     font-weight: 500;
 }
 
 .image-placeholder-pcard small {
-    font-size: 0.75rem;
+    font-size: 0.5rem;
     color: #9ca3af;
-    line-height: 1.4;
-    max-width: 250px;
+    line-height: 1.1;
+    max-width: 110px;
 }
 
-/* Loading state - Colores originales */
+/* Loading state */
 .image-loading-pcard {
     position: absolute;
     top: 0;
@@ -253,46 +257,48 @@
 }
 
 .loading-spinner-pcard {
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba(72, 149, 207, 0.2);
-    border-top: 3px solid #4895CF;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid rgba(72, 149, 207, 0.2);
+    border-top: 1.5px solid #4895CF;
     border-radius: 50%;
-    animation: spinPcard 1s linear infinite;
-    margin-bottom: 1rem;
+    animation: spinPcard 0.8s linear infinite;
+    margin-bottom: 0.3rem;
 }
 
 .image-loading-pcard p {
-    font-size: 0.85rem;
-    margin: 0 0 0.5rem 0;
+    font-size: 0.6rem;
+    margin: 0 0 0.15rem 0;
     font-weight: 500;
     color: #4b5563;
 }
 
 .image-loading-pcard small {
-    font-size: 0.7rem;
+    font-size: 0.5rem;
     color: #9ca3af;
     font-weight: 400;
 }
 
-/* Overlay de acciones - Colores originales restaurados */
+/* =============================== */
+/* BOTÓN DE VISTA RÁPIDA RESTAURADO - Versión compacta */
+/* =============================== */
+
 .product-overlay-pcard {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(22, 57, 92, 0.95), rgba(44, 95, 142, 0.9));
+    background: linear-gradient(135deg, rgba(22, 57, 92, 0.85), rgba(44, 95, 142, 0.8));
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.75rem;
     opacity: 0;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
     z-index: 10;
-    padding: 1.5rem;
+    padding: 0.5rem;
 }
 
 .product-card-pcard:hover .product-overlay-pcard {
@@ -303,236 +309,228 @@
 .btn-overlay-pcard {
     background: rgba(255, 255, 255, 0.95);
     border: none;
-    padding: 0.75rem 1.25rem;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    font-weight: 700;
+    padding: 0.4rem 0.6rem; /* Más compacto */
+    border-radius: 6px; /* Más pequeño */
+    font-size: 0.65rem; /* Más pequeño */
+    font-weight: 600; /* Menos grueso */
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    min-width: 160px;
+    gap: 0.3rem; /* Menos espacio */
+    min-width: auto; /* Sin ancho mínimo fijo */
     justify-content: center;
     color: #1f2937;
     text-decoration: none;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    letter-spacing: 0.3px;
-    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Más sutil */
+    letter-spacing: 0.1px;
+    backdrop-filter: blur(6px);
+    width: 90%; /* Ocupa casi todo el ancho */
+    margin: 0.1rem 0; /* Menos margen */
 }
 
 .btn-overlay-pcard:hover {
     background: #4895CF;
     color: white;
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(72, 149, 207, 0.4);
+    transform: translateY(-1px); /* Menos movimiento */
+    box-shadow: 0 4px 10px rgba(72, 149, 207, 0.3); /* Más sutil */
 }
 
 .btn-overlay-pcard:active {
-    transform: translateY(-1px);
+    transform: translateY(0);
 }
 
 .btn-overlay-pcard svg {
-    width: 16px;
-    height: 16px;
+    width: 12px; /* Más pequeño */
+    height: 12px; /* Más pequeño */
     stroke: currentColor;
-    stroke-width: 2.5;
+    stroke-width: 2;
     transition: transform 0.2s ease;
+    flex-shrink: 0;
 }
 
 .btn-overlay-pcard:hover svg {
-    transform: scale(1.1);
+    transform: scale(1.05); /* Menos aumento */
 }
 
-/* Información del producto - Colores originales */
+/* Información del producto */
 .product-info-pcard {
-    padding: 1.25rem;
+    padding: 0.5rem;
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.25rem;
     background: white;
-    min-height: 240px;
+    min-height: 140px;
+    width: 100%;
 }
 
-/* Meta información - Colores originales restaurados */
+/* Meta información */
 .product-meta-pcard {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.25rem;
-    gap: 0.5rem;
+    margin-bottom: 0.05rem;
+    gap: 0.2rem;
 }
 
 .product-brand-pcard {
     background: linear-gradient(135deg, #4895CF, #2C5F8E);
     color: white;
-    padding: 0.4rem 0.85rem;
-    border-radius: 10px;
-    font-size: 0.7rem;
+    padding: 0.12rem 0.35rem;
+    border-radius: 3px;
+    font-size: 0.45rem;
     font-weight: 800;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.15px;
     text-transform: uppercase;
-    box-shadow: 0 2px 8px rgba(72, 149, 207, 0.3);
+    box-shadow: 0 1px 2px rgba(72, 149, 207, 0.3);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 120px;
+    max-width: 60px;
 }
 
 .product-category-pcard {
     color: #bac1ce;
-    font-size: 0.7rem;
+    font-size: 0.45rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.15px;
     text-align: right;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 120px;
+    max-width: 60px;
 }
 
-/* Nombre del producto - Colores originales */
+/* Nombre del producto */
 .product-name-pcard {
-    font-size: 1rem;
+    font-size: 0.7rem;
     font-weight: 700;
     color: #1f2937;
-    line-height: 1.4;
+    line-height: 1.2;
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: 2.8rem;
-    letter-spacing: -0.2px;
+    min-height: 1.6rem;
+    letter-spacing: -0.03px;
+    width: 100%;
 }
 
 .product-name-pcard a {
     color: inherit;
     text-decoration: none;
-    transition: color 0.2s ease;
+    transition: color 0.15s ease;
+    display: block;
+    width: 100%;
 }
 
 .product-name-pcard a:hover {
     color: #4895CF;
 }
 
-/* Descripción - Colores originales */
+/* Descripción */
 .product-description-pcard {
     color: #6b7280;
-    font-size: 0.8rem;
-    line-height: 1.5;
+    font-size: 0.55rem;
+    line-height: 1.15;
     margin: 0;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     flex: 1;
     font-weight: 400;
-    min-height: 3.6rem;
+    min-height: 2rem;
+    width: 100%;
 }
 
-/* Precios - Colores originales restaurados */
+/* Precios */
 .product-prices-pcard {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
-    margin: 0.5rem 0;
+    gap: 0.08rem;
+    margin: 0.2rem 0;
+    width: 100%;
 }
 
 .price-promo-pcard {
     display: flex;
     align-items: baseline;
-    gap: 0.5rem;
+    gap: 0.2rem;
     flex-wrap: wrap;
 }
 
 .current-price-pcard {
-    font-size: 1.4rem;
+    font-size: 0.9rem;
     font-weight: 800;
     color: #ef4444;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.15px;
     line-height: 1;
 }
 
 .original-price-pcard {
-    font-size: 0.95rem;
+    font-size: 0.65rem;
     color: #9ca3af;
     text-decoration: line-through;
     font-weight: 500;
-    margin-right: 0.5rem;
+    margin-right: 0.2rem;
 }
 
 .price-normal-pcard {
     display: flex;
     align-items: baseline;
-    gap: 0.5rem;
+    gap: 0.2rem;
     flex-wrap: wrap;
 }
 
 .price-normal-pcard .current-price-pcard {
     color: #1f2937;
-    font-size: 1.4rem;
+    font-size: 0.9rem;
     font-weight: 800;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.15px;
 }
 
 .currency-pcard {
-    font-size: 0.8rem;
+    font-size: 0.55rem;
     color: #6b7280;
     font-weight: 600;
-    margin-left: 2px;
+    margin-left: 1px;
 }
 
 .discount-amount-pcard {
-    font-size: 0.8rem;
+    font-size: 0.55rem;
     color: #10b981;
     font-weight: 600;
     background: rgba(16, 185, 129, 0.1);
-    padding: 0.2rem 0.5rem;
-    border-radius: 6px;
+    padding: 0.06rem 0.2rem;
+    border-radius: 2px;
 }
 
-.price-note-pcard {
-    font-size: 0.7rem;
-    color: #4895CF;
-    background: rgba(72, 149, 207, 0.1);
-    padding: 0.2rem 0.5rem;
-    border-radius: 6px;
-    font-weight: 600;
-}
-
-.price-additional-info-pcard {
-    margin-top: 0.25rem;
-}
-
-.price-additional-info-pcard small {
-    font-size: 0.7rem;
-    color: #9ca3af;
-    font-style: italic;
-}
-
-/* Stock - Colores originales restaurados */
+/* Stock */
 .product-stock-pcard {
-    margin: 0.25rem 0;
+    margin: 0.05rem 0;
+    width: 100%;
 }
 
 .stock-badge-pcard {
-    padding: 0.5rem 0.85rem;
-    border-radius: 10px;
-    font-size: 0.8rem;
+    padding: 0.2rem 0.35rem;
+    border-radius: 4px;
+    font-size: 0.55rem;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    transition: all 0.2s ease;
+    gap: 0.2rem;
+    transition: all 0.15s ease;
     border: 1px solid transparent;
+    width: fit-content;
 }
 
 .stock-badge-pcard svg {
-    width: 14px;
-    height: 14px;
+    width: 7px;
+    height: 7px;
     stroke: currentColor;
     stroke-width: 3;
     flex-shrink: 0;
@@ -545,8 +543,8 @@
 }
 
 .in-stock-pcard:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    transform: translateY(-0.5px);
+    box-shadow: 0 1px 4px rgba(16, 185, 129, 0.2);
 }
 
 .stock-low-pcard {
@@ -556,109 +554,78 @@
 }
 
 .stock-low-pcard:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    transform: translateY(-0.5px);
+    box-shadow: 0 1px 4px rgba(245, 158, 11, 0.2);
 }
 
 /* Información del modelo */
 .product-model-pcard {
-    margin-top: 0.25rem;
+    margin-top: 0.05rem;
+    width: 100%;
 }
 
 .product-model-pcard small {
-    font-size: 0.75rem;
+    font-size: 0.5rem;
     color: #dbdee4;
     font-weight: 500;
-}
-
-/* Debug info */
-.debug-info-pcard {
-    margin-top: 0.5rem;
-    padding: 0.5rem;
-    background: #f8fafc;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-}
-
-.debug-info-pcard details {
-    font-size: 0.75rem;
-}
-
-.debug-info-pcard summary {
-    cursor: pointer;
-    font-weight: 600;
-    color: #4895CF;
-}
-
-.debug-info-pcard ul {
-    margin: 0.5rem 0 0 1rem;
-    padding: 0;
-}
-
-.debug-info-pcard li {
-    margin-bottom: 0.25rem;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Error de favoritos */
 .favorite-error-pcard {
-    margin-top: 0.5rem;
-    padding: 0.5rem;
+    margin-top: 0.2rem;
+    padding: 0.2rem;
     background: rgba(239, 68, 68, 0.1);
     border: 1px solid rgba(239, 68, 68, 0.2);
-    border-radius: 8px;
+    border-radius: 3px;
     color: #dc2626;
-    font-size: 0.75rem;
+    font-size: 0.5rem;
+    width: 100%;
 }
 
-/* Botones de acción móviles - Colores originales */
+/* =============================== */
+/* BOTONES DE ACCIÓN MÓVILES RESTAURADOS - Versión compacta */
+/* =============================== */
+
 .product-actions-mobile-pcard {
     display: none;
-    gap: 0.75rem;
-    margin-top: 1rem;
+    gap: 0.3rem;
+    margin-top: 0.4rem;
+    width: 100%;
 }
 
 .btn-mobile-pcard {
     flex: 1;
-    padding: 0.85rem 1rem;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    font-weight: 700;
+    padding: 0.35rem 0.5rem;
+    border-radius: 5px;
+    font-size: 0.6rem;
+    font-weight: 600;
     text-align: center;
     text-decoration: none;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.15s ease;
     border: none;
     cursor: pointer;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.08px;
 }
 
 .btn-quick-view-mobile-pcard {
     background: linear-gradient(135deg, #f8fafc, #e2e8f0);
     color: #374151;
-    border: 1.5px solid #e5e7eb;
+    border: 1px solid #e5e7eb;
 }
 
 .btn-quick-view-mobile-pcard:hover {
     background: linear-gradient(135deg, #e2e8f0, #d1d5db);
     color: #1f2937;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.btn-details-mobile-pcard {
-    background: linear-gradient(135deg, #4895CF, #2C5F8E);
-    color: white;
-    border: 1.5px solid #2C5F8E;
-    box-shadow: 0 2px 8px rgba(72, 149, 207, 0.3);
-}
-
-.btn-details-mobile-pcard:hover {
-    background: linear-gradient(135deg, #2C5F8E, #16395C);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(72, 149, 207, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 /* =============================== */
-/* ESTILOS PARA CARRUSEL HOME */
+/* ESTILOS PARA CARRUSEL HOME con ESPACIADO REDUCIDO */
 /* =============================== */
 
 /* Tarjetas en carrusel */
@@ -666,10 +633,9 @@
 .slick-slide .product-card-pcard,
 .swiper-slide .product-card-pcard,
 .home-carousel .product-card-pcard {
-    /* Asegurar tamaño consistente en carrusel */
-    min-width: 280px;
-    max-width: 320px;
-    margin: 0 5px;
+    min-width: 140px;
+    max-width: 150px;
+    margin: 1px !important; /* ¡Espaciado MUY reducido! */
     transform: none;
 }
 
@@ -677,300 +643,316 @@
 .slick-slide .product-card-pcard:hover,
 .swiper-slide .product-card-pcard:hover,
 .home-carousel .product-card-pcard:hover {
-    transform: translateY(-8px);
+    transform: translateY(-2px);
 }
 
-/* Contenedor de carrusel - Espaciado adecuado */
+/* Contenedor de carrusel - Espaciado MUY reducido */
 .slick-list {
-    padding: 20px 10px !important;
-    margin: 0 -10px !important;
+    padding: 4px 2px !important; /* ¡REDUCIDO al mínimo! */
+    margin: 0 -2px !important;
 }
 
 /* Slides individuales */
 .slick-slide > div {
-    padding: 0 10px;
+    padding: 0 2px !important; /* ¡REDUCIDO! */
     height: 100%;
 }
 
-/* Slide centrado con efecto de zoom */
-.slick-center .product-card-pcard {
-    transform: scale(1.02);
-    z-index: 10;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-}
+/* =============================== */
+/* CONTENEDORES DE GRID PARA REDUCIR ESPACIADO */
+/* =============================== */
 
-.slick-center .product-card-pcard:hover {
-    transform: scale(1.02) translateY(-8px);
+/* Si usas grid para mostrar las cards, ajusta estos estilos: */
+.products-grid .product-card-pcard,
+.grid-container .product-card-pcard {
+    margin: 2px !important; /* Espaciado uniforme */
 }
 
 /* =============================== */
-/* RESPONSIVE DESIGN */
+/* RESPONSIVE DESIGN con ESPACIADO REDUCIDO */
 /* =============================== */
 
 /* Desktop Grande */
 @media (min-width: 1440px) {
     .product-card-pcard {
-        min-width: 280px;
+        min-width: 150px;
+        margin: 3px !important; /* Un poco más de espacio en pantallas grandes */
     }
     
     .product-image-pcard {
-        height: 240px;
+        height: 120px;
     }
 }
 
 /* Desktop */
 @media (max-width: 1200px) {
     .product-card-pcard {
-        min-width: 260px;
+        min-width: 135px;
+        margin: 2px !important;
     }
     
     .product-image-pcard {
-        height: 200px;
+        height: 105px;
     }
     
     .product-info-pcard {
-        padding: 1rem;
+        padding: 0.45rem;
     }
 }
 
 /* Tablet Grande */
 @media (max-width: 1024px) {
     .product-card-pcard {
-        min-width: 240px;
+        min-width: 120px;
+        margin: 1px !important; /* Menos espacio en tablet */
     }
     
     .product-image-pcard {
-        height: 180px;
+        height: 90px;
     }
     
     .product-info-pcard {
-        padding: 0.875rem;
-        min-height: 220px;
+        padding: 0.4rem;
+        min-height: 125px;
     }
     
     .product-name-pcard {
-        font-size: 0.95rem;
-        min-height: 2.6rem;
+        font-size: 0.65rem;
+        min-height: 1.4rem;
     }
     
     .current-price-pcard {
-        font-size: 1.2rem;
+        font-size: 0.85rem;
+    }
+    
+    /* Mostrar botones móviles en tablet */
+    .product-actions-mobile-pcard {
+        display: flex;
+    }
+    
+    /* Ocultar overlay en tablet/mobile */
+    .product-overlay-pcard {
+        display: none !important;
+    }
+    
+    .carousel-container .product-card-pcard,
+    .slick-slide .product-card-pcard {
+        min-width: 120px;
+        margin: 1px !important;
     }
 }
 
 /* Tablet */
 @media (max-width: 768px) {
     .product-card-pcard {
-        min-width: 220px;
+        min-width: 110px;
+        margin: 1px !important;
     }
     
     .product-image-pcard {
-        height: 160px;
+        height: 80px;
     }
     
     .product-info-pcard {
-        padding: 0.75rem;
-        min-height: 200px;
-        gap: 0.5rem;
+        padding: 0.35rem;
+        min-height: 110px;
+        gap: 0.2rem;
     }
     
     .product-name-pcard {
-        font-size: 0.9rem;
-        min-height: 2.4rem;
+        font-size: 0.6rem;
+        min-height: 1.2rem;
     }
     
     .product-description-pcard {
-        font-size: 0.75rem;
-        min-height: 3rem;
+        font-size: 0.5rem;
+        min-height: 1.5rem;
         -webkit-line-clamp: 2;
     }
     
     .current-price-pcard {
-        font-size: 1.1rem;
+        font-size: 0.75rem;
     }
     
-    .product-overlay-pcard {
-        display: none;
-    }
-    
-    .product-actions-mobile-pcard {
-        display: flex;
-    }
-    
-    /* Favoritos responsive */
     .favorite-btn-pcard {
-        width: 32px;
-        height: 32px;
-        top: 8px;
-        right: 8px;
+        width: 20px;
+        height: 20px;
+        top: 3px;
+        right: 3px;
     }
     
     .favorite-icon {
-        width: 16px;
-        height: 16px;
+        width: 10px;
+        height: 10px;
     }
     
-    /* Ajustes para carrusel en tablet */
     .carousel-container .product-card-pcard,
     .slick-slide .product-card-pcard {
-        min-width: 200px;
+        min-width: 110px;
+        margin: 1px !important;
     }
 }
 
 /* Mobile Large */
 @media (max-width: 640px) {
     .product-card-pcard {
-        min-width: 200px;
+        min-width: 100px;
+        margin: 1px !important;
     }
     
     .product-image-pcard {
-        height: 150px;
+        height: 70px;
     }
     
     .product-info-pcard {
-        padding: 0.625rem;
-        min-height: 180px;
-        gap: 0.375rem;
+        padding: 0.3rem;
+        min-height: 100px;
+        gap: 0.15rem;
     }
     
     .product-name-pcard {
-        font-size: 0.85rem;
-        min-height: 2.2rem;
+        font-size: 0.55rem;
+        min-height: 1rem;
     }
     
     .product-description-pcard {
-        font-size: 0.7rem;
-        min-height: 2.6rem;
+        font-size: 0.45rem;
+        min-height: 1.3rem;
     }
     
     .current-price-pcard {
-        font-size: 1rem;
+        font-size: 0.7rem;
     }
     
     .product-actions-mobile-pcard {
-        flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.25rem;
     }
     
     .btn-mobile-pcard {
-        padding: 0.625rem 0.75rem;
-        font-size: 0.75rem;
+        padding: 0.3rem 0.4rem;
+        font-size: 0.55rem;
     }
     
-    /* Ajustes para carrusel en mobile */
     .carousel-container .product-card-pcard,
     .slick-slide .product-card-pcard {
-        min-width: 180px;
+        min-width: 100px;
+        margin: 1px !important;
     }
 }
 
 /* Mobile Medium */
 @media (max-width: 480px) {
     .product-card-pcard {
-        min-width: 180px;
+        min-width: 90px;
+        margin: 0.5px !important; /* Mínimo espacio */
     }
     
     .product-image-pcard {
-        height: 140px;
+        height: 60px;
     }
     
     .product-info-pcard {
-        padding: 0.5rem;
-        min-height: 170px;
+        padding: 0.25rem;
+        min-height: 90px;
     }
     
     .product-name-pcard {
-        font-size: 0.8rem;
-        min-height: 2rem;
+        font-size: 0.5rem;
+        min-height: 0.9rem;
     }
     
     .product-description-pcard {
-        font-size: 0.65rem;
-        min-height: 2.3rem;
+        font-size: 0.4rem;
+        min-height: 1.1rem;
     }
     
     .current-price-pcard {
-        font-size: 0.95rem;
+        font-size: 0.65rem;
     }
     
     .btn-mobile-pcard {
-        padding: 0.5rem 0.625rem;
-        font-size: 0.7rem;
+        padding: 0.25rem 0.35rem;
+        font-size: 0.5rem;
     }
     
-    /* Ajustes para carrusel en mobile pequeño */
     .carousel-container .product-card-pcard,
     .slick-slide .product-card-pcard {
-        min-width: 160px;
-        margin: 0 3px;
+        min-width: 90px;
+        margin: 0.5px !important;
     }
 }
 
 /* Mobile Small */
 @media (max-width: 360px) {
     .product-card-pcard {
-        min-width: 160px;
+        min-width: 80px;
+        margin: 0.5px !important;
     }
     
     .product-image-pcard {
-        height: 130px;
+        height: 55px;
     }
     
     .product-info-pcard {
-        padding: 0.375rem;
-        min-height: 160px;
+        padding: 0.2rem;
+        min-height: 80px;
     }
     
     .product-name-pcard {
-        font-size: 0.75rem;
-        min-height: 1.8rem;
+        font-size: 0.45rem;
+        min-height: 0.8rem;
+        -webkit-line-clamp: 1;
     }
     
     .product-description-pcard {
-        font-size: 0.6rem;
-        min-height: 2rem;
+        font-size: 0.35rem;
+        min-height: 0.9rem;
+        -webkit-line-clamp: 1;
     }
     
     .current-price-pcard {
-        font-size: 0.9rem;
+        font-size: 0.6rem;
     }
     
-    /* Ajustes para carrusel en mobile muy pequeño */
     .carousel-container .product-card-pcard,
     .slick-slide .product-card-pcard {
-        min-width: 150px;
-        margin: 0 2px;
+        min-width: 80px;
+        margin: 0.5px !important;
     }
 }
 
 /* =============================== */
-/* CORRECCIONES GENERALES DE DISEÑO */
+/* CORRECCIONES FINALES */
 /* =============================== */
 
-/* Corregir: Asegurar que el overlay cubra toda la imagen */
-.product-overlay-pcard {
+/* Asegurar que todo ocupe el ancho completo */
+.product-image-pcard,
+.product-info-pcard,
+.product-name-pcard,
+.product-description-pcard,
+.product-prices-pcard,
+.product-stock-pcard,
+.product-model-pcard {
     width: 100%;
-    height: 100%;
 }
 
-/* Corregir: Asegurar que las imágenes se carguen correctamente */
+/* Prevenir desbordamiento */
+.product-card-pcard {
+    overflow: hidden;
+}
+
+/* Asegurar que las imágenes no desborden */
 .product-image-pcard img {
-    display: block;
     max-width: 100%;
-    max-height: 100%;
+    height: auto;
+    object-fit: contain;
 }
 
-/* Corregir: Mejorar contraste en modo oscuro */
+/* Modo oscuro básico */
 @media (prefers-color-scheme: dark) {
     .product-card-pcard {
         background: #1f2937;
         border-color: #374151;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-    }
-    
-    .product-card-pcard:hover {
-        border-color: #4895CF;
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
     }
     
     .product-name-pcard {
@@ -989,73 +971,349 @@
         color: #f9fafb;
     }
     
-    .currency-pcard {
-        color: #d1d5db;
-    }
-    
     .product-info-pcard {
         background: linear-gradient(135deg, #0f4780, #4895CF);
     }
     
-    /* Para carrusel en modo oscuro */
-    .carousel-container .product-card-pcard,
-    .slick-slide .product-card-pcard {
-        background: #1f2937 !important;
-        border-color: #374151 !important;
-    }
-}
-
-/* Corregir: Estados de enfoque para accesibilidad */
-.btn-overlay-pcard:focus-visible,
-.btn-mobile-pcard:focus-visible,
-.favorite-btn-pcard:focus-visible {
-    outline: 3px solid #4895CF;
-    outline-offset: 2px;
-}
-
-.product-card-pcard:focus-within {
-    outline: 2px solid #4895CF;
-    outline-offset: 2px;
-}
-
-/* Corregir: Prevenir desbordamiento de texto */
-.product-name-pcard,
-.product-description-pcard {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-
-/* Corregir: Asegurar que los botones sean clickeables en móviles */
-@media (max-width: 768px) {
-    .btn-mobile-pcard {
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .btn-overlay-pcard {
+        background: rgba(30, 41, 59, 0.95);
+        color: #f1f5f9;
     }
     
-    .favorite-btn-pcard {
+    .btn-overlay-pcard:hover {
+        background: #4895CF;
+        color: white;
+    }
+}
+
+/* Estados de enfoque */
+.favorite-btn-pcard:focus-visible,
+.btn-overlay-pcard:focus-visible,
+.btn-mobile-pcard:focus-visible {
+    outline: 2px solid #4895CF;
+    outline-offset: 1px;
+}
+
+/* Asegurar que el texto no se desborde */
+.product-name-pcard,
+.product-description-pcard {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    white-space: normal;
+    overflow: hidden;
+}
+
+.product-brand-pcard,
+.product-category-pcard,
+.product-model-pcard small {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* =============================== */
+/* BOTÓN DE CARRITO (AÑADIR AL FINAL DEL CSS ORIGINAL) */
+/* =============================== */
+
+/* Contenedor de stock con botón de carrito */
+.product-stock-pcard {
+    position: relative;
+    margin: 0.2rem 0;
+    width: 100%;
+    min-height: 28px;
+}
+
+/* Botón de carrito compacto - AUMENTADO */
+.cart-btn-pcard {
+    background: linear-gradient(135deg, #4895CF, #2C5F8E);
+    border: none;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(72, 149, 207, 0.3);
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+    /* Visible por defecto */
+    display: flex;
+}
+
+.cart-btn-pcard:hover {
+    background: linear-gradient(135deg, #2C5F8E, #4895CF);
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 3px 8px rgba(72, 149, 207, 0.4);
+}
+
+.cart-btn-pcard:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.cart-btn-pcard:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Icono del carrito - AUMENTADO */
+.cart-icon-pcard {
+    width: 18px;
+    height: 18px;
+    stroke: white;
+    stroke-width: 2;
+    fill: none;
+    transition: stroke 0.2s ease;
+}
+
+/* Spinner para el botón de carrito - AUMENTADO */
+.cart-btn-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spinPcard 0.6s linear infinite;
+}
+
+/* Tooltip para el botón de carrito */
+.cart-btn-pcard::after {
+    content: 'Agregar al carrito';
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: white;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.6rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    z-index: 100;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.cart-btn-pcard:hover::after {
+    opacity: 1;
+    visibility: visible;
+    bottom: -35px;
+}
+
+/* =============================== */
+/* MODO OSCURO - ESTILOS ESPECÍFICOS */
+/* =============================== */
+
+@media (prefers-color-scheme: dark) {
+    .cart-btn-pcard {
+        background: transparent;
+        border: 1.5px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    
+    .cart-btn-pcard:hover {
+        background: white;
+        border-color: white;
+        transform: translateY(-1px) scale(1.05);
+        box-shadow: 0 3px 8px rgba(255, 255, 255, 0.2);
+    }
+    
+    .cart-btn-pcard:active {
+        background: rgba(255, 255, 255, 0.9);
+        transform: translateY(0) scale(0.95);
+    }
+    
+    /* Icono blanco en estado normal */
+    .cart-btn-pcard .cart-icon-pcard {
+        stroke: white;
+    }
+    
+    /* Icono azul en hover (color del background original) */
+    .cart-btn-pcard:hover .cart-icon-pcard {
+        stroke: #4895CF;
+    }
+    
+    /* Spinner en modo oscuro - normal */
+    .cart-btn-pcard .cart-btn-spinner {
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top: 2px solid white;
+    }
+    
+    /* Spinner en modo oscuro - hover */
+    .cart-btn-pcard:hover .cart-btn-spinner {
+        border: 2px solid rgba(72, 149, 207, 0.3);
+        border-top: 2px solid #4895CF;
+    }
+    
+    /* Tooltip en modo oscuro */
+    .cart-btn-pcard::after {
+        background: #374151;
+        color: #f9fafb;
+        border: 1px solid #4b5563;
+    }
+}
+
+/* =============================== */
+/* CLASES PARA MODO OSCURO MANUAL (si usas toggle) */
+/* =============================== */
+
+.dark-mode .cart-btn-pcard {
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .cart-btn-pcard:hover {
+    background: white;
+    border-color: white;
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 3px 8px rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode .cart-btn-pcard:active {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(0) scale(0.95);
+}
+
+.dark-mode .cart-btn-pcard .cart-icon-pcard {
+    stroke: white;
+}
+
+.dark-mode .cart-btn-pcard:hover .cart-icon-pcard {
+    stroke: #4895CF;
+}
+
+.dark-mode .cart-btn-pcard .cart-btn-spinner {
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+}
+
+.dark-mode .cart-btn-pcard:hover .cart-btn-spinner {
+    border: 2px solid rgba(72, 149, 207, 0.3);
+    border-top: 2px solid #4895CF;
+}
+
+.dark-mode .cart-btn-pcard::after {
+    background: #374151;
+    color: #f9fafb;
+    border: 1px solid #4b5563;
+}
+
+/* =============================== */
+/* RESPONSIVE - OCULTAR BOTÓN EN TABLET Y MÓVIL */
+/* =============================== */
+
+/* Desktop Grande (> 1024px) - Botón visible */
+@media (min-width: 1025px) {
+    .cart-btn-pcard {
+        display: flex !important;
+        opacity: 1;
+        visibility: visible;
+        transform: scale(1);
+        pointer-events: auto;
+    }
+}
+
+/* Tablet y Móvil (≤ 1024px) - Ocultar botón */
+@media (max-width: 1024px) {
+    .cart-btn-pcard {
+        display: none !important;
+        opacity: 0;
+        visibility: hidden;
+        transform: scale(0);
+        pointer-events: none;
+    }
+    
+    /* Ajustar el contenedor de stock cuando el botón está oculto */
+    .product-stock-pcard {
+        min-height: auto;
+        margin: 0.15rem 0;
+        height: auto;
+    }
+    
+    /* El badge de stock ocupa todo el ancho */
+    .stock-badge-pcard {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+        display: flex;
+    }
+    
+    /* Ocultar tooltip también */
+    .cart-btn-pcard::after {
+        display: none !important;
+    }
+}
+
+/* =============================== */
+/* TAMAÑOS PARA DESKTOP (solo aplica cuando es visible) */
+/* =============================== */
+
+/* Desktop Extra Grande */
+@media (min-width: 1440px) and (min-width: 1025px) {
+    .cart-btn-pcard {
+        width: 34px;
+        height: 34px;
+    }
+    
+    .cart-icon-pcard {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .product-stock-pcard {
+        min-height: 34px;
+    }
+    
+    .cart-btn-spinner {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* Desktop Normal */
+@media (min-width: 1025px) and (max-width: 1439px) {
+    .cart-btn-pcard {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .cart-icon-pcard {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .product-stock-pcard {
         min-height: 32px;
     }
-}
-
-/* Corregir: Mejorar rendimiento de animaciones */
-.product-image-pcard img {
-    will-change: transform;
-}
-
-/* Corregir: Estados de carga mejorados */
-.product-img-pcard.loading-pcard {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: loadingShimmerPcard 1.5s infinite;
-}
-
-@keyframes loadingShimmerPcard {
-    0% {
-        background-position: -200% 0;
+    
+    .cart-btn-spinner {
+        width: 14px;
+        height: 14px;
     }
-    100% {
-        background-position: 200% 0;
+}
+
+/* Estado de enfoque (solo cuando es visible) */
+@media (min-width: 1025px) {
+    .cart-btn-pcard:focus-visible {
+        outline: 2px solid #4895CF;
+        outline-offset: 1px;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        .cart-btn-pcard:focus-visible {
+            outline: 2px solid white;
+            outline-offset: 1px;
+        }
     }
 }

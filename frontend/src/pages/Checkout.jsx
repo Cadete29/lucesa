@@ -9,8 +9,21 @@ import paymentService from '../api/paymentService';
 
 // ✅ Configuración de URLs por entorno - USANDO LA MISMA QUE EL CARRITO
 const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://testpaginaweb.shop/api/images/code'
+  ? 'https://lucesademexico-shop.com.mx/api/images/code'
   : 'http://localhost:4004/api/images/code';
+
+// ✅ Función para formatear precios con separadores de miles
+const formatPrice = (number) => {
+  if (number === null || number === undefined || isNaN(number)) return '0,00';
+  
+  const num = typeof number === 'string' ? parseFloat(number) : number;
+  
+  // Usar Intl.NumberFormat para formato mexicano
+  return new Intl.NumberFormat('es-MX', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(num);
+};
 
 const Checkout = () => {
   const { cartItems, getCartTotal, clearCart, getCartItemsCount, debugCart } = useCart();
@@ -45,6 +58,7 @@ const Checkout = () => {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('mercado_pago'); // Estado para método de pago
 
   const subtotal = getCartTotal();
   const shipping = subtotal >= 1000 ? 0 : 150;
@@ -115,6 +129,81 @@ const Checkout = () => {
       }
       
       setIsProcessing(false);
+    }
+  };
+
+  const handleTransferPayment = async () => {
+    if (!formData.acceptTerms) {
+      alert('Debes aceptar los términos y condiciones');
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const shippingAddress = {
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zipCode: formData.zipCode,
+        country: 'México'
+      };
+
+      const customerInfo = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone
+      };
+
+      // Crear orden de transferencia
+      const result = await paymentService.createTransferOrder(
+        cartItems,
+        shippingAddress,
+        customerInfo,
+        total
+      );
+      
+      if (result.success && result.order_number) {
+        // Navegar a la página de confirmación de transferencia
+        navigate('/order-confirmation-transfer', {
+          state: {
+            ...result,
+            cartItems: cartItems,
+            formData: formData,
+            total: total,
+            subtotal: subtotal,
+            tax: tax,
+            shipping: shipping,
+            paymentMethod: 'transfer'
+          }
+        });
+      } else {
+        throw new Error('No se pudo crear la orden de transferencia');
+      }
+
+    } catch (error) {
+      console.error('❌ Error al crear orden de transferencia:', error);
+      alert('Error al crear la orden: ' + error.message);
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePayment = () => {
+    if (!isAuthenticated) {
+      navigate('/login', { 
+        state: { 
+          from: '/checkout',
+          message: 'Inicia sesión para completar tu compra'
+        }
+      });
+      return;
+    }
+
+    if (paymentMethod === 'mercado_pago') {
+      handleMercadoPagoPayment();
+    } else if (paymentMethod === 'transfer') {
+      handleTransferPayment();
     }
   };
 
@@ -324,8 +413,8 @@ const Checkout = () => {
                       {formData.address}<br />
                       {formData.city}, {formData.state} {formData.zipCode}<br />
                       {formData.country}<br />
-                      📞 {formData.phone}<br />
-                      📧 {formData.email}
+                       {formData.phone}<br />
+                       {formData.email}
                     </div>
                   </div>
 
@@ -361,33 +450,72 @@ const Checkout = () => {
 
               {currentStep === 3 && (
                 <div className="lcs-co-form-step">
-                  <h2 className="lcs-co-step-title">Pago con Mercado Pago</h2>
+                  <h2 className="lcs-co-step-title">Selecciona Método de Pago</h2>
                   
-                  <div className="lcs-co-mercadopago-section">
-                    <div className="lcs-co-mercadopago-header">
-                      <div className="lcs-co-mercadopago-logo">
-                        <div className="lcs-co-mp-icon">
-                          <img 
-                            src="/mer.svg" 
-                            alt="Mercado Pago" 
-                            className="lcs-co-mp-logo-img"
-                          />
+                  <div className="lcs-co-payment-methods">
+                    <div className="lcs-co-payment-options">
+                      {/* <label className={`lcs-co-payment-option ${paymentMethod === 'mercado_pago' ? 'lcs-co-payment-option-selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="mercado_pago"
+                          checked={paymentMethod === 'mercado_pago'}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                          className="lcs-co-payment-radio"
+                        />
+                        <div className="lcs-co-payment-option-content">
+                          <div className="lcs-co-mercadopago-header">
+                            <div className="lcs-co-mercadopago-logo">
+                              <div className="lcs-co-mp-icon">
+                                <img 
+                                  src="/mer.svg" 
+                                  alt="Mercado Pago" 
+                                  className="lcs-co-mp-logo-img"
+                                />
+                              </div>
+                              <h3 className="lcs-co-mp-title"></h3>
+                            </div>
+                            <p className="lcs-co-mp-description">
+                              Pago seguro con tarjeta de crédito/débito o efectivo
+                            </p>
+                          </div>
                         </div>
-                        <h3 className="lcs-co-mp-title">Mercado Pago</h3>
-                      </div>
-                      <p className="lcs-co-mp-description">
-                        Serás redirigido a Mercado Pago para completar tu pago de manera segura
-                      </p>
+                      </label> */}
+
+                      <label className={`lcs-co-payment-option ${paymentMethod === 'transfer' ? 'lcs-co-payment-option-selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="transfer"
+                          checked={paymentMethod === 'transfer'}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                          className="lcs-co-payment-radio"
+                        />
+                        <div className="lcs-co-payment-option-content">
+                          <div className="lcs-co-transfer-header">
+                            <div className="lcs-co-transfer-logo">
+                              <div className="lcs-co-transfer-icon">
+                                <span className="lcs-co-transfer-icon-text">🏦</span>
+                              </div>
+                              <h3 className="lcs-co-transfer-title">Transferencia Bancaria</h3>
+                            </div>
+                            <p className="lcs-co-transfer-description">
+                              Paga por transferencia o depósito bancario
+                            </p>
+                            <div className="lcs-co-transfer-details">
+                              <p><strong>Instrucciones:</strong></p>
+                              <ul className="lcs-co-transfer-instructions">
+                                <li>Realiza el pago a nuestra cuenta bancaria</li>
+                                <li>Envía el comprobante por WhatsApp o correo</li>
+                                <li>Procesaremos tu pedido en 24-48 horas</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </label>
                     </div>
 
-                    {!isAuthenticated && (
-                      <div className="lcs-co-auth-required-message">
-                        <p className="lcs-co-auth-message-text">
-                          🔐 <strong>Autenticación requerida:</strong> Debes iniciar sesión para proceder con el pago.
-                        </p>
-                      </div>
-                    )}
-
+                    {/* Sección de seguridad común */}
                     <div className="lcs-co-payment-security">
                       <div className="lcs-co-security-badge">
                         <span className="lcs-co-security-icon">🔒</span>
@@ -398,10 +526,20 @@ const Checkout = () => {
                       </div>
                     </div>
 
+                    {/* Total a pagar */}
                     <div className="lcs-co-order-total-payment">
                       <h4 className="lcs-co-total-payment-title">Total a pagar:</h4>
-                      <div className="lcs-co-total-payment-amount">${total.toFixed(2)} MXN</div>
+                      <div className="lcs-co-total-payment-amount">${formatPrice(total)} MXN</div>
                     </div>
+
+                    {/* Mensaje de autenticación */}
+                    {!isAuthenticated && (
+                      <div className="lcs-co-auth-required-message">
+                        <p className="lcs-co-auth-message-text">
+                          🔐 <strong>Autenticación requerida:</strong> Debes iniciar sesión para proceder con el pago.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="lcs-co-form-actions">
@@ -412,17 +550,23 @@ const Checkout = () => {
                     {isAuthenticated ? (
                       <button 
                         type="button" 
-                        onClick={handleMercadoPagoPayment}
-                        className="lcs-co-btn lcs-co-btn-primary lcs-co-btn-mercadopago"
+                        onClick={handlePayment}
+                        className={`lcs-co-btn lcs-co-btn-primary ${
+                          paymentMethod === 'mercado_pago' 
+                            ? 'lcs-co-btn-mercadopago' 
+                            : 'lcs-co-btn-transfer'
+                        }`}
                         disabled={isProcessing}
                       >
                         {isProcessing ? (
                           <>
                             <div className="lcs-co-loading-spinner"></div>
-                            Conectando con Mercado Pago...
+                            Procesando...
                           </>
-                        ) : (
+                        ) : paymentMethod === 'mercado_pago' ? (
                           'Pagar con Mercado Pago'
+                        ) : (
+                          'Continuar con Transferencia'
                         )}
                       </button>
                     ) : (
@@ -461,12 +605,12 @@ const Checkout = () => {
               <div className="lcs-co-summary-details">
                 <div className="lcs-co-summary-row">
                   <span className="lcs-co-summary-label">Subtotal ({getCartItemsCount()} productos):</span>
-                  <span className="lcs-co-summary-value">${subtotal.toFixed(2)} MXN</span>
+                  <span className="lcs-co-summary-value">${formatPrice(subtotal)} MXN</span>
                 </div>
                 
                 <div className="lcs-co-summary-row">
                   <span className="lcs-co-summary-label">IVA (16%):</span>
-                  <span className="lcs-co-summary-value">${tax.toFixed(2)} MXN</span>
+                  <span className="lcs-co-summary-value">${formatPrice(tax)} MXN</span>
                 </div>
                 
                 <div className="lcs-co-summary-row">
@@ -475,7 +619,7 @@ const Checkout = () => {
                     {subtotal >= 1000 ? (
                       <span className="lcs-co-free-shipping-text">GRATIS</span>
                     ) : (
-                      <span className="lcs-co-shipping-cost-text">$150.00 MXN</span>
+                      <span className="lcs-co-shipping-cost-text">${formatPrice(150)} MXN</span>
                     )}
                   </span>
                 </div>
@@ -483,7 +627,7 @@ const Checkout = () => {
                 <div className="lcs-co-summary-divider"></div>
                 <div className="lcs-co-summary-row lcs-co-total">
                   <span className="lcs-co-total-label">Total:</span>
-                  <span className="lcs-co-total-amount">${total.toFixed(2)} MXN</span>
+                  <span className="lcs-co-total-amount">${formatPrice(total)} MXN</span>
                 </div>
               </div>
             </div>
@@ -628,7 +772,7 @@ const CheckoutOrderItem = ({ item }) => {
         
         {item.promociones && item.promociones.length > 0 && (
           <div className="lcs-co-item-promo">
-            <span className="lcs-co-promo-badge">🔥 Oferta especial</span>
+            <span className="lcs-co-promo-badge"> Oferta especial</span>
           </div>
         )}
       </div>
@@ -640,11 +784,11 @@ const CheckoutOrderItem = ({ item }) => {
 
       <div className="lcs-co-order-item-total">
         <div className="lcs-co-order-total-price">
-          ${((item.precioFinal || item.precio) * item.quantity).toFixed(2)} MXN
+          ${formatPrice((item.precioFinal || item.precio) * item.quantity)} MXN
         </div>
         {item.precioFinal !== item.precio && (
           <div className="lcs-co-order-unit-price">
-            ${(item.precioFinal || item.precio).toFixed(2)} c/u
+            ${formatPrice(item.precioFinal || item.precio)} c/u
           </div>
         )}
       </div>
@@ -765,7 +909,7 @@ const CheckoutPreviewItem = ({ item }) => {
         <span className="lcs-co-preview-quantity">x{item.quantity}</span>
       </div>
       <span className="lcs-co-preview-price">
-        ${((item.precioFinal || item.precio) * item.quantity).toFixed(2)}
+        ${formatPrice((item.precioFinal || item.precio) * item.quantity)}
       </span>
     </div>
   );

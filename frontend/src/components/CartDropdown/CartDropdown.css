@@ -560,3 +560,26 @@
     transition: none;
   }
 }
+/* _____Eliminar estas para regresar la visibilida der slidebar_________________________________________________________________________ */
+/* Asegurar que el carrito esté siempre por encima de TODO */
+.cd-dropdown {
+  z-index: 999999 !important;
+  position: fixed !important;
+}
+
+.cd-backdrop {
+  z-index: 999998 !important;
+  position: fixed !important;
+}
+
+/* Cuando el carrito está abierto, forzar que esté por encima del sidebar */
+body.cart-open .sidebar-categories,
+body.cart-open .sidebar-children-panel,
+body.cart-open .sidebar-subcategories-panel {
+  z-index: 1 !important;
+}
+
+/* Asegurar que ningún elemento del sidebar interfiera */
+body.cart-open *:not(.cd-dropdown):not(.cd-backdrop) {
+  pointer-events: auto !important;
+}

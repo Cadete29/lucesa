@@ -1,9 +1,9 @@
-/* Cart.css - COMPLETO CON TEXTO BLANCO */
+/* Cart.css - CORREGIDO SIN DARK MODE PROBLEMÁTICO */
 .ct-page {
   min-height: 100vh;
   background: #f8fafc;
   padding: 2rem 0;
-  padding-top: 150px !important;
+  padding-top: 50px !important;
 }
 
 .ct-container {
@@ -22,7 +22,7 @@
 }
 
 .ct-title {
-  color: #16395C !important; /* CAMBIADO A BLANCO */
+  color: #16395C;
   font-size: 2rem;
   font-weight: 700;
   margin: 0;
@@ -60,13 +60,13 @@
 }
 
 .ct-empty-title {
-  color: #ffffff; /* CAMBIADO A BLANCO */
+  color: #2d3748;
   margin-bottom: 1rem;
   font-size: 1.5rem;
 }
 
 .ct-empty-text {
-  color: #ffffff; /* CAMBIADO A BLANCO */
+  color: #4a5568;
   margin-bottom: 2rem;
   font-size: 1.1rem;
 }
@@ -134,7 +134,7 @@
 }
 
 .ct-item-link {
-  color: #ffffff; /* CAMBIADO A BLANCO */
+  color: #2d3748;
   text-decoration: none;
   font-size: 1.1rem;
   font-weight: 600;
@@ -146,14 +146,14 @@
 }
 
 .ct-item-brand {
-  color: #ffffff; /* CAMBIADO A BLANCO */
+  color: #4a5568;
   font-weight: 500;
   margin: 0 0 0.25rem 0;
   font-size: 0.9rem;
 }
 
 .ct-item-code {
-  color: #e2e8f0; /* CAMBIADO A GRIS CLARO */
+  color: #718096;
   font-size: 0.8rem;
   margin: 0 0 0.75rem 0;
 }
@@ -178,7 +178,7 @@
 .ct-price {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #ffffff; /* MANTENIDO VERDE */
+  color: #48bb78;
   margin-bottom: 0.5rem;
 }
 
@@ -243,7 +243,7 @@
 .ct-total-price {
   font-size: 1.3rem;
   font-weight: 700;
-  color: #ffffff; /* CAMBIADO A BLANCO */
+  color: #48bb78;
   margin-bottom: 0.75rem;
 }
 
@@ -281,7 +281,7 @@
 }
 
 .ct-summary-title {
-  color: #ffffff; /* CAMBIADO A BLANCO */
+  color: #2d3748;
   margin: 0 0 1.5rem 0;
   font-size: 1.3rem;
   font-weight: 600;
@@ -292,31 +292,31 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 0;
-  color: #ffffff; /* CAMBIADO A BLANCO */
+  color: #4a5568;
 }
 
 .ct-summary-label {
-  color: #ffffff; /* CAMBIADO A BLANCO */
+  color: #4a5568;
 }
 
 .ct-summary-value {
-  color: #ffffff; /* CAMBIADO A BLANCO */
+  color: #2d3748;
   font-weight: 600;
 }
 
 .ct-summary-row.ct-total {
   font-weight: 700;
-  color: #ffffff; /* CAMBIADO A BLANCO */
+  color: #2d3748;
   font-size: 1.1rem;
 }
 
 .ct-total-amount {
-  color: #ffffff; /* MANTENIDO VERDE */
+  color: #48bb78;
   font-size: 1.3rem;
 }
 
 .ct-free-shipping {
-  color: #ffffff; /* MANTENIDO VERDE */
+  color: #48bb78;
   font-weight: 700;
 }
 
@@ -329,6 +329,38 @@
   text-align: center;
   color: #dd6b20;
   font-weight: 500;
+}
+
+.ct-minimum-notice {
+  background: #fffaf0;
+  border: 1px solid #fbd38d;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  color: #dd6b20;
+}
+
+.ct-minimum-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.ct-minimum-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.ct-minimum-text {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.ct-shipping-unavailable {
+  color: #c53030;
+  font-weight: 600;
 }
 
 .ct-summary-divider {
@@ -357,10 +389,23 @@
   box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
 }
 
+.ct-checkout-btn.ct-checkout-disabled {
+  background: #cbd5e0;
+  color: #718096;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ct-checkout-btn.ct-checkout-disabled:hover {
+  background: #cbd5e0;
+  transform: none;
+  box-shadow: none;
+}
+
 .ct-continue-shopping {
   display: block;
   text-align: center;
-  color: #ffffff;
+  color: #4299e1;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s ease;
@@ -380,7 +425,7 @@
 }
 
 .ct-benefits-title {
-  color: #ffffff; /* CAMBIADO A BLANCO */
+  color: #2d3748;
   margin: 0 0 1rem 0;
   font-size: 1.1rem;
   font-weight: 600;
@@ -404,12 +449,12 @@
 }
 
 .ct-benefit-text {
-  color: #ffffff; /* CAMBIADO A BLANCO */
+  color: #4a5568;
   line-height: 1.4;
 }
 
 .ct-benefit-text strong {
-  color: #ffffff; /* CAMBIADO A BLANCO */
+  color: #2d3748;
 }
 
 /* Buttons */
@@ -733,44 +778,10 @@
     transition: none;
     animation: none;
   }
-}
-
-/* Dark Mode Support - ACTUALIZADO CON TEXTO BLANCO */
-@media (prefers-color-scheme: dark) {
-  .ct-page {
-    background: #ffffff;
-  }
   
-  .ct-empty,
-  .ct-items-section,
-  .ct-summary-card,
-  .ct-benefits {
-    background: linear-gradient(90deg, #4895CF, #7CCBDD);
-    color: #ffffff; /* CAMBIADO A BLANCO */
-  }
-  
-  .ct-title,
-  .ct-item-link,
-  .ct-summary-title,
-  .ct-benefits-title,
-  .ct-item-brand,
-  .ct-empty-title,
-  .ct-empty-text,
-  .ct-summary-label,
-  .ct-summary-value,
-  .ct-summary-row,
-  .ct-benefit-text,
-  .ct-benefit-text strong,
-  .ct-total-price {
-    color: #ffffff; /* TODOS BLANCO */
-  }
-  
-  .ct-item-code {
-    color: #e2e8f0; /* GRIS CLARO */
-  }
-  
-  .ct-summary-label {
-    color: #ffffff;
+  .ct-loading-spinner {
+    animation: none;
+    border-top-color: #e2e8f0;
   }
 }
 
@@ -782,4 +793,47 @@
 .ct-item-large.ct-updating {
   opacity: 0.7;
   background: #f7fafc;
+}
+
+/* Forzar fondos blancos en todos los modos */
+.ct-empty,
+.ct-items-section,
+.ct-summary-card,
+.ct-benefits {
+  background: white !important;
+}
+
+/* Asegurar que los colores se mantengan consistentes */
+.ct-title,
+.ct-item-link,
+.ct-summary-title,
+.ct-benefits-title,
+.ct-summary-row.ct-total {
+  color: #2d3748 !important;
+}
+
+.ct-item-brand,
+.ct-empty-text,
+.ct-summary-label,
+.ct-benefit-text {
+  color: #4a5568 !important;
+}
+
+.ct-item-code {
+  color: #718096 !important;
+}
+
+.ct-price,
+.ct-total-price,
+.ct-total-amount,
+.ct-free-shipping {
+  color: #48bb78 !important;
+}
+
+.ct-summary-value {
+  color: #2d3748 !important;
+}
+
+.ct-benefit-text strong {
+  color: #2d3748 !important;
 }

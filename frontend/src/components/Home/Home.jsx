@@ -1,3 +1,25 @@
+// src/pages/Home/Home.jsx
+
+/**
+ * Componente Home - Página principal del e-commerce
+ * 
+ * Componente principal que muestra:
+ * - Carrusel automático de categorías destacadas
+ * - Carrusel de productos destacados
+ * - Carrusel de productos adicionales
+ * - Sección de ofertas especiales
+ * - Sección de beneficios
+ * - Mosaico de marcas confiables
+ * 
+ * Responsabilidades:
+ * 1. Mostrar contenido principal de la página de inicio
+ * 2. Implementar carruseles interactivos
+ * 3. Integrar múltiples fuentes de datos (productos, categorías, marcas)
+ * 4. Manejar vistas rápidas de productos
+ * 5. Adaptar diseño según sidebar
+ * 6. Proporcionar experiencia de usuario fluida
+ */
+
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../Product Card/ProductCard";
@@ -12,164 +34,239 @@ import {
 } from "../../api/productosHooks";
 import "./Home.css";
 
-// Helper para generar ID desde nombre
-const generarIdDesdeNombreHome = (nombre) => {
-  if (!nombre) return `categoria-${Math.random().toString(36).substr(2, 9)}`;
-  
-  return nombre.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-};
+// ============================================
+// COMPONENTE: CategoriasDestacadasHome
+// ============================================
 
-// Helper para color de categoría
-const getColorCategoriaHome = (nombre) => {
-  const colors = [
-    '#4299e1', '#48bb78', '#ed8936', '#9f7aea', '#f56565',
-    '#38b2ac', '#ecc94b', '#667eea', '#ed64a6', '#4fd1c7',
-    '#fc8181', '#68d391', '#f6ad55', '#d69e2e', '#63b3ed',
-    '#b794f4', '#f687b3', '#4c51bf', '#3182ce', '#38a169',
-    '#805ad5', '#e53e3e', '#dd6b20', '#0bc5ea', '#00b5d8'
-  ];
+/**
+ * Componente Categorías Destacadas con Carrusel Automático
+ * @component
+ * @description Muestra un carrusel automático de categorías principales
+ * @returns {JSX.Element} Carrusel de categorías destacadas
+ */
+const CategoriasDestacadasHome = () => {
+  /** @state {number} currentSlide - Índice del slide actual */
+  const [currentSlide, setCurrentSlide] = useState(0);
+  /** @ref {Object} carruselRef - Referencia al contenedor del carrusel */
+  const carruselRef = useRef(null);
+  /** @ref {Object} intervalRef - Referencia al intervalo de autoplay */
+  const intervalRef = useRef(null);
   
-  if (!nombre) return colors[0];
-  
-  let hash = 0;
-  for (let i = 0; i < nombre.length; i++) {
-    hash = nombre.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  
-  return colors[Math.abs(hash) % colors.length];
-};
+  /**
+   * Datos de categorías padre (hardcodeados)
+   * @constant {Array} categoriasPadre
+   * @description Lista de categorías principales con sus propiedades
+   */
+  const categoriasPadre = useMemo(() => [
+    {
+      id: 'Cómputo',
+      nombre: 'Cómputo',
+      imagen: 'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80',
+      descripcion: 'Laptops, PCs, tablets y equipos de cómputo',
+      ruta: '/products?category=Computación',
+      productosCount: 300,
+      color: '#4895CF'
+    },
+    {
+      id: 'audio-video',
+      nombre: 'Audio y Video',
+      imagen: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80',
+      descripcion: 'Parlantes, audífonos, micrófonos y sistemas de sonido',
+      ruta: '/products?category=Audio%20y%20Video',
+      productosCount: 150,
+      color: '#7CCBDD'
+    },
+    {
+      id: 'gaming',
+      nombre: 'Gaming',
+      imagen: '/gaming.avif',
+      descripcion: 'Equipos y accesorios especializados para gamers',
+      ruta: '/products?category=Gaming',
+      productosCount: 1000,
+      color: '#EF4444'
+    },
+    {
+      id: 'apple',
+      nombre: 'Apple',
+      imagen: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80',
+      descripcion: 'Productos Apple originales y accesorios',
+      ruta: '/products?category=Apple',
+      productosCount: 50,
+      color: '#000000'
+    },
+    {
+      id: 'electronica',
+      nombre: 'Electrónica',
+      imagen: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80',
+      descripcion: 'Componentes electrónicos y equipos especializados',
+      ruta: '/products?category=Electrónica',
+      productosCount: 500,
+      color: '#10B981'
+    }
+  ], []);
 
-// Helper para descripción de categoría
-const obtenerDescripcionCategoriaHome = (nombreCategoria) => {
-  const descripciones = {
-    'Consumibles': 'Materiales de oficina, tecnología y uso diario esencial',
-    'Ensamble': 'Componentes para armar computadoras y equipos tecnológicos',
-    'Cables': 'Cables USB, HDMI, red, alimentación y todo tipo de conectores',
-    'Accesorios Gaming': 'Equipos especializados para gaming: mouse, teclados, headsets',
-    'Video Vigilancia': 'Sistemas completos de CCTV y seguridad visual',
-    'Red Activa': 'Routers, switches, firewalls y equipos de networking',
-    'Electrónica': 'Componentes electrónicos y equipos especializados',
-    'Computadoras': 'Computadoras de escritorio, todo-en-uno y equipos completos',
-    'Impresión': 'Impresoras, plotters y equipos de impresión profesional',
-    'Audio': 'Bocinas, audífonos, micrófonos y sistemas de sonido',
-    'Almacenamiento': 'Discos duros, SSDs y unidades de almacenamiento',
-    'Periféricos': 'Mouse, teclados, monitores y accesorios para computadora',
-    'Software': 'Programas y aplicaciones para diversos usos',
-    'Networking': 'Equipos y accesorios para redes informáticas',
-    'Componentes': 'Partes individuales para ensamblar equipos',
-  };
-  
-  return descripciones[nombreCategoria] || 
-    `Productos de ${nombreCategoria} - Calidad y variedad para tus necesidades`;
-};
+  // ============================================
+  // FUNCIONES DE NAVEGACIÓN DEL CARRUSEL
+  // ============================================
 
-// Componente Carrusel de Categorías
-const CarruselCategoriasHome = ({ categorias }) => {
-  const carruselRefHome = useRef(null);
-  const [currentIndexHome, setCurrentIndexHome] = useState(0);
-
-  const scrollToIndexHome = (index) => {
-    if (!carruselRefHome.current) return;
+  /**
+   * Ir a un slide específico
+   * @param {number} index - Índice del slide al que ir
+   */
+  const goToSlide = (index) => {
+    setCurrentSlide(index);
+    if (carruselRef.current) {
+      carruselRef.current.style.transform = `translateX(-${index * 100}%)`;
+    }
     
-    const cardWidth = 280;
-    const gap = 16;
-    const scrollAmount = index * (cardWidth + gap);
+    // Reiniciar el autoplay
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      startAutoPlay();
+    }
+  };
+
+  /**
+   * Ir al siguiente slide
+   */
+  const nextSlide = () => {
+    const nextIndex = (currentSlide + 1) % categoriasPadre.length;
+    goToSlide(nextIndex);
+  };
+
+  /**
+   * Ir al slide anterior
+   */
+  const prevSlide = () => {
+    const prevIndex = currentSlide === 0 ? categoriasPadre.length - 1 : currentSlide - 1;
+    goToSlide(prevIndex);
+  };
+
+  /**
+   * Iniciar reproducción automática del carrusel
+   * @function startAutoPlay
+   * @callback useCallback
+   */
+  const startAutoPlay = useCallback(() => {
+    intervalRef.current = setInterval(() => {
+      nextSlide();
+    }, 5000); // Cambia cada 5 segundos
+  }, [currentSlide]);
+
+  /**
+   * Detener reproducción automática
+   */
+  const stopAutoPlay = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+  };
+
+  // ============================================
+  // EFECTOS DE LIFECYCLE
+  // ============================================
+
+  /**
+   * Efecto: Iniciar autoplay al montar y limpiar al desmontar
+   */
+  useEffect(() => {
+    startAutoPlay();
     
-    carruselRefHome.current.scrollTo({
-      left: scrollAmount,
-      behavior: 'smooth'
-    });
-    setCurrentIndexHome(index);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [startAutoPlay]);
+
+  // ============================================
+  // MANEJADORES DE EVENTOS
+  // ============================================
+
+  /**
+   * Pausar autoplay al hacer hover
+   */
+  const handleMouseEnter = () => {
+    stopAutoPlay();
   };
 
-  const nextSlideHome = () => {
-    const maxIndex = Math.ceil(categorias.length / 1.5) - 1;
-    const nextIndex = currentIndexHome >= maxIndex ? 0 : currentIndexHome + 1;
-    scrollToIndexHome(nextIndex);
+  /**
+   * Reanudar autoplay al salir del hover
+   */
+  const handleMouseLeave = () => {
+    startAutoPlay();
   };
 
-  const prevSlideHome = () => {
-    const maxIndex = Math.ceil(categorias.length / 1.5) - 1;
-    const prevIndex = currentIndexHome <= 0 ? maxIndex : currentIndexHome - 1;
-    scrollToIndexHome(prevIndex);
-  };
-
-  if (!categorias || categorias.length === 0) {
-    return (
-      <div className="no-categories-home">
-        <p>No hay categorías disponibles del backend.</p>
-      </div>
-    );
-  }
+  // ============================================
+  // RENDERIZADO
+  // ============================================
 
   return (
-    <div className="carrusel-container-home">
-      <div className="carrusel-wrapper-home">
-        <button 
-          className="carrusel-btn-home carrusel-btn-prev-home" 
-          onClick={prevSlideHome}
-          aria-label="Categoría anterior"
-        >
-          ‹
-        </button>
-        
-        <div className="carrusel-categorias-home" ref={carruselRefHome}>
-          <div className="carrusel-track-home">
-            {categorias.map((categoria, index) => (
-              <div key={categoria.id || index} className="categoria-card-small-home">
-                <div className="categoria-icon-small-home">
-                  {categoria.nombre?.charAt(0)?.toUpperCase() || '📦'}
-                </div>
-                <h3>{categoria.nombre}</h3>
-                <p>{categoria.descripcion}</p>
-                <div className="categoria-count-small-home">
-                  {categoria.productosRealesEnCategoria} productos
-                  {categoria.productosConStock > 0 && (
-                    <span className="categoria-stock-badge-small"> ✓ Stock</span>
-                  )}
-                </div>
-                <Link 
-                  to={categoria.ruta || `/products?category=${encodeURIComponent(categoria.nombre)}`} 
-                  className="btn-categoria-small-home"
-                >
-                  Explorar
-                </Link>
+    <div className="categorias-carrusel-container-home">
+      <div 
+        className="categorias-carrusel-home"
+        ref={carruselRef}
+        style={{ 
+          transform: `translateX(-${currentSlide * 100}%)`,
+          transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {categoriasPadre.map((categoria) => (
+          <div 
+            key={categoria.id} 
+            className="categoria-carrusel-item-home"
+            style={{ 
+              backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${categoria.imagen})`,
+              borderLeft: `5px solid ${categoria.color}`
+            }}
+          >
+            <div className="categoria-carrusel-content-home">
+              <h3 className="categoria-carrusel-title-home">{categoria.nombre}</h3>
+              <p className="categoria-carrusel-desc-home">{categoria.descripcion}</p>
+              <div className="categoria-carrusel-info-home">
+                <span className="categoria-carrusel-count-home">
+                  {categoria.productosCount}+ productos
+                </span>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-
-        <button 
-          className="carrusel-btn-home carrusel-btn-next-home" 
-          onClick={nextSlideHome}
-          aria-label="Siguiente categoría"
-        >
-          ›
-        </button>
+        ))}
       </div>
 
-      {categorias.length > 3 && (
-        <div className="carrusel-indicators-home">
-          {Array.from({ length: Math.ceil(categorias.length / 1.5) }).map((_, index) => (
-            <button
-              key={index}
-              className={`carrusel-indicator-home ${index === currentIndexHome ? 'active-home' : ''}`}
-              onClick={() => scrollToIndexHome(index)}
-              aria-label={`Ir a página ${index + 1}`}
-            />
-          ))}
-        </div>
-      )}
+      {/* INDICADORES DEL CARRUSEL */}
+      <div className="carrusel-indicators-categorias-home">
+        {categoriasPadre.map((_, index) => (
+          <button
+            key={index}
+            className={`carrusel-indicator-categoria-home ${index === currentSlide ? 'active-categoria' : ''}`}
+            onClick={() => goToSlide(index)}
+            aria-label={`Ir a categoría ${index + 1}`}
+          >
+            <span className="indicator-progress-categoria"></span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 };
 
-// Componente Carrusel de Productos - CON EL MISMO DISEÑO QUE CATEGORÍAS
+// ============================================
+// COMPONENTE: CarruselProductosHome
+// ============================================
+
+/**
+ * Componente Carrusel de Productos
+ * @component
+ * @param {Object} props - Propiedades del componente
+ * @param {Array} props.productos - Lista de productos a mostrar
+ * @param {string} props.titulo - Título del carrusel
+ * @param {string} props.subtitulo - Subtítulo del carrusel
+ * @param {Function} props.onQuickView - Función para vista rápida
+ * @param {string} props.verTodosRuta - Ruta para "ver todos"
+ * @returns {JSX.Element} Carrusel de productos interactivo
+ */
 const CarruselProductosHome = ({ 
   productos, 
   titulo, 
@@ -177,13 +274,23 @@ const CarruselProductosHome = ({
   onQuickView,
   verTodosRuta = "/products" 
 }) => {
+  /** @ref {Object} carruselRef - Referencia al contenedor del carrusel */
   const carruselRef = useRef(null);
+  /** @state {number} currentIndex - Índice actual del carrusel */
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // ============================================
+  // FUNCIONES DE NAVEGACIÓN
+  // ============================================
+
+  /**
+   * Desplazarse a un índice específico
+   * @param {number} index - Índice al que desplazarse
+   */
   const scrollToIndex = (index) => {
     if (!carruselRef.current) return;
     
-    const cardWidth = 300; // Ancho de las tarjetas de producto
+    const cardWidth = 300;
     const gap = 20;
     const scrollAmount = index * (cardWidth + gap);
     
@@ -194,17 +301,27 @@ const CarruselProductosHome = ({
     setCurrentIndex(index);
   };
 
+  /**
+   * Ir al siguiente slide
+   */
   const nextSlide = () => {
     const maxIndex = Math.ceil(productos.length / 1.5) - 1;
     const nextIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1;
     scrollToIndex(nextIndex);
   };
 
+  /**
+   * Ir al slide anterior
+   */
   const prevSlide = () => {
     const maxIndex = Math.ceil(productos.length / 1.5) - 1;
     const prevIndex = currentIndex <= 0 ? maxIndex : currentIndex - 1;
     scrollToIndex(prevIndex);
   };
+
+  // ============================================
+  // VALIDACIÓN Y ESTADOS VACÍOS
+  // ============================================
 
   if (!productos || productos.length === 0) {
     return (
@@ -216,13 +333,19 @@ const CarruselProductosHome = ({
     );
   }
 
+  // ============================================
+  // RENDERIZADO
+  // ============================================
+
   return (
     <div className="carrusel-container-home carrusel-productos-home">
+      {/* ENCABEZADO */}
       <div className="carrusel-header-home">
         <h2 className="carrusel-titulo-home">{titulo}</h2>
         {subtitulo && <p className="carrusel-subtitulo-home">{subtitulo}</p>}
       </div>
       
+      {/* CONTENEDOR PRINCIPAL */}
       <div className="carrusel-wrapper-home">
         <button 
           className="carrusel-btn-home carrusel-btn-prev-home" 
@@ -255,6 +378,7 @@ const CarruselProductosHome = ({
         </button>
       </div>
 
+      {/* INDICADORES */}
       {productos.length > 3 && (
         <div className="carrusel-indicators-home">
           {Array.from({ length: Math.ceil(productos.length / 1.5) }).map((_, index) => (
@@ -268,6 +392,7 @@ const CarruselProductosHome = ({
         </div>
       )}
       
+      {/* PIE DE PÁGINA */}
       <div className="carrusel-footer-home">
         <Link to={verTodosRuta} className="btn-view-all-home">
           Ver todos los productos ›
@@ -277,77 +402,179 @@ const CarruselProductosHome = ({
   );
 };
 
-const Home = () => {
-    const [quickViewProductHome, setQuickViewProductHome] = useState(null);
-    const [isQuickViewOpenHome, setIsQuickViewOpenHome] = useState(false);
+// ============================================
+// COMPONENTE: MarcasMosaicoSimpleHome
+// ============================================
 
-    // HOOKS
+/**
+ * Componente de Marcas en Mosaico Simple
+ * @component
+ * @description Muestra logos de marcas en un diseño de mosaico estático
+ * @param {Object} props - Propiedades del componente
+ * @param {Array} props.marcas - Lista de nombres de marcas
+ * @param {Function} props.getLogoUrlHome - Función para obtener URLs de logos
+ * @returns {JSX.Element} Mosaico de marcas
+ */
+const MarcasMosaicoSimpleHome = ({ marcas, getLogoUrlHome }) => {
+  // Validar datos
+  if (!marcas || marcas.length === 0) {
+    return (
+      <div className="no-marcas-home">
+        <p>No hay marcas disponibles en este momento.</p>
+      </div>
+    );
+  }
+
+  // Renderizar mosaico
+  return (
+    <div className="marcas-mosaico-simple-container-home">
+      {marcas.map((marca, index) => {
+        const logoUrl = getLogoUrlHome(marca);
+        
+        return (
+          <div 
+            key={`${marca}-${index}`} 
+            className="marca-mosaico-simple-item-home"
+          >
+            {logoUrl ? (
+              <img 
+                src={logoUrl} 
+                alt={`Logo ${marca}`}
+                className="marca-mosaico-simple-logo-home"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  const textElement = e.target.nextSibling;
+                  if (textElement) {
+                    textElement.style.display = 'inline';
+                  }
+                }}
+              />
+            ) : null}
+            <span className="marca-mosaico-simple-texto-home" style={{display: logoUrl ? 'none' : 'inline'}}>
+              {marca}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ============================================
+// COMPONENTE PRINCIPAL: Home
+// ============================================
+
+/**
+ * Componente principal de la página de inicio
+ * @component
+ * @returns {JSX.Element} Página principal completa
+ */
+const Home = () => {
+    // ============================================
+    // ESTADOS DEL COMPONENTE
+    // ============================================
+    
+    /** @state {Object|null} quickViewProductHome - Producto para vista rápida */
+    const [quickViewProductHome, setQuickViewProductHome] = useState(null);
+    /** @state {boolean} isQuickViewOpenHome - Controla visibilidad del modal */
+    const [isQuickViewOpenHome, setIsQuickViewOpenHome] = useState(false);
+    /** @state {boolean} hasSidebar - Indica si sidebar está visible */
+    const [hasSidebar, setHasSidebar] = useState(false);
+
+    // ============================================
+    // EFECTOS DE LIFECYCLE
+    // ============================================
+
+    /**
+     * Efecto: Detectar si el sidebar está visible
+     * - Verifica periodicamente si existe un sidebar expandido
+     * - Ajusta estilos del contenedor principal
+     */
+    useEffect(() => {
+        const checkSidebar = () => {
+            const sidebar = document.querySelector('.sidebar-categories.expanded');
+            const isDesktop = window.innerWidth >= 1025;
+            
+            // Verificar si el sidebar existe y está expandido
+            setHasSidebar(isDesktop && sidebar !== null);
+        };
+
+        // Verificar inicialmente
+        checkSidebar();
+
+        // Verificar en resize
+        const handleResize = () => {
+            checkSidebar();
+        };
+        
+        window.addEventListener('resize', handleResize);
+        
+        // Verificar periódicamente
+        const interval = setInterval(checkSidebar, 500);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
+
+    // ============================================
+    // HOOKS DE API
+    // ============================================
+
+    /** @hook useProductosDestacados - Obtiene productos destacados */
     const { data: productosDestacadosData, loading: destacadosLoading, error: destacadosError } = useProductosDestacados();
+    
+    /** @hook useProductos - Obtiene todos los productos (limitado) */
     const { data: todosProductosData, loading: productosLoading } = useProductos({ limit: 200 });
     
+    /** @hook useCategoriasActualizadas - Obtiene categorías actualizadas */
     const { 
       data: categoriasResponse, 
       loading: categoriasLoading, 
       error: categoriasError 
     } = useCategoriasActualizadas(300000);
     
+    /** @hook useTodosProductos - Obtiene todos los productos (sin límite) */
     const { data: productosCompletosData } = useTodosProductos({ page: 1, limit: 20000 });
+    
+    /** @hook useMarcas - Obtiene lista de marcas */
     const { data: marcasData, loading: marcasLoading } = useMarcas();
+    
+    /** @hook useEstadisticas - Obtiene estadísticas del sistema */
     const { data: estadisticasData } = useEstadisticas();
 
-    // Datos procesados
+    // ============================================
+    // DATOS PROCESADOS
+    // ============================================
+
+    /** @constant {Array} productosDestacados - Productos destacados procesados */
     const productosDestacados = productosDestacadosData?.data || [];
+    
+    /** @constant {Array} todosProductos - Productos limitados */
     const todosProductos = todosProductosData?.data || [];
+    
+    /** @constant {Array} productosCompletos - Productos completos */
     const productosCompletos = productosCompletosData?.data || [];
+    
+    /** @constant {Array} marcasReales - Lista de marcas */
     const marcasReales = marcasData?.data || [];
+    
+    /** @constant {Object} estadisticas - Estadísticas del sistema */
     const estadisticas = estadisticasData?.data || {};
 
-    // OBTENER CATEGORÍAS POPULARES
-    const topCategoriasHome = useMemo(() => {
-      if (!categoriasResponse?.data || !Array.isArray(categoriasResponse.data)) {
-        return [];
-      }
+    // ============================================
+    // FUNCIONES DE PROCESAMIENTO DE DATOS
+    // ============================================
 
-      const categoriasProcesadas = categoriasResponse.data.map(categoriaApi => {
-        let productosEnCategoria = 0;
-        let productosConStockEnCategoria = 0;
-        
-        if (productosCompletos && Array.isArray(productosCompletos)) {
-          const productosFiltrados = productosCompletos.filter(p => 
-            p.categoria && p.categoria.trim() === categoriaApi.nombre.trim()
-          );
-          
-          productosEnCategoria = productosFiltrados.length;
-          productosConStockEnCategoria = productosFiltrados.filter(p => 
-            (p.existencia || p.existenciaTotal || 0) > 0
-          ).length;
-        }
-
-        return {
-          ...categoriaApi,
-          nombre: categoriaApi.nombre,
-          id: categoriaApi.id || generarIdDesdeNombreHome(categoriaApi.nombre),
-          productosRealesEnCategoria: productosEnCategoria,
-          productosConStock: productosConStockEnCategoria,
-          color: getColorCategoriaHome(categoriaApi.nombre),
-          descripcion: obtenerDescripcionCategoriaHome(categoriaApi.nombre),
-          ruta: `/products?category=${encodeURIComponent(categoriaApi.nombre)}`
-        };
-      })
-      .filter(cat => cat.productosRealesEnCategoria > 0)
-      .sort((a, b) => b.productosRealesEnCategoria - a.productosRealesEnCategoria)
-      .slice(0, 8);
-
-      return categoriasProcesadas;
-    }, [categoriasResponse, productosCompletos]);
-
-    // FUNCIÓN PARA PRODUCTOS DESTACADOS
+    /**
+     * Obtiene productos destacados con fallbacks
+     * @function getProductosDestacadosHome
+     * @returns {Array} Lista de productos destacados únicos
+     */
     const getProductosDestacadosHome = useMemo(() => {
-      console.log('🔄 Procesando productos destacados...');
-      
+      // 1. Intentar con productos destacados de API
       if (Array.isArray(productosDestacados) && productosDestacados.length > 0) {
-        console.log('✅ Usando productos destacados de la API:', productosDestacados.length);
-        
         const productosFiltrados = productosDestacados.filter(p => {
           const tieneDatosMinimos = p.nombre && p.precio;
           const tieneStock = (p.existencia || p.existenciaTotal || 0) > 0;
@@ -361,21 +588,19 @@ const Home = () => {
             [item.idProducto || item.codigo || item.id, item]
           )).values()].slice(0, 12);
           
-          console.log('🎯 Productos destacados filtrados:', productosUnicos);
           return productosUnicos;
         }
       }
       
-      console.log('⚠️ No hay productos destacados de la API, usando productos generales');
-      
+      // 2. Fallback: productos disponibles
       const productosDisponibles = Array.isArray(todosProductos) ? todosProductos : 
                                   Array.isArray(productosCompletos) ? productosCompletos : [];
       
       if (productosDisponibles.length === 0) {
-        console.log('❌ No hay productos disponibles');
         return [];
       }
       
+      // 2.1 Filtrar productos con imagen y stock
       const productosConImagenYStock = productosDisponibles.filter(p => {
         const tieneImagen = p.imagen || p.imagenUrl || p.imagenPrincipal;
         const tieneStock = (p.existencia || p.existenciaTotal || 0) > 0;
@@ -387,10 +612,10 @@ const Home = () => {
           [item.idProducto || item.codigo || item.id, item]
         )).values()].slice(0, 12);
         
-        console.log('📸 Productos con imagen y stock:', productosUnicos.length);
         return productosUnicos;
       }
       
+      // 2.2 Fallback: solo productos con imagen
       const productosConImagen = productosDisponibles.filter(p => 
         p.imagen || p.imagenUrl || p.imagenPrincipal
       );
@@ -400,20 +625,23 @@ const Home = () => {
           [item.idProducto || item.codigo || item.id, item]
         )).values()].slice(0, 12);
         
-        console.log('🖼️ Productos con imagen:', productosUnicos.length);
         return productosUnicos;
       }
       
+      // 3. Fallback final: productos únicos
       const productosUnicos = [...new Map(productosDisponibles.map(item => 
         [item.idProducto || item.codigo || item.id, item]
       )).values()].slice(0, 12);
       
-      console.log('🎲 Productos generales:', productosUnicos.length);
       return productosUnicos;
       
     }, [productosDestacados, todosProductos, productosCompletos]);
 
-    // FUNCIÓN PARA MÁS PRODUCTOS
+    /**
+     * Obtiene productos adicionales (no destacados)
+     * @function getMasProductosHome
+     * @returns {Array} Lista de productos adicionales
+     */
     const getMasProductosHome = useMemo(() => {
       const productosDestacadosIds = getProductosDestacadosHome.map(p => 
         p.idProducto || p.codigo || p.id
@@ -424,6 +652,7 @@ const Home = () => {
       
       if (productosDisponibles.length === 0) return [];
       
+      // Filtrar productos que no están en destacados
       const productosNoDestacados = productosDisponibles.filter(producto => {
         const productoId = producto.idProducto || producto.codigo || producto.id;
         return !productosDestacadosIds.includes(productoId);
@@ -433,6 +662,7 @@ const Home = () => {
         return productosNoDestacados.slice(0, 12);
       }
       
+      // Fallback: productos únicos
       const todosUnicos = [...new Map(productosDisponibles.map(item => 
         [item.idProducto || item.codigo || item.id, item]
       )).values()];
@@ -440,24 +670,35 @@ const Home = () => {
       return todosUnicos.slice(0, 12);
     }, [getProductosDestacadosHome, todosProductos, productosCompletos]);
 
+    /**
+     * Obtiene lista de marcas populares (hardcodeada)
+     * @function getMarcasPopularesHome
+     * @returns {Array} Lista de nombres de marcas
+     */
     const getMarcasPopularesHome = () => {
       const marcasEspecificas = [
         '4GAMERS', 'ACER', 'ACTECK', 'ADATA', 'ADESSO', 'ALTER', 'AMD', 'AOC', 'APC', 'APPLE', 
         'ARUBA', 'ASPEL', 'ASUS', 'AUTODESK', 'AVAST', 'AZOR', 'ALLIED TELESIS', 
-        'AMAZFIT', 'AMAZON', 'ANVIZ', 'LENOVO', 'DELL', 'HP', 'SAMSUNG', 'KYOCERA', 
+        'AMAZFIT', 'AMAZON', 'ANVIZ', 'CANON', 'EPSON', 'LENOVO', 'LEXMARK', 'LOGITECH', 'DELL', 'HP', 'SAMSUNG', 'KYOCERA', 
         'BROTHER', 'FORTINET', 'CISCO', 'SONY', 'SENTINEL', 'KASPERSKY', 'NORTON'
       ];
       
       return marcasEspecificas;
     };
 
+    /**
+     * Obtiene URL del logo de una marca
+     * @function getLogoUrlHome
+     * @param {string} marcaNombre - Nombre de la marca
+     * @returns {string|null} URL del logo o null si no existe
+     */
     const getLogoUrlHome = (marcaNombre) => {
       const logos = {
         '4GAMERS': '/logos/4gamers.jpeg',
         'ACER': '/logos/acer.jpg',
-        'ACTECK': '/logos/acteck.png',
+        'ACTECK': '/logos/AK.png',
         'ADATA': '/logos/ADATA.png',
-        'ADESSO': '/logos/adesso.svg',
+        'ADESSO': '/logos/ades.png',
         'ALTER': '/logos/alter.png',
         'AMD': '/logos/amd.png',
         'AOC': '/logos/aoc.svg',
@@ -470,15 +711,19 @@ const Home = () => {
         'AVAST': '/logos/avast.png',
         'AZOR': '/logos/azor.png',
         'ALLIED TELESIS': '/logos/allied.webp',
-        'AMAZFIT': '/logos/amazfit.jpeg',
+        'AMAZFIT': '/logos/ama.png',
         'AMAZON': '/logos/amazon.jpg',
         'ANVIZ': '/logos/anviz.png',
+        'BROTHER': '/logos/brother.png',
+        'CANON': '/logos/can.svg',
+        'EPSON': '/logos/epson.png',
         'LENOVO': '/logos/lenovo.png',
+        'LEXMARK': '/logos/lex.png',
+        'LOGITECH': '/logos/logi.png',
         'DELL': '/logos/dell.png',
         'HP': '/logos/hp.png',
         'SAMSUNG': '/logos/samsung.png',
         'KYOCERA': '/logos/kyocera.png',
-        'BROTHER': '/logos/brother.png',
         'FORTINET': '/logos/fortinet.png',
         'CISCO': '/logos/cisco.png',
         'SONY': '/logos/sony.png',
@@ -491,20 +736,48 @@ const Home = () => {
       return logos[marcaKey];
     };
 
+    // ============================================
+    // DATOS PARA RENDERIZAR
+    // ============================================
+
+    /** @constant {Array} displayProductosDestacadosHome - Productos destacados a mostrar */
     const displayProductosDestacadosHome = getProductosDestacadosHome;
+    
+    /** @constant {Array} displayMasProductosHome - Productos adicionales a mostrar */
     const displayMasProductosHome = getMasProductosHome;
+    
+    /** @constant {Array} displayMarcasPopularesHome - Marcas populares a mostrar */
     const displayMarcasPopularesHome = getMarcasPopularesHome();
 
+    // ============================================
+    // MANEJADORES DE EVENTOS
+    // ============================================
+
+    /**
+     * Abrir vista rápida de producto
+     * @function handleQuickViewHome
+     * @param {Object} product - Producto a mostrar
+     */
     const handleQuickViewHome = useCallback((product) => {
       setQuickViewProductHome(product);
       setIsQuickViewOpenHome(true);
     }, []);
 
+    /**
+     * Cerrar vista rápida
+     * @function handleCloseQuickViewHome
+     */
     const handleCloseQuickViewHome = useCallback(() => {
       setIsQuickViewOpenHome(false);
       setQuickViewProductHome(null);
     }, []);
 
+    /**
+     * Agregar producto al carrito
+     * @function handleAddToCartHome
+     * @param {Object} product - Producto a agregar
+     * @param {number} quantity - Cantidad a agregar
+     */
     const handleAddToCartHome = useCallback((product, quantity) => {
       console.log('Agregado al carrito:', product, 'Cantidad:', quantity);
       
@@ -528,23 +801,20 @@ const Home = () => {
       alert(`¡${quantity} x ${product.nombre} agregado al carrito!`);
     }, []);
 
+    // ============================================
+    // ESTADOS DE CARGA
+    // ============================================
+
+    /** @constant {boolean} isLoadingHome - Indica si hay carga en curso */
     const isLoadingHome = destacadosLoading || productosLoading || categoriasLoading || marcasLoading;
 
-    // Estadísticas
-    const totalProductos = productosCompletos?.length || estadisticas?.totals?.todos || 0;
-    const totalCategorias = topCategoriasHome.length;
-
-    // Log para debugging
-    useEffect(() => {
-      console.log('🏠 Home Component Debug:');
-      console.log('- Productos destacados API:', productosDestacados?.length || 0);
-      console.log('- Productos destacados procesados:', displayProductosDestacadosHome.length);
-      console.log('- Productos totales:', totalProductos);
-      console.log('- Categorías procesadas:', totalCategorias);
-    }, [productosDestacados, displayProductosDestacadosHome, totalProductos, totalCategorias]);
+    // ============================================
+    // RENDERIZADO PRINCIPAL
+    // ============================================
 
     return (
-        <main className="home-main">
+        <div className={`home-container ${hasSidebar ? 'with-sidebar' : ''}`}>
+            {/* OVERLAY DE CARGA */}
             {isLoadingHome && (
                 <div className="loading-overlay-home">
                     <div className="loading-spinner-large-home"></div>
@@ -552,42 +822,21 @@ const Home = () => {
                 </div>
             )}
 
-            {/* SECCIÓN DE CATEGORÍAS */}
-            <section className="categorias-home">
+            {/* SECCIÓN 1: CATEGORÍAS DESTACADAS */}
+            <section className="categorias-destacadas-seccion-home">
                 <div className="container-home">
                     <div className="section-header-home">
                         <h2 className="section-title-home">Categorías Destacadas</h2>
+                        <p className="section-subtitle-home">
+                            Explora nuestras principales líneas de productos tecnológicos
+                        </p>
                     </div>
                     
-                    {categoriasError && (
-                        <div className="error-message-home">
-                            <p>⚠️ Error cargando categorías del backend.</p>
-                        </div>
-                    )}
-                    
-                    {topCategoriasHome.length > 0 ? (
-                        <>
-                            <CarruselCategoriasHome categorias={topCategoriasHome} />
-                        </>
-                    ) : (
-                        <div className="no-categories-home">
-                            <p>
-                                {categoriasLoading 
-                                    ? 'Cargando categorías del backend...' 
-                                    : 'No hay categorías disponibles del backend.'}
-                            </p>
-                        </div>
-                    )}
-                    
-                    <div className="view-all-container-home">
-                        <Link to="/categories" className="btn-view-all-home">
-                            Ver Todas las Categorías
-                        </Link>
-                    </div>
+                    <CategoriasDestacadasHome />
                 </div>
             </section>
 
-            {/* PRODUCTOS DESTACADOS - CON MISMO DISEÑO QUE CATEGORÍAS */}
+            {/* SECCIÓN 2: PRODUCTOS DESTACADOS */}
             <section className="productos-destacados-home">
                 <div className="container-home">
                     {destacadosError ? (
@@ -622,9 +871,9 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* OFERTAS ESPECIALES */}
+            {/* SECCIÓN 3: OFERTAS ESPECIALES */}
             <section className="ofertas-compactas-home">
-                <div className="container-home">
+                <div className="ofertas-compactas-card-home">
                     <div className="ofertas-compactas-content-home">
                         <div className="ofertas-compactas-text-home">
                             <h2>Ofertas Especiales</h2>
@@ -641,7 +890,7 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* DESCUBRE MÁS PRODUCTOS - CON MISMO DISEÑO QUE CATEGORÍAS */}
+            {/* SECCIÓN 4: MÁS PRODUCTOS */}
             {displayMasProductosHome.length > 0 && (
                 <section className="mas-productos-home">
                     <div className="container-home">
@@ -656,7 +905,7 @@ const Home = () => {
                 </section>
             )}
 
-            {/* BENEFICIOS */}
+            {/* SECCIÓN 5: BENEFICIOS */}
             <section className="beneficios-compactos-home">
                 <div className="container-home">
                     <div className="section-header-home">
@@ -665,22 +914,18 @@ const Home = () => {
                     </div>
                     <div className="beneficios-compactos-content-home">
                         <div className="beneficio-compacto-home">
-                            <div className="beneficio-compacto-icon-home">🚚</div>
                             <h3>Envío Gratis</h3>
-                            <p>En compras mayores a $500 MXN</p>
+                            <p>En compras mayores a $1000 MXN</p>
                         </div>
                         <div className="beneficio-compacto-home">
-                            <div className="beneficio-compacto-icon-home">🛡️</div>
                             <h3>Garantía</h3>
                             <p>Hasta 2 años en productos seleccionados</p>
                         </div>
                         <div className="beneficio-compacto-home">
-                            <div className="beneficio-compacto-icon-home">⏰</div>
                             <h3>Soporte 24/7</h3>
                             <p>Asistencia técnica especializada</p>
                         </div>
                         <div className="beneficio-compacto-home">
-                            <div className="beneficio-compacto-icon-home">💳</div>
                             <h3>Pagos Seguros</h3>
                             <p>Transacciones protegidas SSL</p>
                         </div>
@@ -688,45 +933,20 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* MARCAS */}
+            {/* SECCIÓN 6: MARCAS CONFIABLES */}
             <section className="marcas-home">
                 <div className="container-home">
                     <div className="section-header-home">
                         <h2 className="section-title-home">Marcas Confiables</h2>
-                        <p className="section-subtitle-home">Trabajamos con las mejores marcas del mercado tecnológico</p>
+                        <p className="section-subtitle-home">
+                            Trabajamos con las mejores marcas del mercado tecnológico
+                        </p>
                     </div>
                     {displayMarcasPopularesHome.length > 0 ? (
-                        <div className="marcas-grid-home">
-                            {displayMarcasPopularesHome.map((marca, index) => {
-                                const logoUrl = getLogoUrlHome(marca);
-                                
-                                return (
-                                    <div key={index} className="marca-item-home">
-                                        {logoUrl ? (
-                                            <>
-                                                <img 
-                                                    src={logoUrl} 
-                                                    alt={`Logo ${marca}`}
-                                                    className="marca-logo-home"
-                                                    onError={(e) => {
-                                                        e.target.style.display = 'none';
-                                                        const textElement = e.target.nextSibling;
-                                                        if (textElement) {
-                                                            textElement.style.display = 'block';
-                                                        }
-                                                    }}
-                                                />
-                                                <span className="marca-texto-home" style={{display: 'none'}}>
-                                                    {marca}
-                                                </span>
-                                            </>
-                                        ) : (
-                                            <span className="marca-texto-home">{marca}</span>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                        <MarcasMosaicoSimpleHome 
+                            marcas={displayMarcasPopularesHome}
+                            getLogoUrlHome={getLogoUrlHome}
+                        />
                     ) : (
                         <div className="no-marcas-home">
                             <p>No hay marcas disponibles en este momento.</p>
@@ -735,13 +955,14 @@ const Home = () => {
                 </div>
             </section>
 
+            {/* MODAL DE VISTA RÁPIDA */}
             <QuickViewModal
                 product={quickViewProductHome}
                 isOpen={isQuickViewOpenHome}
                 onClose={handleCloseQuickViewHome}
                 onAddToCart={handleAddToCartHome}
             />
-        </main>
+        </div>
     );
 };
 

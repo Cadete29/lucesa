@@ -3,12 +3,21 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import './CartDropdown.css';
 
+// ✅ Misma URL base que ProductCard
 const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://testpaginaweb.shop/api/images/code'
+  ? 'https://lucesademexico-shop.com.mx/api/images/code'
   : 'http://localhost:4004/api/images/code';
 
-// Constante para debug
 const DEBUG = process.env.NODE_ENV === 'development';
+
+// ✅ Función para formatear precios
+const formatPrice = (price) => {
+  if (typeof price !== 'number' || isNaN(price) || price <= 0) return '0.00';
+  return price.toLocaleString('es-MX', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+};
 
 const CartDropdown = () => {
   const { 
@@ -23,74 +32,68 @@ const CartDropdown = () => {
 
   const dropdownRef = useRef(null);
 
-  // DEBUG: Verificar estado - solo cuando está abierto
+  // DEBUG: Verificar estado
   useEffect(() => {
     if (DEBUG && isCartOpen) {
       console.log('🛒 CartDropdown - Estado actual:', {
         isCartOpen,
         itemsCount: cartItems.length,
-        cartItems: cartItems.length > 0 ? cartItems.map(item => ({
+        cartItems: cartItems.map(item => ({
           id: item.id,
-          nombre: item.nombre
-        })) : 'Vacío'
+          idProducto: item.idProducto,
+          codigo: item.codigo,
+          nombre: item.nombre,
+          precioFinal: item.precioFinal
+        }))
       });
     }
   }, [isCartOpen, cartItems]);
 
-  // Cerrar dropdown al hacer clic fuera - OPTIMIZADO
-  // src/components/Cart/CartDropdown.jsx
-
-useEffect(() => {
-  const handleClickOutside = (event) => {
-    // Si el dropdown no está abierto, no hacer nada
-    if (!isCartOpen) return;
-    
-    // Identificar elementos del carrito
-    const cartDropdown = dropdownRef.current;
-    const isCartButton = event.target.closest('[data-cart-button]') ||
-                         event.target.closest('.cart-btn-hdr') ||
-                         event.target.closest('.cart-button') ||
-                         event.target.closest('.nav-cart-btn') ||
-                         event.target.closest('.cart-icon-hdr');
-    
-    // Si el clic fue en el backdrop, cerrar
-    if (event.target.classList.contains('cd-backdrop')) {
-      console.log('👆 Clic en backdrop, cerrando carrito');
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!isCartOpen) return;
+      
+      const cartDropdown = dropdownRef.current;
+      const isCartButton = event.target.closest('[data-cart-button]') ||
+                           event.target.closest('.cart-btn-hdr') ||
+                           event.target.closest('.cart-button') ||
+                           event.target.closest('.nav-cart-btn') ||
+                           event.target.closest('.cart-icon-hdr');
+      
+      if (event.target.classList.contains('cd-backdrop')) {
+        console.log('👆 Clic en backdrop, cerrando carrito');
+        closeCart();
+        return;
+      }
+      
+      if (cartDropdown && cartDropdown.contains(event.target)) {
+        return;
+      }
+      
+      if (isCartButton) {
+        console.log('👆 Clic en botón del carrito, mantener abierto');
+        return;
+      }
+      
+      console.log('👆 Clic fuera, cerrando carrito');
       closeCart();
-      return;
-    }
-    
-    // Si el clic fue dentro del dropdown, no hacer nada
-    if (cartDropdown && cartDropdown.contains(event.target)) {
-      return;
-    }
-    
-    // Si el clic fue en un botón del carrito, NO cerrar
-    if (isCartButton) {
-      console.log('👆 Clic en botón del carrito, mantener abierto');
-      return;
-    }
-    
-    // Si el clic fue fuera de todo, cerrar el carrito
-    console.log('👆 Clic fuera, cerrando carrito');
-    closeCart();
-  };
+    };
 
-  if (isCartOpen) {
-    console.log('🔵 CartDropdown - Agregando event listeners');
-    document.addEventListener('mousedown', handleClickOutside);
-    document.body.style.overflow = 'hidden';
-    // Añadir clase al body para facilitar la detección
-    document.body.classList.add('cart-open');
-  }
+    if (isCartOpen) {
+      console.log('🔵 CartDropdown - Agregando event listeners');
+      document.addEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'hidden';
+      document.body.classList.add('cart-open');
+    }
 
-  return () => {
-    console.log('🔴 CartDropdown - Removiendo event listeners');
-    document.removeEventListener('mousedown', handleClickOutside);
-    document.body.style.overflow = '';
-    document.body.classList.remove('cart-open');
-  };
-}, [isCartOpen, closeCart]);
+    return () => {
+      console.log('🔴 CartDropdown - Removiendo event listeners');
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = '';
+      document.body.classList.remove('cart-open');
+    };
+  }, [isCartOpen, closeCart]);
 
   // Cerrar con Escape key
   useEffect(() => {
@@ -111,7 +114,7 @@ useEffect(() => {
   }, [isCartOpen, closeCart]);
 
   const handleQuantityChange = useCallback((productId, newQuantity) => {
-    if (newQuantity < 1) {
+    if (newQuantity < 0.01) {
       removeFromCart(productId);
     } else {
       updateQuantity(productId, newQuantity);
@@ -123,7 +126,7 @@ useEffect(() => {
     return null;
   }
 
-  if (DEBUG) console.log('✅ CartDropdown - Renderizando dropdown');
+  console.log('✅ CartDropdown - Renderizando dropdown con', cartItems.length, 'items');
 
   return (
     <>
@@ -157,20 +160,32 @@ useEffect(() => {
         ) : (
           <>
             <div className="cd-items">
-              {cartItems.map(item => (
-                <CartItem 
-                  key={item.id || item.idProducto} 
-                  item={item} 
-                  onQuantityChange={handleQuantityChange}
-                  onRemove={removeFromCart}
-                />
-              ))}
+              {cartItems.map((item, index) => {
+                console.log(`📦 CartDropdown Item [${index}]:`, {
+                  id: item.id,
+                  idProducto: item.idProducto,
+                  codigo: item.codigo,
+                  nombre: item.nombre,
+                  precioFinal: item.precioFinal,
+                  quantity: item.quantity
+                });
+                
+                return (
+                  <CartItem 
+                    key={`${item.id || item.idProducto}_${index}`} 
+                    item={item} 
+                    onQuantityChange={handleQuantityChange}
+                    onRemove={removeFromCart}
+                    formatPrice={formatPrice}
+                  />
+                );
+              })}
             </div>
 
             <div className="cd-footer">
               <div className="cd-subtotal">
                 <span className="cd-subtotal-label">Subtotal:</span>
-                <span className="cd-subtotal-amount">${getCartTotal().toFixed(2)} MXN</span>
+                <span className="cd-subtotal-amount">${formatPrice(getCartTotal())} MXN</span>
               </div>
               <div className="cd-actions">
                 <Link to="/cart" className="cd-btn cd-btn-secondary" onClick={closeCart}>
@@ -191,7 +206,7 @@ useEffect(() => {
               {getCartTotal() < 1000 && (
                 <div className="cd-minimum-notice">
                   <span className="cd-minimum-icon">⚠️</span>
-                  <span className="cd-minimum-text">Compra mínima: $1,000 MXN</span>
+                  <span className="cd-minimum-text">Compra mínima: $1.000 MXN</span>
                 </div>
               )}
             </div>
@@ -202,15 +217,33 @@ useEffect(() => {
   );
 };
 
-// Componente CartItem separado para mejor rendimiento
-const CartItem = React.memo(({ item, onQuantityChange, onRemove }) => {
+// ✅ Componente CartItem mejorado
+const CartItem = React.memo(({ item, onQuantityChange, onRemove, formatPrice }) => {
   const [imageStatus, setImageStatus] = useState('loading');
   const [currentImageUrl, setCurrentImageUrl] = useState('');
   const imgRef = useRef(null);
   const retryCountRef = useRef(0);
 
+  // ✅ DEBUG: Verificar datos del item
   useEffect(() => {
-    if (!item.codigo) {
+    console.log('🔍 CartItem - Datos recibidos:', {
+      id: item.id,
+      idProducto: item.idProducto,
+      codigo: item.codigo,
+      nombre: item.nombre,
+      precioFinal: item.precioFinal,
+      precio: item.precio,
+      marca: item.marca,
+      quantity: item.quantity
+    });
+  }, [item]);
+
+  // ✅ Cargar imagen - VERSIÓN MEJORADA
+  useEffect(() => {
+    console.log('🖼️ CartItem - Iniciando carga de imagen para:', item.codigo);
+    
+    if (!item.codigo || item.codigo === 'N/A') {
+      console.log('❌ CartItem - Sin código o código N/A');
       setImageStatus('error');
       return;
     }
@@ -218,10 +251,16 @@ const CartItem = React.memo(({ item, onQuantityChange, onRemove }) => {
     retryCountRef.current = 0;
     setImageStatus('loading');
     
-    const url = `${IMAGE_BASE_URL}/${item.codigo}?size=full&t=${Date.now()}`;
-    setCurrentImageUrl(url);
+    // ✅ URL optimizada - igual que ProductCard
+    const codigoLimpio = item.codigo.toString().trim().toUpperCase();
+    const imageUrl = `${IMAGE_BASE_URL}/${codigoLimpio}?t=${Date.now()}`;
+    
+    console.log('🔗 CartItem - URL de imagen:', imageUrl);
+    setCurrentImageUrl(imageUrl);
+    
   }, [item.codigo]);
 
+  // ✅ Manejar carga/error de imagen
   useEffect(() => {
     if (!imgRef.current || !currentImageUrl) return;
 
@@ -230,24 +269,35 @@ const CartItem = React.memo(({ item, onQuantityChange, onRemove }) => {
     
     const handleLoad = () => {
       if (!isMounted) return;
+      console.log('✅ CartItem - Imagen cargada exitosamente');
       setImageStatus('loaded');
     };
 
-    const handleError = () => {
+    const handleError = (error) => {
       if (!isMounted) return;
+      
+      console.error('❌ CartItem - Error cargando imagen:', error);
       
       if (retryCountRef.current < 2) {
         retryCountRef.current += 1;
         
+        console.log(`🔄 CartItem - Reintento ${retryCountRef.current}...`);
+        
         setTimeout(() => {
           if (!isMounted) return;
-          const sizes = ['full', 'medium', 'small', ''];
-          const retrySize = sizes[retryCountRef.current] || 'full';
-          const retryUrl = `${IMAGE_BASE_URL}/${item.codigo}${retrySize ? `?size=${retrySize}` : ''}&t=${Date.now()}&retry=${retryCountRef.current}`;
+          
+          // Intentar diferentes formatos
+          const formats = ['', '?size=small', '?size=medium', '?size=full'];
+          const retryFormat = formats[retryCountRef.current] || '';
+          const codigoLimpio = item.codigo.toString().trim().toUpperCase();
+          const retryUrl = `${IMAGE_BASE_URL}/${codigoLimpio}${retryFormat}&t=${Date.now()}&retry=${retryCountRef.current}`;
+          
+          console.log(`🔄 CartItem - URL de reintento: ${retryUrl}`);
           setCurrentImageUrl(retryUrl);
           setImageStatus('loading');
-        }, 500);
+        }, 300);
       } else {
+        console.log('❌ CartItem - Agotados reintentos, mostrando placeholder');
         setImageStatus('error');
       }
     };
@@ -255,7 +305,10 @@ const CartItem = React.memo(({ item, onQuantityChange, onRemove }) => {
     img.addEventListener('load', handleLoad);
     img.addEventListener('error', handleError);
 
+    console.log('🖼️ CartItem - Estableciendo src:', currentImageUrl);
     img.src = currentImageUrl;
+    img.crossOrigin = "anonymous";
+    img.loading = "lazy";
 
     return () => {
       isMounted = false;
@@ -264,12 +317,33 @@ const CartItem = React.memo(({ item, onQuantityChange, onRemove }) => {
     };
   }, [currentImageUrl, item.codigo]);
 
+  const handleDecrease = () => {
+    const newQuantity = (item.quantity || 1) - 1;
+    if (newQuantity < 0.01) {
+      onRemove(item.id || item.idProducto);
+    } else {
+      onQuantityChange(item.id || item.idProducto, newQuantity);
+    }
+  };
+
+  const handleIncrease = () => {
+    onQuantityChange(item.id || item.idProducto, (item.quantity || 1) + 1);
+  };
+
+  const handleRemove = () => {
+    onRemove(item.id || item.idProducto);
+  };
+
+  // ✅ Renderizar imagen
   const renderImage = () => {
+    console.log(`🖼️ CartItem - Estado de imagen: ${imageStatus}`);
+    
     if (imageStatus === 'error') {
       return (
         <div className="cd-item-image-error">
           <div className="cd-error-icon">📷</div>
           <small className="cd-error-text">Sin imagen</small>
+          <small className="cd-error-code">{item.codigo}</small>
         </div>
       );
     }
@@ -297,20 +371,15 @@ const CartItem = React.memo(({ item, onQuantityChange, onRemove }) => {
     );
   };
 
-  const handleDecrease = () => {
-    onQuantityChange(item.id || item.idProducto, item.quantity - 1);
-  };
+  // ✅ Obtener precio correcto
+  const precioFinal = item.precioFinal || item.precio || 0;
+  const precioFormateado = formatPrice(precioFinal);
+  const totalItem = precioFinal * (item.quantity || 1);
 
-  const handleIncrease = () => {
-    onQuantityChange(item.id || item.idProducto, item.quantity + 1);
-  };
-
-  const handleRemove = () => {
-    onRemove(item.id || item.idProducto);
-  };
+  console.log(`💰 CartItem - Precio calculado: ${precioFinal} -> ${precioFormateado}`);
 
   return (
-    <div className="cd-item">
+    <div className="cd-item" data-product-id={item.id || item.idProducto}>
       <div className="cd-item-image">
         {renderImage()}
       </div>
@@ -320,7 +389,10 @@ const CartItem = React.memo(({ item, onQuantityChange, onRemove }) => {
         <p className="cd-item-brand">{item.marca || 'Sin marca'}</p>
         <p className="cd-item-code">Código: {item.codigo || 'N/A'}</p>
         <div className="cd-item-price">
-          ${typeof item.precioFinal === 'number' ? item.precioFinal.toFixed(2) : parseFloat(item.precioFinal || 0).toFixed(2)} MXN
+          ${precioFormateado} MXN
+        </div>
+        <div className="cd-item-total">
+          Total: ${formatPrice(totalItem)} MXN
         </div>
       </div>
 
@@ -333,7 +405,11 @@ const CartItem = React.memo(({ item, onQuantityChange, onRemove }) => {
           >
             -
           </button>
-          <span className="cd-quantity">{item.quantity}</span>
+          
+          <div className="cd-quantity-display">
+            <span className="cd-quantity">{item.quantity || 1}</span>
+          </div>
+          
           <button 
             onClick={handleIncrease}
             className="cd-quantity-btn"

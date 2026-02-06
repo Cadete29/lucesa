@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import './ProductManagement.css';
 
-
 const ProductManagement = () => {
   const { user, token } = useAuth();
   const [activeTab, setActiveTab] = useState('warranties');
@@ -33,7 +32,7 @@ const ProductManagement = () => {
   const [editForm, setEditForm] = useState({});
 
   const API_BASE_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://testpaginaweb.shop/api'
+    ? 'https://lucesademexico-shop.com.mx/api'
     : 'http://localhost:4004/api';
 
   // Estados para el formulario de garantía
@@ -182,7 +181,7 @@ const ProductManagement = () => {
     }
   };
 
-  // Cargar devoluciones desde la base de datos - CORREGIDO
+  // Cargar devoluciones desde la base de datos
   const loadReturns = async () => {
     try {
       setReturnsLoading(true);
@@ -212,12 +211,12 @@ const ProductManagement = () => {
               customer_name: item.customer_name,
               customer_email: item.customer_email,
               purchase_amount: item.purchase_amount,
-              fecha_devolucion: item.return_date, // Convertir return_date → fecha_devolucion
-              motivo: item.return_reason, // Convertir return_reason → motivo
-              estado: item.status, // Convertir status → estado
-              numero_serie: item.serial_number, // Convertir serial_number → numero_serie
+              fecha_devolucion: item.return_date,
+              motivo: item.return_reason,
+              estado: item.status,
+              numero_serie: item.serial_number,
               observaciones: item.observations,
-              ticket_soporte: item.ticket_number, // Convertir ticket_number → ticket_soporte
+              ticket_soporte: item.ticket_number,
               created_at: item.created_at,
               updated_at: item.updated_at
             }));
@@ -520,7 +519,7 @@ const ProductManagement = () => {
     }
   };
 
-  // Agregar nueva devolución - CORREGIDO PARA ENVIAR DATOS CORRECTOS AL BACKEND
+  // Agregar nueva devolución
   const handleAddReturn = async () => {
     try {
       setLoading(true);
@@ -533,12 +532,12 @@ const ProductManagement = () => {
         customer_name: returnForm.customer_name,
         customer_email: returnForm.customer_email,
         purchase_amount: parseFloat(returnForm.purchase_amount),
-        return_date: returnForm.fecha_devolucion, // Cambiado: fecha_devolucion → return_date
-        serial_number: returnForm.numero_serie, // Cambiado: numero_serie → serial_number
-        return_reason: returnForm.motivo, // Cambiado: motivo → return_reason
+        return_date: returnForm.fecha_devolucion,
+        serial_number: returnForm.numero_serie,
+        return_reason: returnForm.motivo,
         observations: returnForm.observaciones,
-        status: returnForm.estado, // Cambiado: estado → status
-        ticket_number: returnForm.ticket_soporte // Cambiado: ticket_soporte → ticket_number
+        status: returnForm.estado,
+        ticket_number: returnForm.ticket_soporte
       };
       
       console.log('📋 Datos a enviar al backend:', returnDataForBackend);
@@ -663,7 +662,7 @@ const ProductManagement = () => {
     }
   };
 
-  // Actualizar estado de devolución - CORREGIDO PARA ENVIAR DATOS CORRECTOS
+  // Actualizar estado de devolución
   const handleReturnStatusUpdate = async (returnId, newStatus) => {
     try {
       // Enviar actualización al backend
@@ -674,7 +673,7 @@ const ProductManagement = () => {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ status: newStatus }) // Enviar 'status' en lugar de 'estado'
+          body: JSON.stringify({ status: newStatus })
         });
 
         if (response.ok) {
@@ -691,7 +690,7 @@ const ProductManagement = () => {
       const updatedReturns = returns.map(ret =>
         ret.id === returnId ? { 
           ...ret, 
-          estado: newStatus, // Mantener 'estado' en frontend
+          estado: newStatus,
           updated_at: new Date().toISOString()
         } : ret
       );
@@ -734,40 +733,6 @@ const ProductManagement = () => {
     }
   };
 
-  // Manejar acciones de garantía
-  const handleWarrantyAction = (warrantyId, action) => {
-    if (action === 'extender') {
-      const updatedWarranties = warranties.map(warranty => 
-        warranty.id === warrantyId 
-          ? { 
-              ...warranty, 
-              status: 'activa',
-              warranty_application_date: new Date().toISOString().split('T')[0],
-              updated_at: new Date().toISOString()
-            } 
-          : warranty
-      );
-      setWarranties(updatedWarranties);
-      saveWarrantiesToStorage(updatedWarranties);
-      alert(`✅ Garantía ${warrantyId} extendida`);
-    } else {
-      alert(`${action} garantía ${warrantyId}`);
-    }
-  };
-
-  // Manejar acciones de devolución
-  const handleReturnAction = (returnId, action) => {
-    if (action === 'aprobar') {
-      handleReturnStatusUpdate(returnId, 'aprobada');
-    } else if (action === 'rechazar') {
-      handleReturnStatusUpdate(returnId, 'rechazada');
-    } else if (action === 'completar') {
-      handleReturnStatusUpdate(returnId, 'completada');
-    } else {
-      alert(`${action} devolución ${returnId}`);
-    }
-  };
-
   // Manejar mostrar detalles
   const handleShowDetails = (item, type) => {
     setSelectedDetailItem(item);
@@ -796,7 +761,7 @@ const ProductManagement = () => {
     }));
   };
 
-  // Guardar edición - CORREGIDO PARA ENVIAR DATOS CORRECTOS
+  // Guardar edición
   const handleSaveEdit = async () => {
     try {
       setLoading(true);
@@ -814,12 +779,12 @@ const ProductManagement = () => {
       } else if (detailModalType === 'return') {
         // Para devoluciones, enviar datos al backend
         const returnUpdateData = {
-          status: editForm.estado, // Enviar 'status' en lugar de 'estado'
-          return_reason: editForm.motivo, // Enviar 'return_reason' en lugar de 'motivo'
-          serial_number: editForm.numero_serie, // Enviar 'serial_number' en lugar de 'numero_serie'
-          return_date: editForm.fecha_devolucion, // Enviar 'return_date' en lugar de 'fecha_devolucion'
+          status: editForm.estado,
+          return_reason: editForm.motivo,
+          serial_number: editForm.numero_serie,
+          return_date: editForm.fecha_devolucion,
           observations: editForm.observaciones,
-          ticket_number: editForm.ticket_soporte // Enviar 'ticket_number' en lugar de 'ticket_soporte'
+          ticket_number: editForm.ticket_soporte
         };
         
         try {
@@ -992,79 +957,79 @@ const ProductManagement = () => {
     const item = selectedDetailItem;
 
     return (
-      <div className="modal-overlay active" onClick={handleCloseModal}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <div className="modal-header">
+      <div className="luc-modal-overlay active" onClick={handleCloseModal}>
+        <div className="luc-modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="luc-modal-header">
             <h2>
               {isWarranty ? '🛡️ Detalles de Garantía' : '🔄 Detalles de Devolución'}
             </h2>
-            <button className="modal-close" onClick={handleCloseModal}>×</button>
+            <button className="luc-modal-close" onClick={handleCloseModal}>×</button>
           </div>
 
-          <div className="modal-body">
+          <div className="luc-modal-body">
             {!isEditing ? (
-              <div className="detail-view">
-                <div className="detail-section">
+              <div className="luc-detail-view">
+                <div className="luc-detail-section">
                   <h3>Información General</h3>
-                  <div className="detail-grid">
-                    <div className="detail-item">
+                  <div className="luc-detail-grid">
+                    <div className="luc-detail-item">
                       <strong>Ticket:</strong>
-                      <code className="ticket-code">
+                      <code className="luc-ticket-code">
                         {isWarranty ? item.ticket_number : item.ticket_soporte}
                       </code>
                     </div>
-                    <div className="detail-item">
+                    <div className="luc-detail-item">
                       <strong>Orden:</strong>
-                      <span className="lucesa-order-number">{item.order_number}</span>
+                      <span className="luc-lucesa-order-number">{item.order_number}</span>
                     </div>
-                    <div className="detail-item">
+                    <div className="luc-detail-item">
                       <strong>Producto:</strong>
                       <span>{item.product_name}</span>
                     </div>
-                    <div className="detail-item">
+                    <div className="luc-detail-item">
                       <strong>Código:</strong>
                       <code>{item.product_code}</code>
                     </div>
-                    <div className="detail-item">
+                    <div className="luc-detail-item">
                       <strong>Cliente:</strong>
                       <span>{item.customer_name}</span>
                     </div>
-                    <div className="detail-item">
+                    <div className="luc-detail-item">
                       <strong>Email:</strong>
                       <span>{item.customer_email}</span>
                     </div>
-                    <div className="detail-item">
+                    <div className="luc-detail-item">
                       <strong>Monto:</strong>
                       <span>{formatCurrency(item.purchase_amount)}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="detail-section">
+                <div className="luc-detail-section">
                   <h3>{isWarranty ? 'Información de Garantía' : 'Información de Devolución'}</h3>
-                  <div className="detail-grid">
+                  <div className="luc-detail-grid">
                     {isWarranty ? (
                       <>
-                        <div className="detail-item">
+                        <div className="luc-detail-item">
                           <strong>Fecha Compra:</strong>
                           <span>{formatDate(item.purchase_date)}</span>
                         </div>
-                        <div className="detail-item">
+                        <div className="luc-detail-item">
                           <strong>Fecha Aplicación:</strong>
                           <span>{formatDate(item.warranty_application_date)}</span>
                         </div>
-                        <div className="detail-item">
+                        <div className="luc-detail-item">
                           <strong>Serie Anterior:</strong>
                           <code>{item.old_serial_number || 'N/A'}</code>
                         </div>
-                        <div className="detail-item">
+                        <div className="luc-detail-item">
                           <strong>Serie Nuevo:</strong>
                           <code>{item.new_serial_number || 'N/A'}</code>
                         </div>
-                        <div className="detail-item">
+                        <div className="luc-detail-item">
                           <strong>Estado:</strong>
                           <span 
-                            className={`status-badge ${item.status}`}
+                            className={`luc-warranty-badge ${item.status}`}
                             style={{ borderColor: getWarrantyStatusColor(item.status) }}
                           >
                             {getWarrantyStatusLabel(item.status)}
@@ -1073,29 +1038,29 @@ const ProductManagement = () => {
                       </>
                     ) : (
                       <>
-                        <div className="detail-item">
+                        <div className="luc-detail-item">
                           <strong>Fecha Devolución:</strong>
                           <span>{formatDate(item.fecha_devolucion)}</span>
                         </div>
-                        <div className="detail-item">
+                        <div className="luc-detail-item">
                           <strong>Número Serie:</strong>
                           <code>{item.numero_serie}</code>
                         </div>
-                        <div className="detail-item">
+                        <div className="luc-detail-item">
                           <strong>Motivo:</strong>
                           <span>{item.motivo}</span>
                         </div>
-                        <div className="detail-item">
+                        <div className="luc-detail-item">
                           <strong>Estado:</strong>
                           <span 
-                            className={`status-badge ${item.estado}`}
+                            className={`luc-return-badge ${item.estado}`}
                             style={{ borderColor: getReturnStatusColor(item.estado) }}
                           >
                             {getReturnStatusLabel(item.estado)}
                           </span>
                         </div>
                         {item.observaciones && (
-                          <div className="detail-item full-width">
+                          <div className="luc-detail-item full-width">
                             <strong>Observaciones:</strong>
                             <p>{item.observaciones}</p>
                           </div>
@@ -1105,14 +1070,14 @@ const ProductManagement = () => {
                   </div>
                 </div>
 
-                <div className="detail-section">
-                  <div className="detail-grid">
-                    <div className="detail-item">
+                <div className="luc-detail-section">
+                  <div className="luc-detail-grid">
+                    <div className="luc-detail-item">
                       <strong>Fecha de Creación:</strong>
                       <span>{formatDate(item.created_at)}</span>
                     </div>
                     {item.updated_at && item.updated_at !== item.created_at && (
-                      <div className="detail-item">
+                      <div className="luc-detail-item">
                         <strong>Última Actualización:</strong>
                         <span>{formatDate(item.updated_at)}</span>
                       </div>
@@ -1121,9 +1086,9 @@ const ProductManagement = () => {
                 </div>
               </div>
             ) : (
-              <div className="edit-view">
-                <div className="form-grid">
-                  <div className="form-group">
+              <div className="luc-edit-view">
+                <div className="luc-form-grid">
+                  <div className="luc-form-group">
                     <label>Ticket *</label>
                     <input
                       type="text"
@@ -1136,7 +1101,7 @@ const ProductManagement = () => {
                     />
                   </div>
 
-                  <div className="form-group">
+                  <div className="luc-form-group">
                     <label>Estado *</label>
                     <select
                       value={isWarranty ? editForm.status : editForm.estado}
@@ -1164,7 +1129,7 @@ const ProductManagement = () => {
 
                   {isWarranty ? (
                     <>
-                      <div className="form-group">
+                      <div className="luc-form-group">
                         <label>Fecha Aplicación *</label>
                         <input
                           type="date"
@@ -1173,7 +1138,7 @@ const ProductManagement = () => {
                           required
                         />
                       </div>
-                      <div className="form-group">
+                      <div className="luc-form-group">
                         <label>Serie Anterior</label>
                         <input
                           type="text"
@@ -1181,7 +1146,7 @@ const ProductManagement = () => {
                           onChange={(e) => handleEditChange('old_serial_number', e.target.value)}
                         />
                       </div>
-                      <div className="form-group">
+                      <div className="luc-form-group">
                         <label>Serie Nuevo</label>
                         <input
                           type="text"
@@ -1192,7 +1157,7 @@ const ProductManagement = () => {
                     </>
                   ) : (
                     <>
-                      <div className="form-group">
+                      <div className="luc-form-group">
                         <label>Fecha Devolución *</label>
                         <input
                           type="date"
@@ -1201,7 +1166,7 @@ const ProductManagement = () => {
                           required
                         />
                       </div>
-                      <div className="form-group">
+                      <div className="luc-form-group">
                         <label>Número Serie *</label>
                         <input
                           type="text"
@@ -1210,7 +1175,7 @@ const ProductManagement = () => {
                           required
                         />
                       </div>
-                      <div className="form-group full-width">
+                      <div className="luc-form-group full-width">
                         <label>Motivo *</label>
                         <select
                           value={editForm.motivo}
@@ -1228,7 +1193,7 @@ const ProductManagement = () => {
                           <option value="Otro">Otro</option>
                         </select>
                       </div>
-                      <div className="form-group full-width">
+                      <div className="luc-form-group full-width">
                         <label>Observaciones</label>
                         <textarea
                           value={editForm.observaciones}
@@ -1243,23 +1208,23 @@ const ProductManagement = () => {
             )}
           </div>
 
-          <div className="modal-actions">
+          <div className="luc-modal-actions">
             {!isEditing ? (
               <>
-                <button className="btn-secondary" onClick={handleCloseModal}>
+                <button className="luc-btn-secondary" onClick={handleCloseModal}>
                   Cerrar
                 </button>
-                <button className="btn-primary" onClick={handleEditToggle}>
+                <button className="luc-btn-primary" onClick={handleEditToggle}>
                   ✏️ Editar
                 </button>
               </>
             ) : (
               <>
-                <button className="btn-secondary" onClick={handleEditToggle}>
+                <button className="luc-btn-secondary" onClick={handleEditToggle}>
                   Cancelar
                 </button>
                 <button 
-                  className="btn-primary" 
+                  className="luc-btn-primary" 
                   onClick={handleSaveEdit}
                   disabled={loading}
                 >
@@ -1275,644 +1240,639 @@ const ProductManagement = () => {
 
   if (user?.rol !== 'admin') {
     return (
-      <div className="admin-panel-container">
-        <div className="no-access">
-          <div className="no-access-icon">🔒</div>
-          <h3>Acceso Restringido</h3>
-          <p>No tienes permisos de administrador para acceder a esta sección.</p>
-        </div>
+      <div className="no-access-section">
+        <div className="no-access-icon">🔒</div>
+        <h3>Acceso Restringido</h3>
+        <p>No tienes permisos de administrador para acceder a esta sección.</p>
       </div>
     );
   }
 
   return (
-    <div className="admin-panel-container">
-      <div className="admin-header">
-        <h1>🛍️ Gestión de Garantías y Devoluciones</h1>
-        <p>Administra garantías y devoluciones del sistema</p>
-      </div>
+    <div className="tab-content" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="admin-content" style={{ width: '100%' }}>
+        <div className="profile-header-inner">
+          <h2>🛍️ Gestión de Garantías y Devoluciones</h2>
+          <p className="section-subtitle">Administra garantías y devoluciones del sistema</p>
+        </div>
 
-      <div className="admin-tabs">
-        <button 
-          className={`tab-button ${activeTab === 'warranties' ? 'active' : ''}`}
-          onClick={() => setActiveTab('warranties')}
-        >
-          🛡️ Garantías ({warranties.length})
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'returns' ? 'active' : ''}`}
-          onClick={() => setActiveTab('returns')}
-        >
-          🔄 Devoluciones ({returns.length})
-        </button>
-      </div>
+        <div className="luc-admin-tabs">
+          <button 
+            className={`luc-tab-button ${activeTab === 'warranties' ? 'active' : ''}`}
+            onClick={() => setActiveTab('warranties')}
+          >
+            🛡️ Garantías 
+            <span className="luc-tab-count">{warranties.length}</span>
+          </button>
+          <button 
+            className={`luc-tab-button ${activeTab === 'returns' ? 'active' : ''}`}
+            onClick={() => setActiveTab('returns')}
+          >
+            🔄 Devoluciones 
+            <span className="luc-tab-count">{returns.length}</span>
+          </button>
+        </div>
 
-      {activeTab === 'warranties' && (
-        <div className="tab-content">
-          <div className="admin-toolbar">
-            <div className="search-box">
+        {activeTab === 'warranties' && (
+          <div className="management-section">
+            <div className="luc-toolbar">
+            <div className="luc-search-box">
               <input
                 type="text"
                 placeholder="Buscar garantías por ticket, orden, producto, cliente o número de serie..."
                 value={warrantySearchTerm}
                 onChange={(e) => setWarrantySearchTerm(e.target.value)}
-                className="search-input"
+                className="luc-search-input"
               />
-              <span className="search-icon">🔍</span>
+              <span className="luc-search-icon">🔍</span>
             </div>
             <button 
-              className="btn-primary"
+              className="luc-btn-primary"
               onClick={() => setShowAddWarranty(true)}
             >
               + Añadir Garantía
             </button>
           </div>
 
-          {showAddWarranty && (
-            <div className="form-modal">
-              <div className="form-content">
-                <h3>Agregar Nueva Garantía</h3>
-                
-                <div className="form-group">
-                  <label>Buscar Orden *</label>
-                  <div className="order-search-container">
-                    <input
-                      type="text"
-                      placeholder="Buscar por número de orden, cliente o email..."
-                      value={warrantyOrderSearchTerm}
-                      onChange={(e) => {
-                        setWarrantyOrderSearchTerm(e.target.value);
-                        setShowWarrantyOrderSearch(true);
-                      }}
-                      onFocus={() => setShowWarrantyOrderSearch(true)}
-                      className="search-input"
-                    />
-                    <span className="search-icon">🔍</span>
-                    
-                    {showWarrantyOrderSearch && warrantyOrderSearchTerm && (
-                      <div className="order-search-results">
-                        {filteredWarrantyOrders.length > 0 ? (
-                          filteredWarrantyOrders.map(order => (
-                            <div 
-                              key={order.id} 
-                              className="order-search-result"
-                              onClick={() => handleWarrantyOrderSelect(order)}
-                            >
-                              <div className="order-info">
-                                <strong>{order.order_number}</strong>
-                                <span>{order.customer_name || order.shipping_address?.nombre || order.user_nombre}</span>
-                                <span>{order.customer_email || order.shipping_address?.email || order.user_email}</span>
+            {showAddWarranty && (
+              <div className="luc-form-modal">
+                <div className="luc-form-content">
+                  <h3>Agregar Nueva Garantía</h3>
+                  
+                  <div className="luc-form-group">
+                    <label>Buscar Orden *</label>
+                    <div className="luc-order-search-container">
+                      <input
+                        type="text"
+                        placeholder="Buscar por número de orden, cliente o email..."
+                        value={warrantyOrderSearchTerm}
+                        onChange={(e) => {
+                          setWarrantyOrderSearchTerm(e.target.value);
+                          setShowWarrantyOrderSearch(true);
+                        }}
+                        onFocus={() => setShowWarrantyOrderSearch(true)}
+                        className="luc-search-input"
+                      />
+                      <span className="luc-search-icon">🔍</span>
+                      
+                      {showWarrantyOrderSearch && warrantyOrderSearchTerm && (
+                        <div className="luc-order-search-results">
+                          {filteredWarrantyOrders.length > 0 ? (
+                            filteredWarrantyOrders.map(order => (
+                              <div 
+                                key={order.id} 
+                                className="luc-order-search-result"
+                                onClick={() => handleWarrantyOrderSelect(order)}
+                              >
+                                <div className="luc-order-info">
+                                  <strong>{order.order_number}</strong>
+                                  <span>{order.customer_name || order.shipping_address?.nombre || order.user_nombre}</span>
+                                  <span>{order.customer_email || order.shipping_address?.email || order.user_email}</span>
+                                </div>
+                                <div className="luc-order-details">
+                                  <span>{formatCurrency(order.total_amount)}</span>
+                                  <span>{formatDate(order.created_at)}</span>
+                                </div>
                               </div>
-                              <div className="order-details">
-                                <span>{formatCurrency(order.total_amount)}</span>
-                                <span>{formatDate(order.created_at)}</span>
-                              </div>
+                            ))
+                          ) : (
+                            <div className="luc-no-results">
+                              No se encontraron órdenes
                             </div>
-                          ))
-                        ) : (
-                          <div className="no-results">
-                            No se encontraron órdenes
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {selectedWarrantyOrder && (
-                  <div className="selected-order-info">
-                    <h4>Información de la Orden Seleccionada</h4>
-                    <div className="order-details-grid">
-                      <div className="detail-item">
-                        <strong>Orden:</strong> {selectedWarrantyOrder.order_number}
-                      </div>
-                      <div className="detail-item">
-                        <strong>Cliente:</strong> {selectedWarrantyOrder.customer_name || selectedWarrantyOrder.shipping_address?.nombre || selectedWarrantyOrder.user_nombre}
-                      </div>
-                      <div className="detail-item">
-                        <strong>Email:</strong> {selectedWarrantyOrder.customer_email || selectedWarrantyOrder.shipping_address?.email || selectedWarrantyOrder.user_email}
-                      </div>
-                      <div className="detail-item">
-                        <strong>Producto:</strong> {selectedWarrantyOrder.items?.[0]?.product_name}
-                      </div>
-                      <div className="detail-item">
-                        <strong>Código:</strong> {selectedWarrantyOrder.items?.[0]?.product_code}
-                      </div>
-                      <div className="detail-item">
-                        <strong>Total:</strong> {formatCurrency(selectedWarrantyOrder.total_amount)}
-                      </div>
-                      <div className="detail-item">
-                        <strong>Fecha Compra:</strong> {formatDate(selectedWarrantyOrder.created_at)}
-                      </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
 
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Número de Ticket *</label>
-                    <input
-                      type="text"
-                      value={warrantyForm.ticket_number}
-                      onChange={(e) => setWarrantyForm({...warrantyForm, ticket_number: e.target.value})}
-                      placeholder="Ej: TS-1738361600000-ABCDE"
-                      required
-                      readOnly
-                      className="ticket-display"
-                    />
-                    <small className="ticket-note">Ticket generado automáticamente</small>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Fecha de Aplicación de Garantía *</label>
-                    <input
-                      type="date"
-                      value={warrantyForm.warranty_application_date}
-                      onChange={(e) => setWarrantyForm({...warrantyForm, warranty_application_date: e.target.value})}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Número de Serie Anterior</label>
-                    <input
-                      type="text"
-                      value={warrantyForm.old_serial_number}
-                      onChange={(e) => setWarrantyForm({...warrantyForm, old_serial_number: e.target.value})}
-                      placeholder="Ej: SN-001-OLD"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Número de Serie Nuevo</label>
-                    <input
-                      type="text"
-                      value={warrantyForm.new_serial_number}
-                      onChange={(e) => setWarrantyForm({...warrantyForm, new_serial_number: e.target.value})}
-                      placeholder="Ej: SN-001-NEW"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Estado de Garantía *</label>
-                    <select
-                      value={warrantyForm.status}
-                      onChange={(e) => setWarrantyForm({...warrantyForm, status: e.target.value})}
-                    >
-                      <option value="activa">Activa</option>
-                      <option value="aplicada">Aplicada</option>
-                      <option value="expirada">Expirada</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-actions">
-                  <button 
-                    className="btn-secondary"
-                    onClick={() => {
-                      setShowAddWarranty(false);
-                      resetWarrantyForm();
-                    }}
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    className="btn-primary"
-                    onClick={handleAddWarranty}
-                    disabled={loading || !warrantyForm.ticket_number || !selectedWarrantyOrder || !warrantyForm.warranty_application_date}
-                  >
-                    {loading ? 'Guardando...' : 'Agregar Garantía'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {warrantiesLoading ? (
-            <div className="loading">
-              <div className="loading-spinner"></div>
-              Cargando garantías...
-            </div>
-          ) : (
-            <div className="admin-table-container">
-              <div className="results-info">
-                Mostrando {filteredWarranties.length} de {warranties.length} garantías
-                {warrantySearchTerm && <span> para "{warrantySearchTerm}"</span>}
-              </div>
-
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Ticket</th>
-                    <th>Orden</th>
-                    <th>Producto</th>
-                    <th>Cliente</th>
-                    <th>Fecha Compra</th>
-                    <th>Fecha Aplicación</th>
-                    <th>Monto</th>
-                    <th>Serie Anterior</th>
-                    <th>Serie Nuevo</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredWarranties.map(warranty => (
-                    <tr key={warranty.id}>
-                      <td>
-                        <code className="ticket-cell">{warranty.ticket_number || 'N/A'}</code>
-                      </td>
-                      <td>
-                        <strong className="lucesa-order-number">{warranty.order_number}</strong>
-                      </td>
-                      <td>
-                        <strong>{warranty.product_name}</strong>
-                        <br />
-                        <small>{warranty.product_code}</small>
-                      </td>
-                      <td>
-                        {warranty.customer_name}
-                        <br />
-                        <small>{warranty.customer_email}</small>
-                      </td>
-                      <td>{formatDate(warranty.purchase_date)}</td>
-                      <td>{formatDate(warranty.warranty_application_date)}</td>
-                      <td>{formatCurrency(warranty.purchase_amount)}</td>
-                      <td>
-                        <code>{warranty.old_serial_number || 'N/A'}</code>
-                      </td>
-                      <td>
-                        <code>{warranty.new_serial_number || 'N/A'}</code>
-                      </td>
-                      <td>
-                        <span 
-                          className={`status-badge ${warranty.status}`}
-                          style={{ borderColor: getWarrantyStatusColor(warranty.status) }}
-                        >
-                          {getWarrantyStatusLabel(warranty.status)}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button 
-                            className="btn-small btn-info"
-                            onClick={() => handleShowDetails(warranty, 'warranty')}
-                          >
-                            📋 Detalles
-                          </button>
-                          <select
-                            value={warranty.status}
-                            onChange={(e) => handleWarrantyStatusUpdate(warranty.id, e.target.value)}
-                            className="status-select"
-                          >
-                            <option value="activa">Activa</option>
-                            <option value="aplicada">Aplicada</option>
-                            <option value="expirada">Expirada</option>
-                          </select>
-                          {/* <button 
-                            className="btn-small btn-warning"
-                            onClick={() => handleWarrantyAction(warranty.id, 'extender')}
-                            disabled={warranty.status === 'expirada'}
-                          >
-                            ⏳ Extender
-                          </button> */}
+                  {selectedWarrantyOrder && (
+                    <div className="luc-selected-order-info">
+                      <h4>Información de la Orden Seleccionada</h4>
+                      <div className="luc-order-details-grid">
+                        <div className="luc-detail-item">
+                          <strong>Orden:</strong> {selectedWarrantyOrder.order_number}
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <div className="luc-detail-item">
+                          <strong>Cliente:</strong> {selectedWarrantyOrder.customer_name || selectedWarrantyOrder.shipping_address?.nombre || selectedWarrantyOrder.user_nombre}
+                        </div>
+                        <div className="luc-detail-item">
+                          <strong>Email:</strong> {selectedWarrantyOrder.customer_email || selectedWarrantyOrder.shipping_address?.email || selectedWarrantyOrder.user_email}
+                        </div>
+                        <div className="luc-detail-item">
+                          <strong>Producto:</strong> {selectedWarrantyOrder.items?.[0]?.product_name}
+                        </div>
+                        <div className="luc-detail-item">
+                          <strong>Código:</strong> {selectedWarrantyOrder.items?.[0]?.product_code}
+                        </div>
+                        <div className="luc-detail-item">
+                          <strong>Total:</strong> {formatCurrency(selectedWarrantyOrder.total_amount)}
+                        </div>
+                        <div className="luc-detail-item">
+                          <strong>Fecha Compra:</strong> {formatDate(selectedWarrantyOrder.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-              {filteredWarranties.length === 0 && (
-                <div className="no-results">
-                  <div className="no-results-icon">🔍</div>
-                  <h3>No se encontraron garantías</h3>
-                  <p>{warranties.length === 0 ? 'Aún no hay garantías registradas.' : 'Intenta con otros términos de búsqueda.'}</p>
+                  <div className="luc-form-grid">
+                    <div className="luc-form-group">
+                      <label>Número de Ticket *</label>
+                      <input
+                        type="text"
+                        value={warrantyForm.ticket_number}
+                        onChange={(e) => setWarrantyForm({...warrantyForm, ticket_number: e.target.value})}
+                        placeholder="Ej: TS-1738361600000-ABCDE"
+                        required
+                        readOnly
+                        className="luc-ticket-display"
+                      />
+                      <small className="luc-ticket-note">Ticket generado automáticamente</small>
+                    </div>
+
+                    <div className="luc-form-group">
+                      <label>Fecha de Aplicación de Garantía *</label>
+                      <input
+                        type="date"
+                        value={warrantyForm.warranty_application_date}
+                        onChange={(e) => setWarrantyForm({...warrantyForm, warranty_application_date: e.target.value})}
+                        required
+                      />
+                    </div>
+
+                    <div className="luc-form-group">
+                      <label>Número de Serie Anterior</label>
+                      <input
+                        type="text"
+                        value={warrantyForm.old_serial_number}
+                        onChange={(e) => setWarrantyForm({...warrantyForm, old_serial_number: e.target.value})}
+                        placeholder="Ej: SN-001-OLD"
+                      />
+                    </div>
+
+                    <div className="luc-form-group">
+                      <label>Número de Serie Nuevo</label>
+                      <input
+                        type="text"
+                        value={warrantyForm.new_serial_number}
+                        onChange={(e) => setWarrantyForm({...warrantyForm, new_serial_number: e.target.value})}
+                        placeholder="Ej: SN-001-NEW"
+                      />
+                    </div>
+
+                    <div className="luc-form-group">
+                      <label>Estado de Garantía *</label>
+                      <select
+                        value={warrantyForm.status}
+                        onChange={(e) => setWarrantyForm({...warrantyForm, status: e.target.value})}
+                      >
+                        <option value="activa">Activa</option>
+                        <option value="aplicada">Aplicada</option>
+                        <option value="expirada">Expirada</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="luc-form-actions">
+                    <button 
+                      className="luc-btn-secondary"
+                      onClick={() => {
+                        setShowAddWarranty(false);
+                        resetWarrantyForm();
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      className="luc-btn-primary"
+                      onClick={handleAddWarranty}
+                      disabled={loading || !warrantyForm.ticket_number || !selectedWarrantyOrder || !warrantyForm.warranty_application_date}
+                    >
+                      {loading ? 'Guardando...' : 'Agregar Garantía'}
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+              </div>
+            )}
 
-      {activeTab === 'returns' && (
-        <div className="tab-content">
-          <div className="admin-toolbar">
-            <div className="search-box">
-              <input
-                type="text"
-                placeholder="Buscar devoluciones por ticket, orden, producto, cliente o número de serie..."
-                value={returnSearchTerm}
-                onChange={(e) => setReturnSearchTerm(e.target.value)}
-                className="search-input"
-              />
-              <span className="search-icon">🔍</span>
-            </div>
-            <button 
-              className="btn-primary"
-              onClick={() => setShowAddReturn(true)}
-            >
-              + Añadir Devolución
-            </button>
+            {warrantiesLoading ? (
+              <div className="luc-loading">
+                <div className="luc-loading-spinner"></div>
+                Cargando garantías...
+              </div>
+            ) : (
+              <div className="luc-table-container">
+                <div className="luc-results-info">
+                  Mostrando {filteredWarranties.length} de {warranties.length} garantías
+                  {warrantySearchTerm && <span> para "{warrantySearchTerm}"</span>}
+                </div>
+
+                <table className="luc-table">
+                  <thead>
+                    <tr>
+                      <th>Ticket</th>
+                      <th>Orden</th>
+                      <th>Producto</th>
+                      <th>Cliente</th>
+                      <th>Fecha Compra</th>
+                      <th>Fecha Aplicación</th>
+                      <th>Monto</th>
+                      <th>Serie Anterior</th>
+                      <th>Serie Nuevo</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredWarranties.map(warranty => (
+                      <tr key={warranty.id}>
+                        <td>
+                          <code className="luc-ticket-cell">{warranty.ticket_number || 'N/A'}</code>
+                        </td>
+                        <td>
+                          <strong className="luc-lucesa-order-number">{warranty.order_number}</strong>
+                        </td>
+                        <td>
+                          <strong>{warranty.product_name}</strong>
+                          <br />
+                          <small>{warranty.product_code}</small>
+                        </td>
+                        <td>
+                          {warranty.customer_name}
+                          <br />
+                          <small>{warranty.customer_email}</small>
+                        </td>
+                        <td>{formatDate(warranty.purchase_date)}</td>
+                        <td>{formatDate(warranty.warranty_application_date)}</td>
+                        <td>{formatCurrency(warranty.purchase_amount)}</td>
+                        <td>
+                          <code>{warranty.old_serial_number || 'N/A'}</code>
+                        </td>
+                        <td>
+                          <code>{warranty.new_serial_number || 'N/A'}</code>
+                        </td>
+                        <td>
+                          <span 
+                            className={`luc-warranty-badge ${warranty.status}`}
+                            style={{ borderColor: getWarrantyStatusColor(warranty.status) }}
+                          >
+                            {getWarrantyStatusLabel(warranty.status)}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="luc-action-buttons">
+                            <button 
+                              className="luc-btn-small info"
+                              onClick={() => handleShowDetails(warranty, 'warranty')}
+                            >
+                              📋 Detalles
+                            </button>
+                            <select
+                              value={warranty.status}
+                              onChange={(e) => handleWarrantyStatusUpdate(warranty.id, e.target.value)}
+                              className="luc-status-select"
+                            >
+                              <option value="activa">Activa</option>
+                              <option value="aplicada">Aplicada</option>
+                              <option value="expirada">Expirada</option>
+                            </select>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {filteredWarranties.length === 0 && (
+                  <div className="luc-no-data">
+                    <div className="luc-no-data-icon">🔍</div>
+                    <h3>No se encontraron garantías</h3>
+                    <p>{warranties.length === 0 ? 'Aún no hay garantías registradas.' : 'Intenta con otros términos de búsqueda.'}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+        )}
 
-          {showAddReturn && (
-            <div className="form-modal">
-              <div className="form-content">
-                <h3>Agregar Nueva Devolución</h3>
-                
-                <div className="form-group">
-                  <label>Buscar Orden *</label>
-                  <div className="order-search-container">
-                    <input
-                      type="text"
-                      placeholder="Buscar por número de orden, cliente o email..."
-                      value={returnOrderSearchTerm}
-                      onChange={(e) => {
-                        setReturnOrderSearchTerm(e.target.value);
-                        setShowReturnOrderSearch(true);
-                      }}
-                      onFocus={() => setShowReturnOrderSearch(true)}
-                      className="search-input"
-                    />
-                    <span className="search-icon">🔍</span>
-                    
-                    {showReturnOrderSearch && returnOrderSearchTerm && (
-                      <div className="order-search-results">
-                        {filteredReturnOrders.length > 0 ? (
-                          filteredReturnOrders.map(order => (
-                            <div 
-                              key={order.id} 
-                              className="order-search-result"
-                              onClick={() => handleReturnOrderSelect(order)}
-                            >
-                              <div className="order-info">
-                                <strong>{order.order_number}</strong>
-                                <span>{order.customer_name || order.shipping_address?.nombre || order.user_nombre}</span>
-                                <span>{order.customer_email || order.shipping_address?.email || order.user_email}</span>
+        {activeTab === 'returns' && (
+          <div className="management-section">
+            <div className="luc-toolbar">
+              <div className="luc-search-box">
+                <input
+                  type="text"
+                  placeholder="Buscar devoluciones por ticket, orden, producto, cliente o número de serie..."
+                  value={returnSearchTerm}
+                  onChange={(e) => setReturnSearchTerm(e.target.value)}
+                  className="luc-search-input"
+                />
+                <span className="luc-search-icon">🔍</span>
+              </div>
+              <button 
+                className="luc-btn-primary"
+                onClick={() => setShowAddReturn(true)}
+              >
+                + Añadir Devolución
+              </button>
+            </div>
+
+            {showAddReturn && (
+              <div className="luc-form-modal">
+                <div className="luc-form-content">
+                  <h3>Agregar Nueva Devolución</h3>
+                  
+                  <div className="luc-form-group">
+                    <label>Buscar Orden *</label>
+                    <div className="luc-order-search-container">
+                      <input
+                        type="text"
+                        placeholder="Buscar por número de orden, cliente o email..."
+                        value={returnOrderSearchTerm}
+                        onChange={(e) => {
+                          setReturnOrderSearchTerm(e.target.value);
+                          setShowReturnOrderSearch(true);
+                        }}
+                        onFocus={() => setShowReturnOrderSearch(true)}
+                        className="luc-search-input"
+                      />
+                      <span className="luc-search-icon">🔍</span>
+                      
+                      {showReturnOrderSearch && returnOrderSearchTerm && (
+                        <div className="luc-order-search-results">
+                          {filteredReturnOrders.length > 0 ? (
+                            filteredReturnOrders.map(order => (
+                              <div 
+                                key={order.id} 
+                                className="luc-order-search-result"
+                                onClick={() => handleReturnOrderSelect(order)}
+                              >
+                                <div className="luc-order-info">
+                                  <strong>{order.order_number}</strong>
+                                  <span>{order.customer_name || order.shipping_address?.nombre || order.user_nombre}</span>
+                                  <span>{order.customer_email || order.shipping_address?.email || order.user_email}</span>
+                                </div>
+                                <div className="luc-order-details">
+                                  <span>{formatCurrency(order.total_amount)}</span>
+                                  <span>{formatDate(order.created_at)}</span>
+                                </div>
                               </div>
-                              <div className="order-details">
-                                <span>{formatCurrency(order.total_amount)}</span>
-                                <span>{formatDate(order.created_at)}</span>
-                              </div>
+                            ))
+                          ) : (
+                            <div className="luc-no-results">
+                              No se encontraron órdenes
                             </div>
-                          ))
-                        ) : (
-                          <div className="no-results">
-                            No se encontraron órdenes
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {selectedReturnOrder && (
-                  <div className="selected-order-info">
-                    <h4>Información de la Orden Seleccionada</h4>
-                    <div className="order-details-grid">
-                      <div className="detail-item">
-                        <strong>Orden:</strong> {selectedReturnOrder.order_number}
-                      </div>
-                      <div className="detail-item">
-                        <strong>Cliente:</strong> {selectedReturnOrder.customer_name || selectedReturnOrder.shipping_address?.nombre || selectedReturnOrder.user_nombre}
-                      </div>
-                      <div className="detail-item">
-                        <strong>Email:</strong> {selectedReturnOrder.customer_email || selectedReturnOrder.shipping_address?.email || selectedReturnOrder.user_email}
-                      </div>
-                      <div className="detail-item">
-                        <strong>Producto:</strong> {selectedReturnOrder.items?.[0]?.product_name}
-                      </div>
-                      <div className="detail-item">
-                        <strong>Código:</strong> {selectedReturnOrder.items?.[0]?.product_code}
-                      </div>
-                      <div className="detail-item">
-                        <strong>Total:</strong> {formatCurrency(selectedReturnOrder.total_amount)}
-                      </div>
-                      <div className="detail-item">
-                        <strong>Fecha Compra:</strong> {formatDate(selectedReturnOrder.created_at)}
-                      </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
 
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Número de Ticket *</label>
-                    <input
-                      type="text"
-                      value={returnForm.ticket_soporte}
-                      onChange={(e) => setReturnForm({...returnForm, ticket_soporte: e.target.value})}
-                      placeholder="Ej: DEV-1738448000000-KLMNO"
-                      required
-                      readOnly
-                      className="ticket-display"
-                    />
-                    <small className="ticket-note">Ticket generado automáticamente</small>
-                  </div>
-
-                  <div className="form-group">
-                    <label>Número de Serie *</label>
-                    <input
-                      type="text"
-                      value={returnForm.numero_serie}
-                      onChange={(e) => setReturnForm({...returnForm, numero_serie: e.target.value})}
-                      placeholder="Ej: SN-001-001"
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Fecha de Devolución *</label>
-                    <input
-                      type="date"
-                      value={returnForm.fecha_devolucion}
-                      onChange={(e) => setReturnForm({...returnForm, fecha_devolucion: e.target.value})}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group full-width">
-                    <label>Motivo de Devolución *</label>
-                    <select
-                      value={returnForm.motivo}
-                      onChange={(e) => setReturnForm({...returnForm, motivo: e.target.value})}
-                      required
-                    >
-                      <option value="">Seleccionar motivo</option>
-                      <option value="Producto defectuoso">Producto defectuoso</option>
-                      <option value="Cambio de modelo">Cambio de modelo</option>
-                      <option value="No cumple expectativas">No cumple expectativas</option>
-                      <option value="Error en el pedido">Error en el pedido</option>
-                      <option value="Arrepentimiento">Arrepentimiento</option>
-                      <option value="Daño durante envío">Daño durante envío</option>
-                      <option value="Falta de piezas">Falta de piezas</option>
-                      <option value="Otro">Otro</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group full-width">
-                    <label>Observaciones</label>
-                    <textarea
-                      value={returnForm.observaciones}
-                      onChange={(e) => setReturnForm({...returnForm, observaciones: e.target.value})}
-                      placeholder="Observaciones adicionales sobre la devolución..."
-                      rows="3"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Estado *</label>
-                    <select
-                      value={returnForm.estado}
-                      onChange={(e) => setReturnForm({...returnForm, estado: e.target.value})}
-                    >
-                      <option value="pendiente">Pendiente</option>
-                      <option value="aprobada">Aprobada</option>
-                      <option value="rechazada">Rechazada</option>
-                      <option value="completada">Completada</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-actions">
-                  <button 
-                    className="btn-secondary"
-                    onClick={() => {
-                      setShowAddReturn(false);
-                      resetReturnForm();
-                    }}
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    className="btn-primary"
-                    onClick={handleAddReturn}
-                    disabled={loading || !returnForm.ticket_soporte || !selectedReturnOrder || !returnForm.numero_serie || !returnForm.fecha_devolucion || !returnForm.motivo}
-                  >
-                    {loading ? 'Guardando...' : 'Agregar Devolución'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {returnsLoading ? (
-            <div className="loading">
-              <div className="loading-spinner"></div>
-              Cargando devoluciones...
-            </div>
-          ) : (
-            <div className="admin-table-container">
-              <div className="results-info">
-                Mostrando {filteredReturns.length} de {returns.length} devoluciones
-                {returnSearchTerm && <span> para "{returnSearchTerm}"</span>}
-              </div>
-
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Ticket</th>
-                    <th>Orden</th>
-                    <th>Producto</th>
-                    <th>Cliente</th>
-                    <th>Fecha Devolución</th>
-                    <th>Total</th>
-                    <th>Número Serie</th>
-                    <th>Motivo</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredReturns.map(returnItem => (
-                    <tr key={returnItem.id}>
-                      <td>
-                        <code className="ticket-cell">{returnItem.ticket_soporte || 'N/A'}</code>
-                      </td>
-                      <td>
-                        <strong className="lucesa-order-number">{returnItem.order_number}</strong>
-                      </td>
-                      <td>
-                        <strong>{returnItem.product_name}</strong>
-                        <br />
-                        <small>{returnItem.product_code}</small>
-                      </td>
-                      <td>
-                        {returnItem.customer_name}
-                        <br />
-                        <small>{returnItem.customer_email}</small>
-                      </td>
-                      <td>{formatDate(returnItem.fecha_devolucion)}</td>
-                      <td>{formatCurrency(returnItem.purchase_amount)}</td>
-                      <td>
-                        <code>{returnItem.numero_serie}</code>
-                      </td>
-                      <td className="motivo-cell">
-                        {returnItem.motivo}
-                        {returnItem.observaciones && (
-                          <div className="observaciones">
-                            <small>{returnItem.observaciones}</small>
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        <span 
-                          className={`status-badge ${returnItem.estado}`}
-                          style={{ borderColor: getReturnStatusColor(returnItem.estado) }}
-                        >
-                          {getReturnStatusLabel(returnItem.estado)}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button 
-                            className="btn-small btn-info"
-                            onClick={() => handleShowDetails(returnItem, 'return')}
-                          >
-                            📋 Detalles
-                          </button>
-                          <select
-                            value={returnItem.estado}
-                            onChange={(e) => {
-                              const newStatus = e.target.value;
-                              if (newStatus === 'aprobada') {
-                                handleReturnAction(returnItem.id, 'aprobar');
-                              } else if (newStatus === 'rechazada') {
-                                handleReturnAction(returnItem.id, 'rechazar');
-                              } else if (newStatus === 'completada') {
-                                handleReturnAction(returnItem.id, 'completar');
-                              } else {
-                                handleReturnAction(returnItem.id, newStatus);
-                              }
-                            }}
-                            className="status-select"
-                          >
-                            <option value="pendiente">Pendiente</option>
-                            <option value="aprobada">Aprobada</option>
-                            <option value="rechazada">Rechazada</option>
-                            <option value="completada">Completada</option>
-                          </select>
+                  {selectedReturnOrder && (
+                    <div className="luc-selected-order-info">
+                      <h4>Información de la Orden Seleccionada</h4>
+                      <div className="luc-order-details-grid">
+                        <div className="luc-detail-item">
+                          <strong>Orden:</strong> {selectedReturnOrder.order_number}
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <div className="luc-detail-item">
+                          <strong>Cliente:</strong> {selectedReturnOrder.customer_name || selectedReturnOrder.shipping_address?.nombre || selectedReturnOrder.user_nombre}
+                        </div>
+                        <div className="luc-detail-item">
+                          <strong>Email:</strong> {selectedReturnOrder.customer_email || selectedReturnOrder.shipping_address?.email || selectedReturnOrder.user_email}
+                        </div>
+                        <div className="luc-detail-item">
+                          <strong>Producto:</strong> {selectedReturnOrder.items?.[0]?.product_name}
+                        </div>
+                        <div className="luc-detail-item">
+                          <strong>Código:</strong> {selectedReturnOrder.items?.[0]?.product_code}
+                        </div>
+                        <div className="luc-detail-item">
+                          <strong>Total:</strong> {formatCurrency(selectedReturnOrder.total_amount)}
+                        </div>
+                        <div className="luc-detail-item">
+                          <strong>Fecha Compra:</strong> {formatDate(selectedReturnOrder.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-              {filteredReturns.length === 0 && (
-                <div className="no-results">
-                  <div className="no-results-icon">🔍</div>
-                  <h3>No se encontraron devoluciones</h3>
-                  <p>{returns.length === 0 ? 'Aún no hay devoluciones registradas.' : 'Intenta con otros términos de búsqueda.'}</p>
+                  <div className="luc-form-grid">
+                    <div className="luc-form-group">
+                      <label>Número de Ticket *</label>
+                      <input
+                        type="text"
+                        value={returnForm.ticket_soporte}
+                        onChange={(e) => setReturnForm({...returnForm, ticket_soporte: e.target.value})}
+                        placeholder="Ej: DEV-1738448000000-KLMNO"
+                        required
+                        readOnly
+                        className="luc-ticket-display"
+                      />
+                      <small className="luc-ticket-note">Ticket generado automáticamente</small>
+                    </div>
+
+                    <div className="luc-form-group">
+                      <label>Número de Serie *</label>
+                      <input
+                        type="text"
+                        value={returnForm.numero_serie}
+                        onChange={(e) => setReturnForm({...returnForm, numero_serie: e.target.value})}
+                        placeholder="Ej: SN-001-001"
+                        required
+                      />
+                    </div>
+
+                    <div className="luc-form-group">
+                      <label>Fecha de Devolución *</label>
+                      <input
+                        type="date"
+                        value={returnForm.fecha_devolucion}
+                        onChange={(e) => setReturnForm({...returnForm, fecha_devolucion: e.target.value})}
+                        required
+                      />
+                    </div>
+
+                    <div className="luc-form-group full-width">
+                      <label>Motivo de Devolución *</label>
+                      <select
+                        value={returnForm.motivo}
+                        onChange={(e) => setReturnForm({...returnForm, motivo: e.target.value})}
+                        required
+                      >
+                        <option value="">Seleccionar motivo</option>
+                        <option value="Producto defectuoso">Producto defectuoso</option>
+                        <option value="Cambio de modelo">Cambio de modelo</option>
+                        <option value="No cumple expectativas">No cumple expectativas</option>
+                        <option value="Error en el pedido">Error en el pedido</option>
+                        <option value="Arrepentimiento">Arrepentimiento</option>
+                        <option value="Daño durante envío">Daño durante envío</option>
+                        <option value="Falta de piezas">Falta de piezas</option>
+                        <option value="Otro">Otro</option>
+                      </select>
+                    </div>
+
+                    <div className="luc-form-group full-width">
+                      <label>Observaciones</label>
+                      <textarea
+                        value={returnForm.observaciones}
+                        onChange={(e) => setReturnForm({...returnForm, observaciones: e.target.value})}
+                        placeholder="Observaciones adicionales sobre la devolución..."
+                        rows="3"
+                      />
+                    </div>
+
+                    <div className="luc-form-group">
+                      <label>Estado *</label>
+                      <select
+                        value={returnForm.estado}
+                        onChange={(e) => setReturnForm({...returnForm, estado: e.target.value})}
+                      >
+                        <option value="pendiente">Pendiente</option>
+                        <option value="aprobada">Aprobada</option>
+                        <option value="rechazada">Rechazada</option>
+                        <option value="completada">Completada</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="luc-form-actions">
+                    <button 
+                      className="luc-btn-secondary"
+                      onClick={() => {
+                        setShowAddReturn(false);
+                        resetReturnForm();
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      className="luc-btn-primary"
+                      onClick={handleAddReturn}
+                      disabled={loading || !returnForm.ticket_soporte || !selectedReturnOrder || !returnForm.numero_serie || !returnForm.fecha_devolucion || !returnForm.motivo}
+                    >
+                      {loading ? 'Guardando...' : 'Agregar Devolución'}
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+              </div>
+            )}
 
-      <DetailModal />
+            {returnsLoading ? (
+              <div className="luc-loading">
+                <div className="luc-loading-spinner"></div>
+                Cargando devoluciones...
+              </div>
+            ) : (
+              <div className="luc-table-container">
+                <div className="luc-results-info">
+                  Mostrando {filteredReturns.length} de {returns.length} devoluciones
+                  {returnSearchTerm && <span> para "{returnSearchTerm}"</span>}
+                </div>
+
+                <table className="luc-table">
+                  <thead>
+                    <tr>
+                      <th>Ticket</th>
+                      <th>Orden</th>
+                      <th>Producto</th>
+                      <th>Cliente</th>
+                      <th>Fecha Devolución</th>
+                      <th>Total</th>
+                      <th>Número Serie</th>
+                      <th>Motivo</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredReturns.map(returnItem => (
+                      <tr key={returnItem.id}>
+                        <td>
+                          <code className="luc-ticket-cell">{returnItem.ticket_soporte || 'N/A'}</code>
+                        </td>
+                        <td>
+                          <strong className="luc-lucesa-order-number">{returnItem.order_number}</strong>
+                        </td>
+                        <td>
+                          <strong>{returnItem.product_name}</strong>
+                          <br />
+                          <small>{returnItem.product_code}</small>
+                        </td>
+                        <td>
+                          {returnItem.customer_name}
+                          <br />
+                          <small>{returnItem.customer_email}</small>
+                        </td>
+                        <td>{formatDate(returnItem.fecha_devolucion)}</td>
+                        <td>{formatCurrency(returnItem.purchase_amount)}</td>
+                        <td>
+                          <code>{returnItem.numero_serie}</code>
+                        </td>
+                        <td className="luc-motivo-cell">
+                          {returnItem.motivo}
+                          {returnItem.observaciones && (
+                            <div className="luc-observaciones">
+                              <small>{returnItem.observaciones}</small>
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          <span 
+                            className={`luc-return-badge ${returnItem.estado}`}
+                            style={{ borderColor: getReturnStatusColor(returnItem.estado) }}
+                          >
+                            {getReturnStatusLabel(returnItem.estado)}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="luc-action-buttons">
+                            <button 
+                              className="luc-btn-small info"
+                              onClick={() => handleShowDetails(returnItem, 'return')}
+                            >
+                              📋 Detalles
+                            </button>
+                            <select
+                              value={returnItem.estado}
+                              onChange={(e) => {
+                                const newStatus = e.target.value;
+                                if (newStatus === 'aprobada') {
+                                  handleReturnStatusUpdate(returnItem.id, 'aprobada');
+                                } else if (newStatus === 'rechazada') {
+                                  handleReturnStatusUpdate(returnItem.id, 'rechazada');
+                                } else if (newStatus === 'completada') {
+                                  handleReturnStatusUpdate(returnItem.id, 'completada');
+                                } else {
+                                  handleReturnStatusUpdate(returnItem.id, newStatus);
+                                }
+                              }}
+                              className="luc-status-select"
+                            >
+                              <option value="pendiente">Pendiente</option>
+                              <option value="aprobada">Aprobada</option>
+                              <option value="rechazada">Rechazada</option>
+                              <option value="completada">Completada</option>
+                            </select>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {filteredReturns.length === 0 && (
+                  <div className="luc-no-data">
+                    <div className="luc-no-data-icon">🔍</div>
+                    <h3>No se encontraron devoluciones</h3>
+                    <p>{returns.length === 0 ? 'Aún no hay devoluciones registradas.' : 'Intenta con otros términos de búsqueda.'}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <DetailModal />
+      </div>
     </div>
   );
 };

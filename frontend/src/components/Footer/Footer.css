@@ -1,6 +1,10 @@
-/* Footer Styles - Con Efecto Niebla Muy Visible - Prefijos Únicos */
+/* src/components/Footer/Footer.css - ESTILO ORIGINAL CON RESPONSIVIDAD */
+
+/* ===================================== */
+/* ESTRUCTURA BASE - ESTILO ORIGINAL */
+/* ===================================== */
 .footer-footer {
-  background: #ffffff;
+  background-image: url('/white-pastel-bbuuoqpjy68ov81s.jpg');
   color: #374151;
   padding: 4rem 0 1rem;
   margin-top: auto;
@@ -9,259 +13,136 @@
   border-top: 1px solid #f1f5f9;
 }
 
-/* Efecto de Niebla MUY VISIBLE como aliento de hielo */
-.footer-footer::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -20%;
-  width: 140%;
-  height: 200%;
-  background: 
-    /* Capa principal de niebla densa */
-    radial-gradient(ellipse at 30% 40%, rgba(124, 203, 221, 0.45) 0%, transparent 70%),
-    radial-gradient(ellipse at 70% 60%, rgba(72, 149, 207, 0.4) 0%, transparent 65%),
-    radial-gradient(ellipse at 50% 20%, rgba(124, 203, 221, 0.35) 0%, transparent 60%),
-    radial-gradient(ellipse at 20% 80%, rgba(44, 95, 142, 0.3) 0%, transparent 55%),
-    radial-gradient(ellipse at 80% 30%, rgba(22, 57, 92, 0.25) 0%, transparent 50%),
-    /* Refuerzo de densidad */
-    radial-gradient(ellipse at 40% 50%, rgba(124, 203, 221, 0.3) 0%, transparent 45%),
-    radial-gradient(ellipse at 60% 70%, rgba(72, 149, 207, 0.35) 0%, transparent 40%);
-  filter: blur(60px);
-  pointer-events: none;
-  z-index: 1;
-  animation: intenseFogDrift-footer 20s ease-in-out infinite;
-}
-
-/* Animación intensa de niebla */
-@keyframes intenseFogDrift-footer {
-  0%, 100% {
-    transform: translateX(0px) translateY(0px) scale(1) rotate(0deg);
-    opacity: 0.8;
-  }
-  15% {
-    transform: translateX(-40px) translateY(20px) scale(1.1) rotate(-2deg);
-    opacity: 0.9;
-  }
-  30% {
-    transform: translateX(30px) translateY(-15px) scale(1.05) rotate(1deg);
-    opacity: 0.85;
-  }
-  45% {
-    transform: translateX(-25px) translateY(25px) scale(1.15) rotate(-1deg);
-    opacity: 0.95;
-  }
-  60% {
-    transform: translateX(35px) translateY(-10px) scale(1.08) rotate(2deg);
-    opacity: 0.88;
-  }
-  75% {
-    transform: translateX(-20px) translateY(30px) scale(1.12) rotate(-3deg);
-    opacity: 0.92;
-  }
-  90% {
-    transform: translateX(25px) translateY(-20px) scale(1.06) rotate(1deg);
-    opacity: 0.87;
+/* CLASE ESPECÍFICA PARA SIDEBAR */
+@media (min-width: 1200px) {
+  .footer-footer.with-sidebar {
+    margin-left: 220px;
+    width: calc(100% - 220px);
   }
 }
 
-/* Partículas de niebla densas y muy visibles */
-.fog-particles-footer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.fog-particle-footer {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(25px);
-  animation: intenseParticleFloat-footer 15s linear infinite;
-}
-
-/* Partículas grandes y muy visibles */
-.fog-particle-footer:nth-child(1) {
-  width: 200px;
-  height: 120px;
-  top: 15%;
-  left: 5%;
-  animation-delay: 0s;
-  background: rgba(124, 203, 221, 0.4);
-  box-shadow: 0 0 80px rgba(124, 203, 221, 0.3);
-}
-
-.fog-particle-footer:nth-child(2) {
-  width: 180px;
-  height: 150px;
-  top: 65%;
-  right: 8%;
-  animation-delay: 3s;
-  background: rgba(72, 149, 207, 0.35);
-  box-shadow: 0 0 70px rgba(72, 149, 207, 0.25);
-}
-
-.fog-particle-footer:nth-child(3) {
-  width: 220px;
-  height: 130px;
-  bottom: 25%;
-  left: 12%;
-  animation-delay: 6s;
-  background: rgba(44, 95, 142, 0.3);
-  box-shadow: 0 0 90px rgba(44, 95, 142, 0.2);
-}
-
-.fog-particle-footer:nth-child(4) {
-  width: 160px;
-  height: 140px;
-  top: 35%;
-  right: 15%;
-  animation-delay: 9s;
-  background: rgba(22, 57, 92, 0.25);
-  box-shadow: 0 0 60px rgba(22, 57, 92, 0.15);
-}
-
-.fog-particle-footer:nth-child(5) {
-  width: 190px;
-  height: 110px;
-  bottom: 40%;
-  left: 20%;
-  animation-delay: 12s;
-  background: rgba(124, 203, 221, 0.35);
-  box-shadow: 0 0 75px rgba(124, 203, 221, 0.25);
-}
-
-@keyframes intenseParticleFloat-footer {
-  0% {
-    transform: translateX(-150px) translateY(0px) scale(0.7);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.6;
-  }
-  30% {
-    opacity: 0.8;
-  }
-  50% {
-    transform: translateX(80px) translateY(-40px) scale(1.1);
-    opacity: 0.9;
-  }
-  70% {
-    opacity: 0.7;
-  }
-  90% {
-    opacity: 0.4;
-  }
-  100% {
-    transform: translateX(250px) translateY(20px) scale(0.8);
-    opacity: 0;
+@media (min-width: 1025px) and (max-width: 1199px) {
+  .footer-footer.with-sidebar {
+    margin-left: 220px;
+    width: calc(100% - 220px);
   }
 }
 
-/* Efecto de viento intenso */
-.wind-effect-footer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 300%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.15) 10%,
-    rgba(255, 255, 255, 0.25) 20%,
-    rgba(255, 255, 255, 0.15) 30%,
-    transparent 40%,
-    transparent 60%,
-    rgba(255, 255, 255, 0.12) 70%,
-    rgba(255, 255, 255, 0.2) 80%,
-    rgba(255, 255, 255, 0.12) 90%,
-    transparent 100%
-  );
-  animation: intenseWindSweep-footer 25s linear infinite;
-  pointer-events: none;
-  z-index: 1;
-  mix-blend-mode: overlay;
-}
-
-@keyframes intenseWindSweep-footer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
+/* TABLET GRANDE - Eliminar sidebar */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .footer-footer.with-sidebar {
+    margin-left: 0 !important;
+    width: 100% !important;
   }
 }
 
-/* Brillo de hielo adicional */
-.ice-glow-footer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: 
-    radial-gradient(ellipse at 40% 60%, rgba(124, 203, 221, 0.2) 0%, transparent 50%),
-    radial-gradient(ellipse at 60% 40%, rgba(72, 149, 207, 0.15) 0%, transparent 45%);
-  pointer-events: none;
-  z-index: 1;
-  animation: icePulse-footer 8s ease-in-out infinite;
-}
-
-@keyframes icePulse-footer {
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
-
-/* Neblina de fondo adicional */
-.fog-overlay-footer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: 
-    linear-gradient(135deg, rgba(124, 203, 221, 0.1) 0%, transparent 50%),
-    linear-gradient(225deg, rgba(72, 149, 207, 0.08) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: 1;
-  animation: fogBreath-footer 12s ease-in-out infinite;
-}
-
-@keyframes fogBreath-footer {
-  0%, 100% {
-    opacity: 0.2;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(1.05);
-  }
-}
-
-/* Asegurar que el contenido esté sobre la niebla */
+/* ===================================== */
+/* CONTAINER - RESPONSIVE ORIGINAL */
+/* ===================================== */
 .container-footer {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1.5rem;
   position: relative;
-  z-index: 10; /* Z-index alto para estar sobre toda la niebla */
+  z-index: 10;
+  width: 100%;
+  box-sizing: border-box;
 }
 
+/* DESKTOP CON SIDEBAR (≥ 1200px) */
+@media (min-width: 1200px) {
+  .container-footer {
+    padding: 0 80px;
+  }
+}
+
+/* DESKTOP MEDIO (1025px - 1199px) */
+@media (min-width: 1025px) and (max-width: 1199px) {
+  .container-footer {
+    padding: 0 50px;
+  }
+}
+
+/* TABLET GRANDE (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container-footer {
+    padding: 0 40px;
+  }
+}
+
+/* TABLET (577px - 768px) */
+@media (min-width: 577px) and (max-width: 768px) {
+  .footer-footer {
+    padding: 3rem 0 1rem;
+  }
+  
+  .container-footer {
+    padding: 0 30px;
+    width: 100%;
+  }
+}
+
+/* MÓVIL (426px - 576px) */
+@media (min-width: 426px) and (max-width: 576px) {
+  .container-footer {
+    padding: 0 20px;
+    width: 100%;
+  }
+}
+
+/* MÓVIL PEQUEÑO (≤ 425px) */
+@media (max-width: 425px) {
+  .footer-footer {
+    padding: 2.5rem 0 1rem;
+  }
+  
+  .container-footer {
+    padding: 0 16px;
+    width: 100%;
+  }
+}
+
+/* ===================================== */
+/* CONTENIDO DEL FOOTER - RESPONSIVE MEJORADO */
+/* ===================================== */
+
+/* MOBILE FIRST - UNA COLUMNA */
 .footer-content-footer {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.5fr;
-  gap: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
   margin-bottom: 3rem;
   position: relative;
   z-index: 10;
+  width: 100%;
+}
+
+/* Tablet (≥ 768px) - DOS COLUMNAS */
+@media (min-width: 768px) {
+  .footer-content-footer {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem 3rem;
+  }
+  
+  /* La primera sección ocupa ambas columnas */
+  .footer-section-footer:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Desktop (≥ 1024px) - CUATRO COLUMNAS ORIGINAL */
+@media (min-width: 1024px) {
+  .footer-content-footer {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+    gap: 3rem;
+  }
+  
+  /* Restaurar primera sección a una columna */
+  .footer-section-footer:first-child {
+    grid-column: 1;
+  }
 }
 
 .footer-section-footer {
@@ -269,19 +150,71 @@
   flex-direction: column;
 }
 
-/* Logo Section */
+/* ===================================== */
+/* Logo Section - RESPONSIVE CON TAMAÑO ORIGINAL */
+/* ===================================== */
 .logo-section-footer {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
+/* Mobile: centrar contenido */
+@media (max-width: 767px) {
+  .logo-section-footer {
+    align-items: center;
+    text-align: center;
+  }
+}
+
+/* Tablet y Desktop: alinear a la izquierda */
+@media (min-width: 768px) {
+  .logo-section-footer {
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+/* TAMAÑO ORIGINAL DE LA IMAGEN - 70px */
 .footer-logo-footer {
   height: 70px;
   width: auto;
   max-width: 250px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  transition: transform 0.3s ease;
+}
+
+.footer-logo-footer:hover {
+  transform: scale(1.02);
+}
+
+/* Ajustes de tamaño responsive - MANTENIENDO 70px COMO BASE */
+@media (max-width: 1024px) {
+  .footer-logo-footer {
+    height: 70px; /* Mantener 70px en tablet */
+    max-width: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .footer-logo-footer {
+    height: 65px; /* Solo reducir ligeramente en móvil grande */
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 576px) {
+  .footer-logo-footer {
+    height: 60px; /* Reducir un poco más en móvil */
+    max-width: 180px;
+  }
+}
+
+@media (max-width: 425px) {
+  .footer-logo-footer {
+    height: 55px; /* Tamaño mínimo manteniendo proporción */
+    max-width: 160px;
+  }
 }
 
 .footer-description-footer {
@@ -289,14 +222,63 @@
   color: #6b7280;
   font-size: 1rem;
   max-width: 350px;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
 }
 
-/* Redes Sociales */
+/* Mobile: centrar y ajustar ancho */
+@media (max-width: 767px) {
+  .footer-description-footer {
+    text-align: center;
+    margin: 0 auto;
+    max-width: 450px;
+    width: 100%;
+    padding: 0 10px;
+  }
+}
+
+/* Tablet y Desktop: mantener alineación izquierda */
+@media (min-width: 768px) {
+  .footer-description-footer {
+    max-width: 350px;
+    text-align: left;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .footer-description-footer {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 425px) {
+  .footer-description-footer {
+    font-size: 0.9rem;
+  }
+}
+
+/* ===================================== */
+/* Redes Sociales - RESPONSIVE */
+/* ===================================== */
 .social-links-footer {
   display: flex;
   gap: 0.75rem;
   margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Mobile: centrar */
+@media (max-width: 767px) {
+  .social-links-footer {
+    justify-content: center;
+  }
+}
+
+/* Tablet y Desktop: alinear a la izquierda */
+@media (min-width: 768px) {
+  .social-links-footer {
+    justify-content: flex-start;
+  }
 }
 
 .social-link-footer {
@@ -310,7 +292,6 @@
   transition: all 0.3s ease;
   border: 1px solid rgba(124, 203, 221, 0.3);
   text-decoration: none;
-  backdrop-filter: blur(10px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
@@ -345,14 +326,49 @@
   background: #2C5F8E;
 }
 
-/* Footer Titles */
+/* Ajustes responsive */
+@media (max-width: 576px) {
+  .social-links-footer {
+    gap: 0.5rem;
+  }
+  
+  .social-link-footer {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .social-link-footer svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 425px) {
+  .social-links-footer {
+    gap: 0.4rem;
+  }
+  
+  .social-link-footer {
+    width: 34px;
+    height: 34px;
+  }
+  
+  .social-link-footer svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+/* ===================================== */
+/* Footer Titles - RESPONSIVE */
+/* ===================================== */
 .footer-title-footer {
   color: #1f2937;
   font-size: 1.2rem;
   font-weight: 600;
   margin-bottom: 1.5rem;
   position: relative;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  width: 100%;
 }
 
 .footer-title-footer::after {
@@ -366,12 +382,56 @@
   border-radius: 2px;
 }
 
-/* Footer Links */
+/* Mobile: centrar título y línea */
+@media (max-width: 767px) {
+  .footer-section-footer:not(:first-child) .footer-title-footer {
+    text-align: center;
+  }
+  
+  .footer-section-footer:not(:first-child) .footer-title-footer::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* Tablet y Desktop: mantener alineación izquierda */
+@media (min-width: 768px) {
+  .footer-section-footer:not(:first-child) .footer-title-footer {
+    text-align: left;
+  }
+  
+  .footer-section-footer:not(:first-child) .footer-title-footer::after {
+    left: 0;
+    transform: none;
+  }
+}
+
+/* Ajustes de tamaño responsive */
+@media (max-width: 576px) {
+  .footer-title-footer {
+    font-size: 1.1rem;
+    margin-bottom: 1.25rem;
+  }
+}
+
+/* ===================================== */
+/* Footer Links - RESPONSIVE */
+/* ===================================== */
 .footer-links-footer {
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+/* Mobile: centrar enlaces */
+@media (max-width: 767px) {
+  .footer-section-footer:not(:first-child) .footer-links-footer {
+    align-items: center;
+  }
 }
 
 .footer-links-footer li a {
@@ -381,7 +441,7 @@
   font-size: 1rem;
   position: relative;
   padding: 0.25rem 0;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  display: inline-block;
 }
 
 .footer-links-footer li a:hover {
@@ -389,11 +449,32 @@
   transform: translateX(8px);
 }
 
-/* Contact Info */
+/* Mobile: eliminar transform en hover */
+@media (max-width: 767px) {
+  .footer-links-footer li a:hover {
+    transform: none;
+  }
+}
+
+/* Ajustes responsive */
+@media (max-width: 576px) {
+  .footer-links-footer {
+    gap: 0.75rem;
+  }
+  
+  .footer-links-footer li a {
+    font-size: 0.95rem;
+  }
+}
+
+/* ===================================== */
+/* Contact Info - RESPONSIVE */
+/* ===================================== */
 .contact-info-footer {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  width: 100%;
 }
 
 .contact-item-footer {
@@ -403,7 +484,29 @@
   color: #6b7280;
   font-size: 1rem;
   line-height: 1.5;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  width: 100%;
+}
+
+/* Mobile: centrar contacto */
+@media (max-width: 767px) {
+  .contact-item-footer {
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+/* Tablet y Desktop: alinear a la izquierda */
+@media (min-width: 768px) {
+  .contact-item-footer {
+    justify-content: flex-start;
+    text-align: left;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 1rem;
+  }
 }
 
 .contact-icon-footer {
@@ -416,6 +519,13 @@
   margin-top: 2px;
 }
 
+/* Mobile: ajustar margen */
+@media (max-width: 767px) {
+  .contact-icon-footer {
+    margin-top: 0;
+  }
+}
+
 .contact-icon-footer svg {
   width: 100%;
   height: 100%;
@@ -424,47 +534,121 @@
   fill: none;
 }
 
+/* Ajustes para email largo en mobile */
+@media (max-width: 767px) {
+  .contact-item-footer:last-child span {
+    word-break: break-word;
+    text-align: center;
+    max-width: 100%;
+  }
+}
+
+/* Ajustes responsive */
+@media (max-width: 576px) {
+  .contact-info-footer {
+    gap: 1rem;
+  }
+  
+  .contact-item-footer {
+    font-size: 0.95rem;
+    gap: 0.75rem;
+  }
+  
+  .contact-icon-footer {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .contact-item-footer:last-child span {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 425px) {
+  .contact-item-footer:last-child span {
+    font-size: 0.85rem;
+    word-break: break-all;
+  }
+}
+
+/* ===================================== */
 /* Footer Divider */
+/* ===================================== */
 .footer-divider-footer {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(229, 231, 235, 0.8), transparent);
   margin: 2rem 0;
   position: relative;
   z-index: 10;
+  width: 100%;
 }
 
-/* Footer Bottom */
+@media (max-width: 767px) {
+  .footer-divider-footer {
+    margin: 1.5rem 0;
+  }
+}
+
+/* ===================================== */
+/* Footer Bottom - RESPONSIVE */
+/* ===================================== */
 .footer-bottom-footer {
   padding-top: 1.5rem;
   position: relative;
   z-index: 10;
+  width: 100%;
 }
 
 .footer-bottom-content-footer {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  flex-wrap: wrap;
   gap: 1rem;
+  text-align: center;
+  width: 100%;
+}
+
+/* Tablet y Desktop: fila horizontal */
+@media (min-width: 768px) {
+  .footer-bottom-content-footer {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+  }
 }
 
 .footer-bottom-footer p {
   color: #6b7280;
   font-size: 0.95rem;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  margin: 0;
+  order: 2; /* Móvil: después de los enlaces legales */
 }
 
-/* Crédito de desarrollo */
-.development-credit-footer {
-  color: #6b7280;
-  font-size: 0.85rem;
-  font-style: italic;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+/* Tablet y Desktop: cambiar orden */
+@media (min-width: 768px) {
+  .footer-bottom-footer p {
+    order: 1; /* Desktop: antes de los enlaces legales */
+  }
 }
 
+/* ===================================== */
+/* Enlaces Legales - RESPONSIVE */
+/* ===================================== */
 .footer-legal-footer {
   display: flex;
   gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  order: 1; /* Móvil: antes del copyright */
+}
+
+/* Tablet y Desktop: cambiar orden y posición */
+@media (min-width: 768px) {
+  .footer-legal-footer {
+    order: 2; /* Desktop: después del copyright */
+    justify-content: flex-end;
+  }
 }
 
 .footer-legal-footer a {
@@ -472,321 +656,137 @@
   text-decoration: none;
   font-size: 0.9rem;
   transition: color 0.3s ease;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
 }
 
 .footer-legal-footer a:hover {
   color: #4895CF;
 }
 
-/* Responsive */
-@media (max-width: 1024px) {
-  .footer-content-footer {
-    grid-template-columns: 1fr 1fr;
-    gap: 2.5rem;
-  }
-  
-  .footer-logo-footer {
-    height: 60px;
-    max-width: 220px;
-  }
-  
-  .footer-bottom-content-footer {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .footer-footer {
-    padding: 3rem 0 1rem;
-  }
-
-  .footer-content-footer {
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
-    text-align: center;
-  }
-
-  .footer-title-footer::after {
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  .footer-links-footer li a:hover {
-    transform: translateX(0);
-  }
-
-  .contact-info-footer {
-    align-items: center;
-  }
-
-  .contact-item-footer {
-    justify-content: center;
-    text-align: center;
-  }
-
-  .footer-logo-footer {
-    height: 55px;
-    max-width: 200px;
-    margin: 0 auto;
-  }
-  
-  .footer-description-footer {
-    text-align: center;
-    margin: 0 auto;
-  }
-
-  .social-links-footer {
-    justify-content: center;
-  }
-}
-
-@media (max-width: 480px) {
-  .container-footer {
-    padding: 0 1rem;
-  }
-
-  .footer-content-footer {
-    gap: 2rem;
-  }
-
+/* Mobile: columna vertical */
+@media (max-width: 767px) {
   .footer-legal-footer {
     flex-direction: column;
     gap: 0.75rem;
-  }
-
-  .footer-logo-footer {
-    height: 50px;
-    max-width: 180px;
+    align-items: center;
   }
   
-  .footer-description-footer {
-    font-size: 0.95rem;
+  .footer-legal-footer a {
+    font-size: 0.85rem;
+    padding: 0.3rem 0;
   }
+}
 
-  .social-links-footer {
-    gap: 0.5rem;
+@media (max-width: 425px) {
+  .footer-legal-footer a {
+    font-size: 0.8rem;
   }
+}
 
-  .social-link-footer {
-    width: 36px;
-    height: 36px;
-  }
+/* ===================================== */
+/* Crédito de desarrollo */
+/* ===================================== */
+.development-credit-footer {
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-style: italic;
+}
 
-  .social-link-footer svg {
-    width: 18px;
-    height: 18px;
-  }
-  
+@media (max-width: 425px) {
   .development-credit-footer {
     font-size: 0.8rem;
+    text-align: center;
   }
 }
 
-/* =========================================== */
-/* CARACTERÍSTICAS COMPACTAS COMO REDES SOCIALES */
-/* =========================================== */
-
-.footer-features-footer {
-  background: linear-gradient(135deg, #2C5F8E, #4895CF);
-  padding: 1.5rem 0;
-  margin-bottom: 2rem;
-  position: relative;
-  z-index: 10;
-  border-radius: 12px;
-  margin: 0 auto 2rem;
-  max-width: 1200px;
-  box-shadow: 
-    0 10px 25px rgba(44, 95, 142, 0.3),
-    0 4px 10px rgba(124, 203, 221, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+/* ===================================== */
+/* ANIMACIONES Y EFECTOS */
+/* ===================================== */
+@media (prefers-reduced-motion: reduce) {
+  .footer-footer,
+  .footer-logo-footer,
+  .social-link-footer,
+  .footer-links-footer li a,
+  .footer-legal-footer a {
+    transition: none;
+  }
 }
 
-.footer-features-container-footer {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
+/* ===================================== */
+/* MEJORAS DE ACCESIBILIDAD */
+/* ===================================== */
+.footer-links-footer li a:focus,
+.footer-legal-footer a:focus,
+.social-link-footer:focus {
+  outline: 2px solid #4895CF;
+  outline-offset: 2px;
 }
 
-/* Grid compacto como redes sociales */
-.features-grid-compact-footer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 2.5rem;
-  flex-wrap: wrap;
-}
-
-/* Característica compacta individual */
-.feature-compact-footer {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  padding: 0.8rem 1.2rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-  cursor: pointer;
-  min-width: 160px;
-  backdrop-filter: blur(10px);
-}
-
-.feature-compact-footer:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.1);
-}
-
-/* Icono compacto */
-.feature-compact-icon-footer {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.feature-compact-icon-footer svg {
-  width: 100%;
-  height: 100%;
-  stroke: #7CCBDD;
-  stroke-width: 2.5;
-  fill: none;
-  transition: all 0.3s ease;
-}
-
-.feature-compact-footer:hover .feature-compact-icon-footer svg {
-  stroke: white;
-  transform: scale(1.1);
-}
-
-/* Texto compacto */
-.feature-compact-text-footer {
-  display: flex;
-  flex-direction: column;
-}
-
-.feature-compact-title-footer {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  white-space: nowrap;
-}
-
-/* =========================================== */
-/* RESPONSIVE PARA CARACTERÍSTICAS COMPACTAS */
-/* =========================================== */
-
-/* Tablets */
-@media (max-width: 1024px) {
-  .footer-features-footer {
-    margin: 0 1.5rem 1.5rem;
-    border-radius: 10px;
+/* Alto contraste para modo oscuro del sistema */
+@media (prefers-color-scheme: dark) {
+  .footer-footer {
+    background-color: rgba(0, 0, 0, 0.05);
   }
   
-  .features-grid-compact-footer {
-    gap: 1.5rem;
+  .footer-title-footer {
+    color: #1f2937;
   }
   
-  .feature-compact-footer {
-    padding: 0.7rem 1rem;
-    min-width: 140px;
+  .footer-links-footer li a,
+  .footer-description-footer,
+  .contact-item-footer,
+  .footer-bottom-footer p,
+  .development-credit-footer,
+  .footer-legal-footer a {
+    color: #4b5563;
   }
   
-  .feature-compact-title-footer {
-    font-size: 0.9rem;
+  .social-link-footer {
+    background: rgba(255, 255, 255, 0.95);
   }
 }
 
-/* Tablets pequeñas */
-@media (max-width: 768px) {
-  .footer-features-footer {
-    margin: 0 1rem 1.2rem;
-    padding: 1.2rem 0;
+/* ===================================== */
+/* FIXES ESPECÍFICOS PARA OVERFLOW EN MÓVIL */
+/* ===================================== */
+@media (max-width: 767px) {
+  .footer-footer {
+    overflow-x: hidden;
   }
   
-  .footer-features-container-footer {
-    padding: 0 1rem;
-  }
-  
-  .features-grid-compact-footer {
-    gap: 1rem;
-    justify-content: space-between;
-  }
-  
-  .feature-compact-footer {
-    flex: 1;
-    min-width: auto;
-    max-width: 180px;
-    padding: 0.6rem 0.8rem;
-  }
-  
-  .feature-compact-icon-footer {
-    width: 22px;
-    height: 22px;
-  }
-  
-  .feature-compact-title-footer {
-    font-size: 0.85rem;
-  }
-}
-
-/* Móviles */
-@media (max-width: 600px) {
-  .footer-features-footer {
-    margin: 0 0.5rem 1rem;
-    padding: 1rem 0;
-  }
-  
-  .features-grid-compact-footer {
-    flex-direction: column;
-    gap: 0.8rem;
-  }
-  
-  .feature-compact-footer {
+  /* Garantizar que nada exceda el ancho */
+  .container-footer,
+  .footer-content-footer,
+  .footer-bottom-footer {
     width: 100%;
-    max-width: 250px;
-    justify-content: center;
-    gap: 0.6rem;
+    max-width: 100%;
   }
   
-  .feature-compact-icon-footer {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .feature-compact-title-footer {
-    font-size: 0.85rem;
+  /* Padding seguro */
+  .container-footer > * {
+    padding-left: 0;
+    padding-right: 0;
   }
 }
 
-/* Móviles pequeños */
-@media (max-width: 480px) {
-  .footer-features-footer {
-    border-radius: 8px;
+/* ===================================== */
+/* IMPRESIÓN */
+/* ===================================== */
+@media print {
+  .footer-footer {
+    background: none;
+    border-top: 1px solid #ccc;
+    color: #000;
+    padding: 2rem 0;
   }
   
-  .feature-compact-footer {
-    padding: 0.5rem 0.8rem;
-    max-width: 220px;
+  .social-links-footer,
+  .development-credit-footer {
+    display: none;
   }
   
-  .feature-compact-icon-footer {
-    width: 18px;
-    height: 18px;
-  }
-  
-  .feature-compact-icon-footer svg {
-    stroke-width: 2.2;
-  }
-  
-  .feature-compact-title-footer {
-    font-size: 0.8rem;
+  .footer-links-footer li a,
+  .footer-legal-footer a {
+    color: #000;
+    text-decoration: underline;
   }
 }

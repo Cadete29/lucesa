@@ -10,12 +10,13 @@ const logger = require('./utils/logger');
 const db = require('./config/db');
 
 // Configuración
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4004;
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Variables globales para manejo graceful shutdown
 let server;
 let isShuttingDown = false;
+let shutdownTimeout = null;
 
 /**
  * Inicializar todos los servicios necesarios
@@ -66,30 +67,52 @@ async function initializeServices() {
  */
 function setupGracefulShutdown() {
   const shutdown = async (signal) => {
-    if (isShuttingDown) return;
+    if (isShuttingDown) {
+      logger.info('⚠️ Shutdown ya en progreso...');
+      return;
+    }
     isShuttingDown = true;
     
-    logger.info(`\n${'='.repeat(50)}`);
-    logger.info(`🛑 Recibido ${signal}, cerrando servidor...`);
-    logger.info(`${'='.repeat(50)}`);
+    // Configurar timeout para evitar bloqueo infinito
+    shutdownTimeout = setTimeout(() => {
+      logger.error('⏰ Timeout en shutdown, forzando salida');
+      process.exit(1);
+    }, 15000);
     
     try {
+      logger.info(`\n${'='.repeat(50)}`);
+      logger.info(`🛑 Recibido ${signal}, cerrando servidor...`);
+      logger.info(`${'='.repeat(50)}`);
+      
       // Detener descargas automáticas
       ftpService.stopScheduledDownloads();
       logger.info('✅ Descargas automáticas detenidas');
       
       // Cerrar servidor HTTP
       if (server) {
-        await new Promise((resolve) => {
+        await new Promise((resolve, reject) => {
           server.close((err) => {
             if (err) {
               logger.error('❌ Error cerrando servidor:', err);
+              reject(err);
             } else {
               logger.info('✅ Servidor HTTP cerrado');
+              resolve();
             }
-            resolve();
           });
+          
+          // Timeout adicional para server.close
+          setTimeout(() => {
+            logger.warn('⚠️  Timeout cerrando servidor, forzando cierre');
+            resolve();
+          }, 5000);
         });
+      }
+      
+      // Limpiar timeout
+      if (shutdownTimeout) {
+        clearTimeout(shutdownTimeout);
+        shutdownTimeout = null;
       }
       
       logger.success('🎯 Servidor cerrado correctamente');
@@ -97,6 +120,13 @@ function setupGracefulShutdown() {
       
     } catch (error) {
       logger.error('❌ Error durante el shutdown:', error);
+      
+      // Limpiar timeout en caso de error
+      if (shutdownTimeout) {
+        clearTimeout(shutdownTimeout);
+        shutdownTimeout = null;
+      }
+      
       process.exit(1);
     }
   };

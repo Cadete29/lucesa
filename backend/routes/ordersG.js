@@ -215,7 +215,7 @@ router.post('/send-confirmation-emails', auth, async (req, res) => {
       orderDate: orderDate || new Date().toLocaleDateString('es-MX'),
       paymentMethod,
       shippingAddress: shippingAddress || null,
-      orderLink: `${process.env.FRONTEND_URL || 'https://testpaginaweb.shop'}/user-profile?tab=orders`
+      orderLink: `${process.env.FRONTEND_URL || 'https://lucesademexico-shop.com.mx'}/user-profile?tab=orders`
     };
 
     // Verificar servicio de correo
@@ -584,7 +584,7 @@ router.post('/', auth, async (req, res) => {
     // 2. Insertar items de la orden
     if (cartItems && cartItems.length > 0) {
       const IMAGE_BASE_URL = process.env.NODE_ENV === 'production' 
-        ? 'https://testpaginaweb.shop/api/images/code'
+        ? 'https://lucesademexico-shop.com.mx/api/images/code'
         : 'http://localhost:4004/api/images/code';
 
       console.log(`📦 Insertando ${cartItems.length} items para orden ${savedOrder.order_number}...`);

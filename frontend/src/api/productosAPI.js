@@ -6,7 +6,7 @@ class ProductosAPI {
   constructor() {
     this.baseURL = import.meta.env.VITE_API_BASE_URL || 
       (import.meta.env.PROD 
-        ? 'https://testpaginaweb.shop/api'
+        ? 'https://lucesademexico-shop.com.mx/api'
         : 'http://localhost:4004/api');
     
     console.log('🔄 ProductosAPI configurado con baseURL:', this.baseURL);

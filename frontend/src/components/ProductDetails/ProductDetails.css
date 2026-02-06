@@ -1,15 +1,294 @@
-/* ProductDetails.css - ESTILOS COMPLETOS CON PREFIJOS ÚNICOS */
+/* ProductDetails.css - AJUSTAR TAMAÑO DE GALERÍA */
+
+/* ========== SIDEBAR SYNCHRONIZATION ========== */
+:root {
+  --sidebar-expanded-width: 220px;
+  --sidebar-collapsed-width: 35px;
+}
+
+/* Clases para sincronización con sidebar - CORREGIDAS */
+.prod-details-page.sidebar-expanded {
+    margin-left: var(--sidebar-expanded-width);
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.prod-details-page.sidebar-collapsed {
+    margin-left: var(--sidebar-collapsed-width);
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.prod-details-page.sidebar-hidden {
+    margin-left: 0;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Contenedor principal - CENTRADO CORREGIDO */
+.prod-details-container {
+    max-width: 1200px;
+    margin: 0 auto; /* Centrado automático */
+    padding: 0 2rem; /* Aumentar padding para mejor centrado */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ajustes responsivos para mantener el centrado */
+@media (max-width: 1400px) {
+    .prod-details-container {
+        max-width: 1100px;
+        padding: 0 1.5rem;
+    }
+}
+
+@media (max-width: 1024px) {
+    .prod-details-page.sidebar-expanded,
+    .prod-details-page.sidebar-collapsed,
+    .prod-details-page.sidebar-hidden {
+        margin-left: 0;
+        padding-left: 0;
+    }
+    
+    .prod-details-container {
+        max-width: 100%;
+        padding: 0 1.5rem;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .prod-details-container {
+        padding: 0 1rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .prod-details-container {
+        padding: 0 0.75rem;
+    }
+}
+
+/* ========== CAMBIOS ESPECÍFICOS PARA REDUCIR GALERÍA ========== */
+
+/* REDUCIR ANCHO DE LA GALERÍA - DE 50% A 40% */
+.prod-details-content {
+    display: grid;
+    grid-template-columns: 40% 60%; /* CAMBIADO: de 1fr 1fr (50%/50%) a 40%/60% */
+    gap: 3rem;
+    margin-bottom: 3rem;
+}
+
+/* Restaurar imagen a tamaño original */
+.prod-details-main-image img {
+    width: 100%; /* RESTAURADO a 100% */
+    height: 100%; /* RESTAURADO a 100% */
+    object-fit: contain;
+    padding: 2rem; /* RESTAURADO a 2rem */
+    transition: transform 0.3s ease;
+}
+
+/* Mantener ajuste para modo zoom */
+.prod-details-image-zoomed img {
+    transform-origin: center;
+}
+
+/* Ajustar galería para compensar el nuevo tamaño */
+.prod-details-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 450px; /* Limitar ancho máximo */
+}
+
+/* Mantener miniaturas del tamaño original */
+.prod-details-thumbnail {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    position: relative;
+    border: none;
+    padding: 0;
+}
+
+/* ========== RESPONSIVE DESIGN PARA NUEVO TAMAÑO ========== */
+@media (max-width: 1200px) {
+    .prod-details-content {
+        grid-template-columns: 45% 55%; /* Un poco más balanceado en pantallas grandes */
+        gap: 2.5rem;
+    }
+}
+
+@media (max-width: 1024px) {
+    .prod-details-content {
+        grid-template-columns: 1fr; /* Volver a una columna en tablet */
+        gap: 2rem;
+    }
+    
+    .prod-details-gallery {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .prod-details-content {
+        gap: 1.5rem;
+    }
+}
+
+/* ========== GRILLA DE PRODUCTOS RELACIONADOS (6 COLUMNAS COMPACTAS Y CENTRADAS) ========== */
+.prod-details-related-products-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.8rem; /* Espacio uniforme y compacto entre cards */
+    margin: 1.5rem auto 0;
+    justify-items: center; /* Centra las cards horizontalmente */
+    align-items: start; /* Alinea al inicio para altura uniforme */
+    padding: 0 0.25rem; /* Muy poco padding lateral */
+    max-width: 100%;
+}
+
+/* Asegurar que las cards ocupen todo el ancho disponible y se centren */
+.prod-details-related-products-grid > * {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+/* Ajustar la card para que sea compacta */
+.prod-details-related-products-grid .product-card-pcard {
+    width: 100%;
+    margin: 0;
+    height: 100%;
+    max-width: 100%;
+    transition: transform 0.2s ease;
+}
+
+/* Efecto hover sutil */
+.prod-details-related-products-grid .product-card-pcard:hover {
+    transform: translateY(-4px);
+}
+
+/* ========== RESPONSIVE PARA PRODUCTOS RELACIONADOS ========== */
+
+/* Pantallas extra grandes (6 columnas compactas) */
+@media (min-width: 1800px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.8rem;
+    }
+}
+
+/* Pantallas muy grandes (5 columnas) */
+@media (max-width: 1799px) and (min-width: 1600px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0.8rem;
+    }
+}
+
+/* Pantallas grandes (4 columnas) */
+@media (max-width: 1599px) and (min-width: 1400px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.8rem;
+    }
+}
+
+/* Pantallas XL (3 columnas) */
+@media (max-width: 1399px) and (min-width: 1200px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.8rem;
+        justify-items: center; /* Mantener centrado */
+    }
+}
+
+/* Pantallas grandes desktop (3 columnas) */
+@media (max-width: 1199px) and (min-width: 1025px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.8rem;
+        justify-items: center; /* Mantener centrado */
+    }
+}
+
+/* Tablet landscape (3 columnas) */
+@media (max-width: 1024px) and (min-width: 900px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.7rem;
+        justify-items: center; /* Mantener centrado */
+    }
+}
+
+/* Tablet portrait (2 columnas compactas) */
+@media (max-width: 899px) and (min-width: 768px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.7rem;
+        justify-items: center; /* Mantener centrado */
+    }
+}
+
+/* Móviles grandes (2 columnas muy compactas) */
+@media (max-width: 767px) and (min-width: 600px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem;
+        justify-items: center; /* Mantener centrado */
+    }
+}
+
+/* Móviles medianos (2 columnas ultra compactas) */
+@media (max-width: 599px) and (min-width: 480px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        justify-items: center; /* Mantener centrado */
+    }
+}
+
+/* Móviles pequeños (1 columna centrada) */
+@media (max-width: 479px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        max-width: 350px; /* Limitar ancho en móviles para mejor centrado */
+        margin: 1rem auto 0;
+        justify-items: center; /* Asegurar centrado */
+    }
+}
+
+/* ========== ANIMACIONES PARA PRODUCTOS RELACIONADOS ========== */
+@keyframes prod-details-fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.prod-details-related-products-grid > * {
+    animation: prod-details-fadeInUp 0.4s ease-out;
+}
+
+/* ========== MANTENER TODO EL RESTO DEL CSS ORIGINAL SIN CAMBIOS ========== */
+
 .prod-details-page {
     padding: 2rem 0;
     margin-top: 120px;
     min-height: calc(100vh - 80px);
     background: #ffffff;
-}
-
-.prod-details-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Loading States */
@@ -115,14 +394,6 @@
     font-weight: 500;
 }
 
-/* Main Content Layout */
-.prod-details-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3rem;
-    margin-bottom: 3rem;
-}
-
 /* Product Gallery */
 .prod-details-gallery {
     display: flex;
@@ -146,20 +417,8 @@
     border: 1px solid #e5e7eb;
 }
 
-.prod-details-main-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    padding: 2rem;
-    transition: transform 0.3s ease;
-}
-
 .prod-details-image-zoomed {
     overflow: hidden;
-}
-
-.prod-details-image-zoomed img {
-    transform-origin: center;
 }
 
 /* Gallery Navigation */
@@ -402,36 +661,6 @@
 .prod-details-image-thumbnails::-webkit-scrollbar-thumb {
     background: #d1d5db;
     border-radius: 3px;
-}
-
-.prod-details-thumbnail {
-    flex-shrink: 0;
-    width: 80px;
-    height: 80px;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    overflow: hidden;
-    cursor: pointer;
-    background: #f8f9fa;
-    transition: all 0.3s ease;
-    position: relative;
-    border: none;
-    padding: 0;
-}
-
-.prod-details-thumbnail-active {
-    border-color: #4895CF;
-}
-
-.prod-details-thumbnail:hover {
-    border-color: #4895CF;
-    transform: translateY(-2px);
-}
-
-.prod-details-thumbnail img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
 }
 
 .prod-details-thumbnail-fallback {
@@ -1004,12 +1233,6 @@
     border-bottom: 2px solid #f3f4f6;
 }
 
-.prod-details-tab-panel h4 {
-    font-size: 1.1rem;
-    margin: 1.5rem 0 0.5rem 0;
-    color: #374151;
-}
-
 /* Description Tab */
 .prod-details-description-full {
     margin-top: 1.5rem;
@@ -1220,7 +1443,7 @@
     font-weight: 600;
 }
 
-/* Related Products */
+/* Related Products - AJUSTADO PARA CENTRAR */
 .prod-details-related-products {
     margin-top: 3rem;
     padding-top: 2rem;
@@ -1242,11 +1465,134 @@
     font-size: 0.9rem;
 }
 
+/* GRILLA DE PRODUCTOS RELACIONADOS CENTRADA */
 .prod-details-related-products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.8rem;
+    margin: 1.5rem auto 0;
+    justify-items: center; /* Centra las cards horizontalmente */
+    align-items: start; /* Alinea al inicio para altura uniforme */
+    padding: 0 0.25rem;
+    max-width: 100%;
+}
+
+/* Asegurar que las cards ocupen todo el ancho disponible y se centren */
+.prod-details-related-products-grid > * {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
+    display: flex;
     justify-content: center;
+}
+
+/* Ajustar la card para que sea compacta */
+.prod-details-related-products-grid .product-card-pcard {
+    width: 100%;
+    margin: 0;
+    height: 100%;
+    max-width: 100%;
+    transition: transform 0.2s ease;
+}
+
+/* Efecto hover sutil */
+.prod-details-related-products-grid .product-card-pcard:hover {
+    transform: translateY(-4px);
+}
+
+/* ========== RESPONSIVE PARA PRODUCTOS RELACIONADOS ========== */
+
+/* Pantallas extra grandes (6 columnas compactas) */
+@media (min-width: 1800px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.8rem;
+        justify-items: center;
+    }
+}
+
+/* Pantallas muy grandes (5 columnas) */
+@media (max-width: 1799px) and (min-width: 1600px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0.8rem;
+        justify-items: center;
+    }
+}
+
+/* Pantallas grandes (4 columnas) */
+@media (max-width: 1599px) and (min-width: 1400px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.8rem;
+        justify-items: center;
+    }
+}
+
+/* Pantallas XL (3 columnas) */
+@media (max-width: 1399px) and (min-width: 1200px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.8rem;
+        justify-items: center;
+    }
+}
+
+/* Pantallas grandes desktop (3 columnas) */
+@media (max-width: 1199px) and (min-width: 1025px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.8rem;
+        justify-items: center;
+    }
+}
+
+/* Tablet landscape (3 columnas) */
+@media (max-width: 1024px) and (min-width: 900px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.7rem;
+        justify-items: center;
+    }
+}
+
+/* Tablet portrait (2 columnas compactas) */
+@media (max-width: 899px) and (min-width: 768px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.7rem;
+        justify-items: center;
+    }
+}
+
+/* Móviles grandes (2 columnas muy compactas) */
+@media (max-width: 767px) and (min-width: 600px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem;
+        justify-items: center;
+    }
+}
+
+/* Móviles medianos (2 columnas ultra compactas) */
+@media (max-width: 599px) and (min-width: 480px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        justify-items: center;
+    }
+}
+
+/* Móviles pequeños (1 columna centrada) */
+@media (max-width: 479px) {
+    .prod-details-related-products-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        max-width: 350px; /* Limitar ancho en móviles para mejor centrado */
+        margin: 1rem auto 0;
+        justify-items: center;
+    }
 }
 
 /* Contact Info */
@@ -1403,15 +1749,10 @@
     color: #374151;
 }
 
-/* Responsive Design */
+/* ========== RESPONSIVE DESIGN ========== */
 @media (max-width: 1024px) {
     .prod-details-content {
         gap: 2rem;
-    }
-    
-    .prod-details-related-products-grid {
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 1.25rem;
     }
 }
 
@@ -1419,10 +1760,6 @@
     .prod-details-page {
         padding: 1rem 0;
         margin-top: 70px;
-    }
-    
-    .prod-details-container {
-        padding: 0 1rem;
     }
     
     .prod-details-content {
@@ -1452,11 +1789,6 @@
     .prod-details-not-found-actions {
         flex-direction: column;
         align-items: center;
-    }
-    
-    .prod-details-related-products-grid {
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 1rem;
     }
     
     .prod-details-related-products h2 {
@@ -1503,11 +1835,6 @@
         gap: 0.5rem;
     }
     
-    .prod-details-related-products-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 0.875rem;
-    }
-    
     .prod-details-tab-content {
         padding: 1.5rem;
     }
@@ -1520,23 +1847,12 @@
 }
 
 @media (max-width: 480px) {
-    .prod-details-container {
-        padding: 0 0.75rem;
-    }
-    
     .prod-details-actions {
         padding: 1rem;
     }
     
     .prod-details-tab-content {
         padding: 1rem;
-    }
-    
-    .prod-details-related-products-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        max-width: 300px;
-        margin: 0 auto;
     }
     
     .prod-details-tab-header {
@@ -1596,4 +1912,27 @@
         animation: none;
         transition: none;
     }
+}
+
+/* Asegurar que las imágenes dentro de las cards no se desborden */
+.prod-details-related-products-grid .product-card-pcard img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ========== ANIMACIONES PARA PRODUCTOS RELACIONADOS ========== */
+@keyframes prod-details-fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.prod-details-related-products-grid > * {
+    animation: prod-details-fadeInUp 0.4s ease-out;
 }

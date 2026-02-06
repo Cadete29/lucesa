@@ -1,7 +1,7 @@
 // src/services/paymentService.js
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://testpaginaweb.shop/api'
+  ? 'https://lucesademexico-shop.com.mx/api'
   : 'http://localhost:4004/api';
 
 const makeRequest = async (endpoint, options = {}) => {
@@ -68,6 +68,19 @@ export const paymentService = {
         cartItems,
         shippingAddress,
         customerInfo
+      }
+    });
+  },
+
+  async createTransferOrder(cartItems, shippingAddress, customerInfo, total) {
+    return await makeRequest('/payments/create-transfer-order', {
+      method: 'POST',
+      body: {
+        cartItems,
+        shippingAddress,
+        customerInfo,
+        total,
+        payment_method: 'transfer'
       }
     });
   }

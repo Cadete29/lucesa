@@ -1,5 +1,5 @@
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://testpaginaweb.shop/api'
+  ? 'https://lucesademexico-shop.com.mx/api'
   : 'http://localhost:4004/api';
 
 const makeRequest = async (endpoint, options = {}) => {

@@ -1,944 +1,997 @@
-/* Banner.css - COMPLETO CON TEXTO REPETIDO */
-
-/* Variables CSS para mejor control */
-:root {
-  --banner-height-desktop: 75vh;
-  --banner-height-tablet: 60vh;
-  --banner-height-mobile: 50vh;
-  --banner-min-height-desktop: 550px;
-  --banner-min-height-tablet: 420px;
-  --banner-min-height-mobile: 350px;
+/* ========== CONTENEDOR PRINCIPAL ========== */
+.banner-container {
+    width: 100%;
+    position: relative;
+    margin-top: 70px;
+    overflow: hidden;
+    z-index: 1;
+    background: #ffffff;
 }
 
-.banner-bnr {
-  position: relative;
-  height: var(--banner-height-desktop);
-  min-height: var(--banner-min-height-desktop);
-  margin-top: 70px;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.8s ease;
-  background: #0f2642;
+/* ========== WRAPPER DEL BANNER ========== */
+.banner-wrapper {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    overflow: hidden;
+    border-radius: 0;
+    box-shadow: 0 4px 20px rgba(44, 95, 142, 0.15);
 }
 
-.banner-bnr.animate-in-bnr {
-  opacity: 1;
-  transform: translateY(0);
+/* ========== SLIDES CONTAINER ========== */
+.banner-slides {
+    display: flex;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    width: 100%;
+    will-change: transform;
 }
 
-.banner-background-bnr {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url('/IMAGEN-1.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+/* ========== SLIDE INDIVIDUAL ========== */
+.banner-slide {
+    flex: 0 0 100%;
+    height: 100%;
+    position: relative;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 100%;
+    opacity: 0;
+    animation: slideFadeIn 0.5s ease-out forwards;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .banner-background-bnr {
-    animation: zoomEffectBnr 25s ease-in-out infinite;
-  }
+/* IMÁGENES DE FONDO PARA CADA SLIDE */
+.banner-slide.slide-1 {
+    background-image: url('/IMAGEN-1.jpg');
 }
 
+.banner-slide.slide-2 {
+    background-image: url('/290.webp');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+
+.banner-slide.slide-3 {
+    background-image: url('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+}
+
+/* COLORES DE FONDO PARA CADA SLIDE */
+.banner-slide.slide-1::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0, 20, 44, 0.95) 0%, rgba(255, 255, 255, 0.651) 100%);
+    z-index: 0;
+}
+
+.banner-slide.slide-2::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0, 20, 44, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%);
+    mix-blend-mode: overlay;
+    z-index: 0;
+}
+
+.banner-slide.slide-3::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0, 20, 44, 0.712) 0%, rgba(255, 255, 255, 0.651) 100%);
+    z-index: 0;
+}
+
+@keyframes slideFadeIn {
+    from {
+        opacity: 0.8;
+        filter: brightness(0.8);
+    }
+    to {
+        opacity: 1;
+        filter: brightness(1);
+    }
+}
+
+/* ========== OVERLAY ========== */
 .banner-overlay-bnr {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    135deg,
-    rgba(22, 57, 92, 0.95) 0%,
-    rgba(44, 95, 142, 0.85) 50%,
-    rgba(72, 149, 207, 0.75) 100%
-  );
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
 }
 
-.banner-bnr::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, #4895CF, #7CCBDD);
-  z-index: 3;
+.banner-slide::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #ffffff;
+    z-index: 3;
 }
 
+/* ========== CONTENIDO DEL BANNER ========== */
 .banner-container-bnr {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
 }
 
 .banner-content-bnr {
-  max-width: 650px;
-  width: 100%;
+    max-width: 650px;
+    width: 100%;
+    position: relative;
 }
 
 .banner-text-bnr {
-  color: #ffffff;
-  padding: 1rem;
+    color: #2C5F8E;
+    padding: 1rem;
+    padding-left: 0; /* Eliminar padding izquierdo para alinear con el banner */
+    animation: slideInLeft 0.8s ease-out 0.3s both;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 /* Título responsivo */
 .banner-title-bnr {
-  font-size: clamp(1.8rem, 4vw, 3.2rem);
-  font-weight: 800;
-  line-height: 1.15;
-  margin-bottom: 1rem;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    font-size: clamp(1.8rem, 4vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+    padding-left: 0; /* Asegurar que no tenga padding izquierdo */
+}
+
+/* Color específico para cada slide */
+.banner-slide.slide-1 .banner-title-bnr {
+    color: #ffffff;
+}
+
+.banner-slide.slide-2 .banner-title-bnr {
+    color: #ffffff;
+}
+
+.banner-slide.slide-3 .banner-title-bnr {
+    color: #ffffff;
 }
 
 .banner-title-bnr .highlight-bnr {
-  background: linear-gradient(135deg, #4FC3F7, #2979FF);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  position: relative;
-  display: inline-block;
+    background: linear-gradient(135deg, #4FC3F7, #2979FF);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    position: relative;
+    display: inline-block;
 }
 
 .banner-title-bnr .highlight-bnr::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, #4FC3F7, #2979FF);
-  border-radius: 2px;
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #4FC3F7, #2979FF);
+    border-radius: 2px;
+}
+
+/* Subtítulo del slide */
+.banner-subtitle-bnr {
+    display: inline-block;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: relative;
+    padding-left: 20px;
+}
+
+/* Color específico para cada slide */
+.banner-slide.slide-1 .banner-subtitle-bnr {
+    color: #ffffff;
+}
+
+.banner-slide.slide-2 .banner-subtitle-bnr {
+    color: #ffffff;
+}
+
+.banner-slide.slide-3 .banner-subtitle-bnr {
+    color: #ffffff;
+}
+
+.banner-subtitle-bnr::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 2px;
+    background: currentColor;
 }
 
 /* Descripción responsiva */
 .banner-description-bnr {
-  font-size: clamp(0.9rem, 1.8vw, 1.2rem);
-  line-height: 1.4;
-  margin-bottom: 1.5rem;
-  opacity: 0.95;
-  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    font-size: clamp(0.9rem, 1.8vw, 1.2rem);
+    line-height: 1.4;
+    margin-bottom: 1.5rem;
+    opacity: 0.95;
+    color: #ffffff;
 }
 
 /* Botones responsivos */
 .banner-buttons-bnr {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
 }
 
 .cta-button-bnr {
-  position: relative;
-  padding: clamp(0.9rem, 2vw, 1.2rem) clamp(1.2rem, 2.5vw, 2.5rem);
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: clamp(0.85rem, 1.3vw, 1rem);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: min(140px, 100%);
-  max-width: 100%;
-  text-decoration: none;
-  overflow: hidden;
-  flex: 1;
+    position: relative;
+    padding: 0.5rem 1.5rem;
+    border: none;
+    border-radius: 125px;
+    font-weight: 600;
+    font-size: clamp(0.85rem, 1.3vw, 1rem);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    min-width: auto;
+    max-width: none;
+    text-decoration: none;
+    overflow: hidden;
+    flex: 0 0 auto;
+    height: auto;
+    white-space: nowrap;
 }
 
 .button-content-bnr {
-  display: flex;
-  align-items: center;
-  gap: clamp(0.4rem, 1vw, 0.8rem);
-  position: relative;
-  z-index: 2;
-  flex-wrap: nowrap;
+    display: flex;
+    align-items: center;
+    gap: clamp(0.4rem, 1vw, 0.8rem);
+    position: relative;
+    z-index: 2;
+    flex-wrap: nowrap;
 }
 
 .button-icon-bnr {
-  font-size: clamp(0.9rem, 1.5vw, 1.2rem);
-  transition: transform 0.3s ease;
-  flex-shrink: 0;
+    font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
 }
 
 .button-text-bnr {
-  font-weight: 600;
-  font-size: clamp(0.8rem, 1.2vw, 0.95rem);
-  transition: transform 0.3s ease;
-  white-space: nowrap;
+    font-weight: 600;
+    font-size: clamp(0.8rem, 1.2vw, 0.95rem);
+    transition: transform 0.3s ease;
+    white-space: nowrap;
 }
 
 .button-arrow-bnr {
-  font-size: clamp(0.9rem, 1.5vw, 1.1rem);
-  transition: transform 0.3s ease;
-  flex-shrink: 0;
+    font-size: clamp(0.9rem, 1.5vw, 1.1rem);
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
 }
 
 /* Botón primario */
 .cta-button-bnr.primary-bnr {
-  background: linear-gradient(135deg, #4895CF, #2C5F8E);
-  color: #ffffff;
-  border: 2px solid #4895CF;
-  box-shadow: 0 4px 15px rgba(72, 149, 207, 0.3);
+    background: linear-gradient(135deg, #4895CF, #2C5F8E);
+    color: #ffffff;
+    border: 2px solid #4895CF;
+    box-shadow: 0 4px 15px rgba(72, 149, 207, 0.3);
 }
 
 .cta-button-bnr.primary-bnr:hover {
-  background: linear-gradient(135deg, #2C5F8E, #4895CF);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(72, 149, 207, 0.4);
-  border-color: #7CCBDD;
+    background: linear-gradient(135deg, #2C5F8E, #4895CF);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(72, 149, 207, 0.4);
+    border-color: #7CCBDD;
 }
 
 .cta-button-bnr.primary-bnr:hover .button-icon-bnr {
-  transform: scale(1.1);
+    transform: scale(1.1);
 }
 
 .cta-button-bnr.primary-bnr:hover .button-arrow-bnr {
-  transform: translateX(3px);
+    transform: translateX(3px);
 }
 
 /* Botón secundario */
 .cta-button-bnr.secondary-bnr {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+    background: linear-gradient(135deg, #2C5F8E, #4895CF);
+    color: #ffffff;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .cta-button-bnr.secondary-bnr:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, #4895CF, #2C5F8E);
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.1);
 }
 
 .cta-button-bnr.secondary-bnr:hover .button-icon-bnr {
-  transform: scale(1.1) rotate(5deg);
+    transform: scale(1.1) rotate(5deg);
 }
 
 .cta-button-bnr.secondary-bnr:hover .button-arrow-bnr {
-  transform: translateX(2px) translateY(-2px);
+    transform: translateX(2px) translateY(-2px);
 }
 
 .cta-button-bnr::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transition: left 0.5s ease;
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
 }
 
 .cta-button-bnr:hover::before {
-  left: 100%;
-}
-
-/* Features responsivos */
-.banner-features-bnr {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 0.8rem;
-  width: 100%;
-}
-
-.feature-bnr {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  background: #2C5F8E;
-  padding: clamp(0.6rem, 1.5vw, 1rem) clamp(0.8rem, 1.5vw, 1.5rem);
-  border-radius: 8px;
-  border: 2px solid #4895CF;
-  transition: all 0.3s ease;
-  min-height: 50px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.feature-icon-bnr {
-  width: clamp(18px, 3vw, 24px);
-  height: clamp(18px, 3vw, 24px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.feature-icon-bnr svg {
-  width: 100%;
-  height: 100%;
-  stroke: #7CCBDD;
-  stroke-width: 2;
-  fill: none;
-}
-
-.feature-bnr:hover {
-  background: #4895CF;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(72, 149, 207, 0.6);
-  border-color: #7CCBDD;
-}
-
-.feature-bnr:hover .feature-icon-bnr svg {
-  stroke: #ffffff;
-  transform: scale(1.1);
-}
-
-.feature-text-bnr {
-  font-weight: 600;
-  font-size: clamp(0.75rem, 1.5vw, 0.95rem);
-  color: white;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.feature-bnr * {
-  background: transparent !important;
-}
-
-/* Animaciones de fondo */
-@keyframes zoomEffectBnr {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-.banner-background-bnr::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(124, 203, 221, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(72, 149, 207, 0.1) 0%, transparent 50%);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .banner-background-bnr::before {
-    animation: floatParticlesBnr 15s ease-in-out infinite;
-  }
-}
-
-@keyframes floatParticlesBnr {
-  0%, 100% {
-    transform: translateX(0) translateY(0);
-  }
-  50% {
-    transform: translateX(-20px) translateY(20px);
-  }
+    left: 100%;
 }
 
 /* =========================================== */
-/* BANNER DE PRECIOS MAYORISTAS - TEXTO REPETIDO */
+/* BANNER FIJO DE PRECIOS MAYORISTAS - COMPACTO */
 /* =========================================== */
-
 .wholesale-banner-bnr {
-  position: relative;
-  width: 100%;
-  height: clamp(35px, 5vw, 45px);
-  background: linear-gradient(135deg, #4895CF, #0f4780);
-  border-radius: 8px;
-  margin-bottom: clamp(1rem, 2vw, 1.5rem);
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-/* Contenedor del texto con múltiples repeticiones */
-.wholesale-text-container-bnr {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  position: relative;
-  animation: scrollTextBnr 5s linear infinite;
-  white-space: nowrap;
-  padding: 0 1rem;
-}
-
-/* Texto con múltiples repeticiones */
-.wholesale-text-bnr {
-  display: inline-block;
-  font-size: clamp(0.95rem, 2vw, 1.2rem);
-  font-weight: 800;
-  color: #ffffff;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-  letter-spacing: 0.5px;
-  background: linear-gradient(135deg, #ffffff, #ffe0d0);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  padding: 0 0.5rem;
-}
-
-/* Versión estática para móviles */
-.wholesale-banner-bnr.static {
-  animation: pulseBackgroundBnr 3s ease-in-out infinite;
-  justify-content: center;
-}
-
-.wholesale-banner-bnr.static .wholesale-text-container-bnr {
-  animation: none;
-  justify-content: center;
-  width: 100%;
-  padding: 0;
-}
-
-.wholesale-banner-bnr.static .wholesale-text-bnr {
-  animation: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  white-space: normal;
-}
-
-/* Animación de texto desplazante CON REPETICIONES */
-@keyframes scrollTextBnr {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-/* Animación de pulso para versión estática */
-@keyframes pulseBackgroundBnr {
-  0%, 100% {
-    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
-  }
-  50% {
-    box-shadow: 0 6px 25px rgba(255, 107, 53, 0.5);
-  }
-}
-
-/* Efecto hover */
-.wholesale-banner-bnr:hover {
-  transform: translateY(-1px);
-  transition: all 0.3s ease;
-  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
-}
-
-.wholesale-banner-bnr:hover .wholesale-text-container-bnr {
-  animation-duration: 15s; /* Más rápido al hacer hover */
-}
-
-/* =========================================== */
-/* MEDIA QUERIES ESPECÍFICAS */
-/* =========================================== */
-
-/* Laptops pequeñas (1024px a 1366px) */
-@media (max-width: 1366px) {
-  .banner-bnr {
-    height: 65vh;
-    min-height: 480px;
-  }
-  
-  .banner-container-bnr {
-    max-width: 1100px;
-    padding: 0 1.5rem;
-  }
-  
-  .banner-title-bnr {
-    font-size: clamp(1.6rem, 3.5vw, 2.5rem);
-  }
-  
-  .banner-description-bnr {
-    font-size: clamp(0.85rem, 1.6vw, 1.1rem);
-  }
-  
-  .banner-buttons-bnr {
-    gap: 0.8rem;
-  }
-  
-  .cta-button-bnr {
-    padding: 0.8rem 1.8rem;
-    font-size: 0.9rem;
-    min-width: 135px;
-  }
-  
-  .banner-features-bnr {
-    gap: 0.7rem;
-  }
-  
-  .feature-bnr {
-    min-width: 125px;
-    padding: 0.7rem 1rem;
-  }
-  
-  .feature-text-bnr {
-    font-size: 0.8rem;
-  }
-  
-  /* Banner mayorista ajustado */
-  .wholesale-text-bnr {
-    font-size: clamp(0.9rem, 1.8vw, 1.1rem);
-  }
-}
-
-/* Tablets (768px a 1024px) */
-@media (max-width: 1024px) {
-  .banner-bnr {
-    height: var(--banner-height-tablet);
-    min-height: var(--banner-min-height-tablet);
-    margin-top: 60px;
-  }
-  
-  .banner-container-bnr {
-    padding: 0 1.5rem;
-  }
-  
-  .banner-content-bnr {
+    position: relative;
+    width: auto;
     max-width: 600px;
-    margin: 0 auto;
-  }
-  
-  .banner-text-bnr {
-    text-align: center;
-    padding: 0.5rem;
-  }
-  
-  .banner-title-bnr {
-    font-size: clamp(1.5rem, 3vw, 2.2rem);
-    margin-bottom: 0.8rem;
-  }
-  
-  .banner-description-bnr {
-    font-size: clamp(0.85rem, 1.5vw, 1rem);
-    margin-bottom: 1.2rem;
-  }
-  
-  .banner-buttons-bnr {
-    justify-content: center;
-    gap: 0.8rem;
-    margin-bottom: 1.8rem;
-  }
-  
-  .cta-button-bnr {
-    flex: 0 1 auto;
-    min-width: 155px;
-    padding: 0.8rem 1.5rem;
-    font-size: 0.88rem;
-  }
-  
-  .banner-features-bnr {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.6rem;
-  }
-  
-  .feature-bnr {
-    flex-direction: column;
-    text-align: center;
-    padding: 0.6rem;
-    gap: 0.4rem;
-    min-height: auto;
-  }
-  
-  .feature-text-bnr {
-    font-size: 0.75rem;
-    white-space: normal;
-    line-height: 1.1;
-  }
-  
-  /* Banner mayorista en tablet - comienza versión estática */
-  .wholesale-banner-bnr {
-    height: 32px;
-    margin-bottom: 1rem;
-  }
-  
-  .wholesale-text-bnr {
-    font-size: 0.9rem;
-    padding: 0 0.8rem;
-  }
-}
-
-/* Tablets pequeñas (600px a 768px) */
-@media (max-width: 768px) {
-  .banner-bnr {
-    height: 50vh;
-    min-height: 380px;
-  }
-  
-  .banner-container-bnr {
-    padding: 0 1rem;
-  }
-  
-  .banner-title-bnr {
-    font-size: 1.6rem;
-    margin-bottom: 0.6rem;
-    line-height: 1.1;
-  }
-  
-  .banner-description-bnr {
-    font-size: 0.85rem;
-    margin-bottom: 1rem;
-    line-height: 1.3;
-  }
-  
-  .banner-buttons-bnr {
-    flex-direction: column;
-    align-items: center;
-    gap: 0.6rem;
-    margin-bottom: 1.5rem;
-  }
-  
-  .cta-button-bnr {
-    width: 100%;
-    max-width: 240px;
-    padding: 0.75rem 1.2rem;
-    font-size: 0.85rem;
-  }
-  
-  .button-content-bnr {
-    gap: 0.4rem;
-  }
-  
-  .banner-features-bnr {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
-  }
-  
-  .feature-bnr {
-    padding: 0.5rem 0.6rem;
-    min-height: 55px;
-    gap: 0.3rem;
-  }
-  
-  .feature-text-bnr {
-    font-size: 0.7rem;
-    white-space: normal;
-    text-align: center;
-    line-height: 1.1;
-  }
-  
-  .wholesale-banner-bnr {
-    height: 30px;
-    margin-bottom: 0.8rem;
-  }
-  
-  .wholesale-text-bnr {
-    font-size: 0.85rem;
-    gap: 0.4rem;
-  }
-  
-  /* En móviles, banner estático con emojis */
-  .wholesale-banner-bnr.static .wholesale-text-bnr {
+    height: clamp(40px, 5vw, 50px);
+    background: linear-gradient(135deg, #00142C 0%, #2C5F8E 100%);
+    border-radius: 12px;
+    margin-bottom: clamp(1.2rem, 2.5vw, 1.8rem);
+    overflow: hidden;
+    box-shadow: 
+        0 4px 20px rgba(0, 20, 44, 0.4),
+        0 0 30px rgba(44, 95, 142, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.15);
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-  }
-  
-  .wholesale-banner-bnr.static .wholesale-text-bnr::before {
-    content: "💰";
-    font-size: 1.1em;
-  }
-  
-  .wholesale-banner-bnr.static .wholesale-text-bnr::after {
-    content: "💰";
-    font-size: 1.1em;
-  }
-}
-
-/* Móviles medianos (480px a 600px) */
-@media (max-width: 600px) {
-  .banner-bnr {
-    height: 48vh;
-    min-height: 340px;
-  }
-  
-  .banner-container-bnr {
-    padding: 0 0.8rem;
-  }
-  
-  .banner-title-bnr {
-    font-size: 1.4rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .banner-description-bnr {
-    font-size: 0.8rem;
-    margin-bottom: 0.8rem;
-  }
-  
-  .banner-buttons-bnr {
-    gap: 0.5rem;
-    margin-bottom: 1.2rem;
-  }
-  
-  .cta-button-bnr {
-    max-width: 220px;
-    padding: 0.7rem 1rem;
-    font-size: 0.8rem;
-  }
-  
-  .button-content-bnr {
-    gap: 0.3rem;
-  }
-  
-  .button-icon-bnr {
-    font-size: 0.9rem;
-  }
-  
-  .button-text-bnr {
-    font-size: 0.78rem;
-  }
-  
-  .banner-features-bnr {
-    grid-template-columns: 1fr;
-    gap: 0.4rem;
-    max-width: 240px;
-    margin: 0 auto;
-  }
-  
-  .feature-bnr {
-    flex-direction: row;
-    justify-content: flex-start;
-    padding: 0.5rem 0.8rem;
-    min-height: 45px;
-  }
-  
-  .feature-text-bnr {
-    font-size: 0.75rem;
-    text-align: left;
-    white-space: nowrap;
-  }
-  
-  .wholesale-banner-bnr {
-    height: 28px;
-    margin-bottom: 0.7rem;
-  }
-  
-  .wholesale-text-bnr {
-    font-size: 0.8rem;
-    padding: 0 0.4rem;
-  }
-}
-
-/* Móviles pequeños (hasta 480px) */
-@media (max-width: 480px) {
-  .banner-bnr {
-    height: 45vh;
-    min-height: 320px;
-    margin-top: 55px;
-  }
-  
-  .banner-title-bnr {
-    font-size: 1.3rem;
-    line-height: 1.1;
-    margin-bottom: 0.4rem;
-  }
-  
-  .banner-description-bnr {
-    font-size: 0.75rem;
-    line-height: 1.2;
-    margin-bottom: 0.8rem;
-  }
-  
-  .banner-buttons-bnr {
-    gap: 0.4rem;
-    margin-bottom: 1rem;
-  }
-  
-  .cta-button-bnr {
-    max-width: 200px;
-    padding: 0.65rem 0.9rem;
-    font-size: 0.78rem;
-  }
-  
-  .button-content-bnr {
-    gap: 0.25rem;
-  }
-  
-  .button-icon-bnr {
-    font-size: 0.85rem;
-  }
-  
-  .button-text-bnr {
-    font-size: 0.75rem;
-  }
-  
-  .button-arrow-bnr {
-    font-size: 0.85rem;
-  }
-  
-  .banner-features-bnr {
-    max-width: 220px;
-    gap: 0.3rem;
-  }
-  
-  .feature-bnr {
-    padding: 0.45rem 0.7rem;
-    min-height: 40px;
-    gap: 0.25rem;
-  }
-  
-  .feature-icon-bnr {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .feature-text-bnr {
-    font-size: 0.7rem;
-  }
-  
-  .wholesale-banner-bnr {
-    height: 26px;
-    margin-bottom: 0.6rem;
-  }
-  
-  .wholesale-text-bnr {
-    font-size: 0.75rem;
-    letter-spacing: 0.2px;
-    gap: 0.3rem;
-  }
-}
-
-/* Móviles muy pequeños (hasta 360px) */
-@media (max-width: 360px) {
-  .banner-bnr {
-    height: 42vh;
-    min-height: 300px;
-  }
-  
-  .banner-title-bnr {
-    font-size: 1.2rem;
-    margin-bottom: 0.3rem;
-  }
-  
-  .banner-description-bnr {
-    font-size: 0.7rem;
-    margin-bottom: 0.7rem;
-  }
-  
-  .cta-button-bnr {
-    padding: 0.6rem 0.8rem;
-    font-size: 0.75rem;
-    max-width: 180px;
-  }
-  
-  .button-text-bnr {
-    font-size: 0.7rem;
-  }
-  
-  .feature-bnr {
-    padding: 0.4rem 0.6rem;
-  }
-  
-  .feature-text-bnr {
-    font-size: 0.65rem;
-  }
-  
-  .wholesale-banner-bnr {
-    height: 24px;
-  }
-  
-  .wholesale-text-bnr {
-    font-size: 0.7rem;
-  }
-}
-
-/* Orientación landscape en móviles */
-@media (max-height: 500px) and (orientation: landscape) {
-  .banner-bnr {
-    height: 90vh;
-    min-height: 300px;
-    margin-top: 55px;
-  }
-  
-  .banner-container-bnr {
-    padding-top: 0.3rem;
-    padding-bottom: 0.3rem;
-  }
-  
-  .banner-title-bnr {
-    font-size: 1.4rem;
-    margin-bottom: 0.3rem;
-  }
-  
-  .banner-description-bnr {
-    font-size: 0.8rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .banner-buttons-bnr {
-    margin-bottom: 0.8rem;
-    flex-direction: row;
-    gap: 0.4rem;
-  }
-  
-  .cta-button-bnr {
-    padding: 0.5rem 0.8rem;
-    min-width: 120px;
-  }
-  
-  .banner-features-bnr {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.3rem;
-  }
-  
-  .feature-bnr {
-    padding: 0.3rem 0.5rem;
-    min-height: 35px;
-  }
-  
-  .feature-text-bnr {
-    font-size: 0.65rem;
-  }
-  
-  .wholesale-banner-bnr {
-    height: 26px;
-    margin-bottom: 0.5rem;
-  }
-}
-
-/* Para usuarios que prefieren reducir movimiento */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-  
-  .banner-background-bnr,
-  .banner-background-bnr::before,
-  .wholesale-text-container-bnr {
-    animation: none !important;
-  }
-  
-  .feature-bnr:hover,
-  .cta-button-bnr:hover {
-    transform: none;
-  }
-  
-  .wholesale-banner-bnr {
-    animation: none;
-  }
-  
-  .wholesale-text-container-bnr {
-    position: static;
     justify-content: center;
+    position: relative;
+    z-index: 2;
+    transform-style: preserve-3d;
+    margin: 0 auto;
+}
+
+/* Efecto de borde luminoso */
+.wholesale-banner-bnr::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, 
+        rgba(255, 255, 255, 0.1),
+        rgba(72, 149, 207, 0.3),
+        rgba(255, 255, 255, 0.1));
+    border-radius: 14px;
+    z-index: -1;
+}
+
+/* Contenedor de texto CENTRADO */
+.wholesale-text-container-bnr {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    position: relative;
+    white-space: nowrap;
+    padding: 0 1.5rem;
+    justify-content: flex-start;
     width: 100%;
-  }
-  
-  .wholesale-text-bnr {
-    animation: none;
-    white-space: normal;
-  }
+    animation: none !important;
+}
+
+/* Texto con animación de brillo */
+.wholesale-text-bnr {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: clamp(1rem, 2vw, 1.5rem);
+    font-weight: 700;
+    color: transparent;
+    text-shadow: none;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, 
+        #FFFFFF 0%, 
+        #FFD700 25%, 
+        #FFFFFF 50%, 
+        #FFD700 75%, 
+        #FFFFFF 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% auto;
+    padding: 0 0.3rem;
+    position: relative;
+    white-space: nowrap;
+    animation: shineText 4s infinite linear;
+}
+
+@keyframes shineText {
+    0% {
+        background-position: 200% center;
+    }
+    100% {
+        background-position: -200% center;
+    }
+}
+
+/* =========================================== */
+/* BANNER WHOLESALE - ALINEADO CON EL H1 */
+/* =========================================== */
+.wholesale-banner-bnr.fixed-wholesale {
+    position: relative;
+    width: auto;
+    max-width: 400px;
+    min-width: 250px;
+    height: 45px;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    align-self: flex-start;
+    margin-left: 0; /* Asegurar que comience desde el borde izquierdo */
+    padding-left: 0; /* Eliminar cualquier padding */
+}
+
+/* Efecto hover conservado */
+.wholesale-banner-bnr.fixed-wholesale:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 8px 30px rgba(0, 20, 44, 0.7),
+        0 0 50px rgba(44, 95, 142, 0.6);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.wholesale-banner-bnr.fixed-wholesale:hover .wholesale-text-bnr {
+    background: linear-gradient(135deg, 
+        #FFD700 0%, 
+        #FFFFFF 25%, 
+        #FFD700 50%, 
+        #FFFFFF 75%, 
+        #FFD700 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+/* ========== INDICADORES DEL CARRUSEL ========== */
+.banner-indicators {
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    z-index: 10;
+}
+
+.indicator {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    border: none;
+    background: rgb(255, 255, 255);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.788);
+}
+
+.indicator::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: #2C5F8E;
+    transition: left 0.3s ease;
+}
+
+.indicator:hover::before {
+    left: 0;
+}
+
+.indicator:hover {
+    transform: scale(2);
+    background: rgba(44, 95, 142, 0.6);
+}
+
+.indicator.active {
+    background: #2C5F8E;
+    transform: scale(2);
+    box-shadow: 0 0 10px rgba(44, 95, 142, 0.6);
+}
+
+.indicator.active::before {
+    left: 0;
+}
+
+/* ========== SKELETON LOADING ========== */
+.banner-skeleton {
+    width: 100%;
+    height: 600px;
+    background: #f8f9fa;
+    animation: loading 1.5s infinite;
+    border-radius: 0;
+}
+
+@keyframes loading {
+    0% {
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 0.6;
+    }
+    100% {
+        opacity: 0.8;
+    }
+}
+
+/* ========== MEDIA QUERIES RESPONSIVE ========== */
+
+/* DESKTOP CON SIDEBAR (≥ 1200px) */
+@media (min-width: 1200px) {
+    .banner-container {
+        margin-left: 220px;
+        width: calc(100% - 220px);
+        background: #ffffff;
+    }
+
+    .banner-wrapper {
+        height: 600px;
+        border-radius: 0 0 0 8px;
+    }
+
+    .banner-container-bnr {
+        padding: 0 80px;
+    }
+
+    .banner-title-bnr {
+        font-size: 3.5rem;
+    }
+    
+    /* Asegurar que el contenido comience desde el padding del contenedor */
+    .banner-content-bnr {
+        padding-left: 0;
+    }
+    
+    .wholesale-banner-bnr.fixed-wholesale {
+        height: 45px;
+        max-width: 350px;
+        margin-bottom: 2rem;
+        margin-left: 0; /* Alinear con el inicio del contenido */
+    }
+    
+    .wholesale-text-bnr {
+        font-size: 1.2rem;
+        gap: 1rem;
+    }
+    
+    .banner-text-bnr {
+        padding-left: 0; /* Alinear con el banner */
+    }
+}
+
+/* DESKTOP MEDIO (1025px - 1199px) */
+@media (min-width: 1025px) and (max-width: 1199px) {
+    .banner-container {
+        margin-left: 220px;
+        width: calc(100% - 220px);
+        background: #ffffff;
+    }
+
+    .banner-wrapper {
+        height: 550px;
+    }
+
+    .banner-container-bnr {
+        padding: 0 50px;
+    }
+
+    .banner-title-bnr {
+        font-size: 2.8rem;
+    }
+    
+    .banner-content-bnr {
+        padding-left: 0;
+    }
+    
+    .wholesale-banner-bnr.fixed-wholesale {
+        height: 43px;
+        max-width: 320px;
+        margin-bottom: 1.8rem;
+        margin-left: 0;
+    }
+    
+    .wholesale-text-bnr {
+        font-size: 1.1rem;
+    }
+    
+    .banner-text-bnr {
+        padding-left: 0;
+    }
+}
+
+/* TABLET GRANDE (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .banner-container {
+        margin-left: 0;
+        width: 100%;
+        margin-top: 70px;
+        background: #ffffff;
+    }
+
+    .banner-wrapper {
+        height: 500px;
+    }
+
+    .banner-container-bnr {
+        padding: 0 40px;
+    }
+
+    .banner-content-bnr {
+        max-width: 100%;
+        margin: 0 auto;
+        text-align: left;
+        padding-left: 0;
+    }
+
+    .banner-text-bnr {
+        padding: 20px 0;
+        text-align: left;
+        padding-left: 0;
+    }
+
+    .banner-title-bnr {
+        font-size: 2.5rem;
+    }
+
+    .banner-buttons-bnr {
+        justify-content: flex-start;
+        gap: 0.8rem;
+    }
+
+    .cta-button-bnr {
+        flex: 0 1 auto;
+        min-width: 155px;
+    }
+    
+    .wholesale-banner-bnr.fixed-wholesale {
+        height: 42px;
+        max-width: 300px;
+        margin-bottom: 1.5rem;
+        margin-left: 0;
+    }
+    
+    .wholesale-text-bnr {
+        font-size: 1rem;
+        gap: 0.8rem;
+    }
+}
+
+/* TABLET (577px - 768px) */
+@media (min-width: 577px) and (max-width: 768px) {
+    .banner-container {
+        margin-top: 60px;
+        background: #ffffff;
+    }
+
+    .banner-wrapper {
+        height: 450px;
+    }
+
+    .banner-container-bnr {
+        padding: 0 30px;
+    }
+
+    .banner-subtitle-bnr {
+        font-size: 0.95rem;
+        margin-bottom: 10px;
+    }
+
+    .banner-title-bnr {
+        font-size: 2.2rem;
+        margin-bottom: 15px;
+    }
+
+    .banner-description-bnr {
+        font-size: 1rem;
+        margin-bottom: 25px;
+    }
+
+    .banner-buttons-bnr {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 0.6rem;
+    }
+
+    .cta-button-bnr {
+        width: auto;
+        max-width: 240px;
+        padding: 12px 28px;
+        font-size: 0.95rem;
+    }
+    
+    .banner-content-bnr {
+        padding-left: 0;
+    }
+    
+    .wholesale-banner-bnr.fixed-wholesale {
+        height: 40px;
+        max-width: 280px;
+        margin-bottom: 1.2rem;
+        margin-left: 0;
+    }
+    
+    .wholesale-text-bnr {
+        font-size: 0.95rem;
+        gap: 0.6rem;
+    }
+    
+    .banner-text-bnr {
+        padding-left: 0;
+    }
+}
+
+/* MÓVIL (426px - 576px) */
+@media (min-width: 426px) and (max-width: 576px) {
+    .banner-container {
+        margin-top: 55px;
+        background: #ffffff;
+    }
+
+    .banner-wrapper {
+        height: 400px;
+    }
+
+    .banner-container-bnr {
+        padding: 0 20px;
+    }
+
+    .banner-subtitle-bnr {
+        font-size: 0.85rem;
+        margin-bottom: 8px;
+        padding-left: 15px;
+    }
+
+    .banner-subtitle-bnr::before {
+        width: 8px;
+    }
+
+    .banner-title-bnr {
+        font-size: 1.8rem;
+        margin-bottom: 12px;
+    }
+
+    .banner-description-bnr {
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+
+    .banner-buttons-bnr {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .cta-button-bnr {
+        padding: 10px 24px;
+        font-size: 0.9rem;
+        gap: 8px;
+        max-width: 220px;
+    }
+
+    .banner-indicators {
+        bottom: 20px;
+        gap: 8px;
+    }
+
+    .indicator {
+        width: 10px;
+        height: 10px;
+    }
+    
+    .banner-content-bnr {
+        padding-left: 0;
+    }
+    
+    .wholesale-banner-bnr.fixed-wholesale {
+        height: 38px;
+        max-width: 250px;
+        min-width: 200px;
+        margin-bottom: 1rem;
+        margin-left: 0;
+    }
+    
+    .wholesale-text-bnr {
+        font-size: 0.9rem;
+        gap: 0.5rem;
+        animation-duration: 5s;
+    }
+    
+    .banner-text-bnr {
+        padding-left: 0;
+    }
+}
+
+/* MÓVIL PEQUEÑO (≤ 425px) */
+@media (max-width: 425px) {
+    .banner-container {
+        background: #ffffff;
+    }
+
+    .banner-wrapper {
+        height: 380px;
+    }
+
+    .banner-container-bnr {
+        padding: 0 15px;
+    }
+
+    .banner-subtitle-bnr {
+        font-size: 0.8rem;
+        margin-bottom: 6px;
+    }
+
+    .banner-title-bnr {
+        font-size: 1.6rem;
+        margin-bottom: 10px;
+    }
+
+    .banner-description-bnr {
+        font-size: 0.85rem;
+        margin-bottom: 18px;
+    }
+
+    .cta-button-bnr {
+        padding: 9px 20px;
+        font-size: 0.85rem;
+        max-width: 200px;
+    }
+
+    .banner-indicators {
+        bottom: 15px;
+    }
+    
+    .banner-content-bnr {
+        padding-left: 0;
+    }
+    
+    .wholesale-banner-bnr.fixed-wholesale {
+        height: 35px;
+        max-width: 220px;
+        min-width: 180px;
+        border-radius: 8px;
+        margin-bottom: 0.8rem;
+        margin-left: 0;
+    }
+    
+    .wholesale-text-bnr {
+        font-size: 0.85rem;
+        gap: 0.4rem;
+        letter-spacing: 0.3px;
+        padding: 0 0.2rem;
+        animation-duration: 6s;
+    }
+    
+    .wholesale-text-container-bnr {
+        padding: 0 1rem;
+    }
+    
+    .banner-text-bnr {
+        padding-left: 0;
+    }
+}
+
+/* ========== ACCESIBILIDAD ========== */
+@media (prefers-reduced-motion: reduce) {
+    .banner-slides,
+    .banner-slide,
+    .banner-text-bnr,
+    .cta-button-bnr,
+    .indicator,
+    .wholesale-text-bnr {
+        transition: none !important;
+        animation: none !important;
+    }
+    
+    .banner-slides {
+        transition: transform 0.1s ease !important;
+    }
+    
+    .wholesale-text-bnr {
+        animation: none !important;
+        background: linear-gradient(135deg, #FFD700, #FFFFFF);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+}
+
+/* ========== MODO ALTO CONTRASTE ========== */
+@media (prefers-contrast: high) {
+    .cta-button-bnr {
+        border: 3px solid white;
+    }
+    
+    .indicator.active {
+        border: 2px solid black;
+    }
+    
+    .banner-title-bnr {
+        text-shadow: 0 0 0 black;
+    }
+    
+    .wholesale-banner-bnr {
+        border: 2px solid #000000;
+        background: #2C5F8E !important;
+    }
+    
+    .wholesale-text-bnr {
+        background: none !important;
+        -webkit-text-fill-color: #ffffff !important;
+        color: #ffffff !important;
+        text-shadow: 0 0 0 black !important;
+        animation: none !important;
+    }
+}
+
+/* ========== MODO OSCURO ========== */
+@media (prefers-color-scheme: dark) {
+    .banner-container {
+        background: #121212;
+    }
+    
+    .banner-skeleton {
+        background: #2d2d2d;
+    }
+    
+    .wholesale-banner-bnr {
+        background: linear-gradient(135deg, #1a3a5c, #0f4780);
+    }
 }

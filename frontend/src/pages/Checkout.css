@@ -1,10 +1,9 @@
-/* Checkout.css - COMPLETO CON PREFIJOS LCS-CO- */
-
+/* src/components/Checkout/Checkout.css */
 .lcs-co-page {
   min-height: 100vh;
   background: #f8fafc !important;
   padding: 2rem 0;
-  padding-top: 150px;
+  padding-top: 50px;
 }
 
 .lcs-co-container {
@@ -52,7 +51,7 @@
   height: 40px;
   border-radius: 50%;
   background: #e2e8f0;
-  color: #707b8b ;
+  color: #707b8b;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -93,10 +92,25 @@
 }
 
 .lcs-co-step-title {
-  color: #2d3748;
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
-  font-weight: 600;
+  color: #16395C !important;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.lcs-co-step-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #7CCBDD, #0f4780);
+  border-radius: 2px;
 }
 
 /* Form Elements */
@@ -146,7 +160,6 @@
   padding: 1.5rem;
   border-radius: 8px;
   margin: 1.5rem 0;
-  
 }
 
 .lcs-co-shipping-header {
@@ -286,11 +299,10 @@
   padding: 1.5rem;
   border-radius: 8px;
   margin-bottom: 1.5rem;
-  
 }
 
 .lcs-co-section-title {
-  color: #ffffff !important;
+  color: #2d3748 !important;
   margin-bottom: 1rem;
   font-size: 1.1rem;
   font-weight: 600;
@@ -421,11 +433,11 @@
   margin: 0 0 0.5rem 0;
 }
 
-.lcs-co-order-item-promo {
+.lcs-co-item-promo {
   margin-top: 0.5rem;
 }
 
-.lcs-co-order-promo-badge {
+.lcs-co-promo-badge {
   background: #fed7d7;
   color: #c53030;
   padding: 0.25rem 0.75rem;
@@ -494,7 +506,7 @@
   align-items: flex-start;
   gap: 0.75rem;
   margin: 0;
-  color: #bcbdbe;
+  color: #4a5568;
   font-weight: 500;
   font-size: 0.95rem;
   line-height: 1.4;
@@ -507,7 +519,7 @@
 }
 
 .lcs-co-terms a {
-  color: #eaf0f5;
+  color: #4299e1;
   text-decoration: none;
   font-weight: 600;
 }
@@ -573,76 +585,338 @@
 }
 
 /* ==================== */
-/* MERCADO PAGO SECTION - CON AUTENTICACIÓN */
+/* DISEÑO MEJORADO PARA MÉTODOS DE PAGO */
 /* ==================== */
-.lcs-co-mercadopago-section {
-  background: #f8fafc;
-  border-radius: 12px;
+
+/* Contenedor principal mejorado */
+.lcs-co-payment-methods {
+  background: #f9fafb;
   padding: 2rem;
-  margin: 1.5rem 0;
-  
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
 }
 
-.lcs-co-mercadopago-header {
-  text-align: center;
+/* Contenedor de opciones mejorado */
+.lcs-co-payment-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
   margin-bottom: 2rem;
+}
+
+/* Tarjeta de método de pago mejorada */
+.lcs-co-payment-option {
+  display: block;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lcs-co-payment-option-content {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.75rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+.lcs-co-payment-option-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+/* Efecto hover mejorado */
+.lcs-co-payment-option:hover .lcs-co-payment-option-content {
+  border-color: #7CCBDD;
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(124, 203, 221, 0.15);
+}
+
+.lcs-co-payment-option:hover .lcs-co-payment-option-content::before {
+  background: linear-gradient(90deg, #7CCBDD, #0f4780);
+}
+
+/* Estado seleccionado mejorado */
+.lcs-co-payment-option-selected .lcs-co-payment-option-content {
+  border-color: #0f4780;
+  background: #f8fafc;
+  box-shadow: 0 8px 32px rgba(15, 71, 128, 0.12);
+  transform: translateY(-2px);
+}
+
+.lcs-co-payment-option-selected .lcs-co-payment-option-content::before {
+  background: linear-gradient(90deg, #0f4780, #7CCBDD);
+}
+
+/* Indicador de selección */
+.lcs-co-payment-option-selected .lcs-co-payment-option-content::after {
+  content: '✓';
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #0f4780, #7CCBDD);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(15, 71, 128, 0.3);
+}
+
+/* Radio button oculto */
+.lcs-co-payment-radio {
+  display: none;
+}
+
+/* Header de Mercado Pago mejorado */
+.lcs-co-mercadopago-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .lcs-co-mercadopago-logo {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  gap: 1rem;
 }
 
-/* Logo oficial de Mercado Pago - TAMAÑO AUMENTADO */
+/* Icono Mercado Pago mejorado */
 .lcs-co-mp-icon {
-  width: 150px;
-  height: 150px;
+  width: 100px;
+  height: 100px;
   
+  border-radius: 14px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: 0 8px 25px rgba(0, 158, 227, 0.4);
-  
+  padding: 12px;
+  box-shadow: 0 6px 20px rgba(0, 158, 227, 0.25);
   transition: all 0.3s ease;
 }
 
-.lcs-co-mp-icon:hover {
-  transform: scale(1.05);
-  box-shadow: 0 12px 30px rgba(0, 158, 227, 0.6);
+.lcs-co-payment-option:hover .lcs-co-mp-icon {
+  transform: scale(1.05) rotate(5deg);
+  box-shadow: 0 8px 25px rgba(0, 158, 227, 0.4);
 }
 
 .lcs-co-mp-logo-img {
-  width: 100%;
-  height: 100%;
+  width: 200%;
+  height: 150%;
   object-fit: contain;
+  /* filter: brightness(0) invert(1); */
 }
 
-.lcs-co-mp-title {
-  color: #ffffff !important;
-  font-size: 2.5rem;
+/* Títulos mejorados */
+.lcs-co-mp-title,
+.lcs-co-transfer-title {
+  color: #1f2937;
+  font-size: 1.4rem;
   font-weight: 700;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(135deg, #009ee3, #007bb8);
-  -webkit-background-clip: text;
-  background-clip: text;
 }
 
-
-
-
-.lcs-co-mp-description {
-  color: #4a5568;
-  font-size: 1.2rem;
-  margin: 0;
+/* Descripciones mejoradas */
+.lcs-co-mp-description,
+.lcs-co-transfer-description {
+  color: #6b7280;
+  font-size: 0.95rem;
   line-height: 1.5;
-  max-width: 500px;
-  margin: 0 auto;
+  margin: 0 0 1.5rem 0;
+  padding-left: 4.5rem;
+}
+
+/* Header de Transferencia mejorado */
+.lcs-co-transfer-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.lcs-co-transfer-logo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Icono Transferencia mejorado */
+.lcs-co-transfer-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.25);
+  transition: all 0.3s ease;
+}
+
+.lcs-co-payment-option:hover .lcs-co-transfer-icon {
+  transform: scale(1.05) rotate(-5deg);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+.lcs-co-transfer-icon-text {
+  font-size: 1.8rem;
+  color: white;
+}
+
+/* Instrucciones de transferencia mejoradas */
+.lcs-co-transfer-details {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.lcs-co-transfer-details p {
+  color: #166534;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+}
+
+.lcs-co-transfer-instructions {
+  color: #166534;
+  margin: 0;
+  padding-left: 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.lcs-co-transfer-instructions li {
+  margin-bottom: 0.5rem;
+  position: relative;
+  padding-left: 0.5rem;
+}
+
+.lcs-co-transfer-instructions li::marker {
+  color: #10b981;
+  font-weight: bold;
+}
+
+.lcs-co-transfer-instructions li:last-child {
+  margin-bottom: 0;
+}
+
+/* Badge de método de pago */
+.lcs-co-payment-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #7CCBDD, #0f4780);
+  color: white;
+  padding: 0.35rem 1rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+/* Seguridad mejorada */
+.lcs-co-payment-security {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.lcs-co-security-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.lcs-co-security-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.lcs-co-security-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.lcs-co-security-text strong {
+  color: #1f2937;
+  font-size: 1.1rem;
+}
+
+.lcs-co-security-text span {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Total a pagar mejorado */
+.lcs-co-order-total-payment {
+  background: #f8fafc;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.75rem;
+  text-align: center;
+  margin: 2rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.lcs-co-order-total-payment::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #7CCBDD, #0f4780);
+}
+
+.lcs-co-total-payment-title {
+  color: #6b7280;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.lcs-co-total-payment-amount {
+  color: #0f4780;
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.lcs-co-total-payment-amount::before {
+  content: '$';
+  font-size: 2rem;
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+.lcs-co-total-payment-amount::after {
+  content: ' MXN';
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #6b7280;
 }
 
 /* Mensaje de autenticación requerida */
@@ -663,114 +937,6 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-}
-
-/* Payment Security */
-.lcs-co-payment-security {
-  margin-bottom: 2rem;
-}
-
-.lcs-co-security-badge {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  
-  
-}
-
-.lcs-co-security-icon {
-  font-size: 2rem;
-  flex-shrink: 0;
-}
-
-.lcs-co-security-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.lcs-co-security-text strong {
-  color: #ffffff;
-  font-size: 1.1rem;
-}
-
-.lcs-co-security-text span {
-  color: #ffffff !important;
-  font-size: 0.9rem;
-}
-
-/* Payment Methods Preview */
-.lcs-co-payment-methods-preview {
-  margin-bottom: 2rem;
-}
-
-.lcs-co-payment-methods-title {
-  color: #16395C;
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  text-align: center;
-}
-
-.lcs-co-payment-methods-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
-
-.lcs-co-payment-method {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0 !important;
-  transition: all 0.3s ease;
-}
-
-.lcs-co-payment-method:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: #4299e1;
-}
-
-.lcs-co-method-icon {
-  font-size: 1.5rem;
-  flex-shrink: 0;
-}
-
-.lcs-co-method-name {
-  color: #2d3748;
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-/* Order Total Payment */
-.lcs-co-order-total-payment {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  border: 2px solid #ffffff !important;
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.lcs-co-total-payment-title {
-  color: #2d3748;
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.lcs-co-total-payment-amount {
-  color: #ffffff;
-  font-size: 2.5rem;
-  font-weight: 700;
-  line-height: 1;
 }
 
 /* Mercado Pago Button */
@@ -807,6 +973,52 @@
   box-shadow: none;
 }
 
+/* Botón de transferencia */
+.lcs-co-btn-transfer {
+  background: linear-gradient(135deg, #48bb78, #38a169);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.lcs-co-btn-transfer:hover:not(:disabled) {
+  background: linear-gradient(135deg, #38a169, #2f855a);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(72, 187, 120, 0.4);
+}
+
+.lcs-co-btn-transfer:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.lcs-co-btn-transfer:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Estados de carga para ambos botones */
+.lcs-co-btn-mercadopago .lcs-co-loading-spinner,
+.lcs-co-btn-transfer .lcs-co-loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: lcs-co-spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+
 /* Botón de login requerido */
 .lcs-co-btn-login-required {
   background: linear-gradient(135deg, #7CCBDD, #0f4780) !important;
@@ -828,32 +1040,6 @@
   box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
 }
 
-/* Payment Note */
-.lcs-co-payment-note {
-  background: #fffaf0;
-  border: 1px solid #fbd38d;
-  border-radius: 8px;
-  padding: 1rem 1.5rem;
-  margin-top: 1.5rem;
-}
-
-.lcs-co-note-text {
-  color: #dd6b20;
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.4;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
-.lcs-co-note-text::before {
-  content: "💡";
-  font-size: 1.1rem;
-  flex-shrink: 0;
-  margin-top: 0.1rem;
-}
-
 /* Checkout Summary */
 .lcs-co-summary {
   position: sticky;
@@ -861,7 +1047,7 @@
 }
 
 .lcs-co-summary-card {
-  background: linear-gradient(90deg, #4895CF, #7CCBDD) !important;
+  background: white !important;
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -869,7 +1055,7 @@
 }
 
 .lcs-co-summary-title {
-  color: #ffffff !important;
+  color: #2d3748 !important;
   margin-bottom: 1.5rem;
   font-size: 1.3rem;
   font-weight: 600;
@@ -934,6 +1120,11 @@
   font-size: 1rem;
 }
 
+.lcs-co-error-text-small {
+  font-size: 0.6rem;
+  color: #a0aec0;
+}
+
 .lcs-co-image-loading-small {
   position: absolute;
   top: 0;
@@ -953,6 +1144,12 @@
   border-top: 2px solid #4299e1;
   border-radius: 50%;
   animation: lcs-co-spin 1s linear infinite;
+}
+
+.lcs-co-retry-text-small {
+  font-size: 0.6rem;
+  color: #718096;
+  margin-top: 0.15rem;
 }
 
 .lcs-co-preview-info {
@@ -982,7 +1179,7 @@
 
 .lcs-co-preview-code {
   font-size: 0.7rem;
-  color: #cfd5dd !important;
+  color: #718096;
   margin-bottom: 0.25rem;
 }
 
@@ -1025,7 +1222,7 @@
 }
 
 .lcs-co-free-shipping-text {
-  color: #ffffff;
+  color: #48bb78;
   font-weight: 700;
 }
 
@@ -1049,7 +1246,7 @@
 }
 
 .lcs-co-total-amount {
-  color: #ffffff;
+  color: #48bb78;
   font-size: 1.3rem;
 }
 
@@ -1057,42 +1254,6 @@
   height: 1px;
   background: #e2e8f0;
   margin: 0.5rem 0;
-}
-
-/* Minimum Notice */
-.lcs-co-minimum-notice {
-  background: #fffaf0;
-  border: 1px solid #fbd38d;
-  border-radius: 8px;
-  padding: 1rem;
-  margin: 1rem 0;
-}
-
-.lcs-co-minimum-notice-content {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.lcs-co-notice-icon {
-  font-size: 1.25rem;
-  flex-shrink: 0;
-}
-
-.lcs-co-notice-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.lcs-co-notice-text strong {
-  color: #dd6b20;
-  font-size: 0.9rem;
-}
-
-.lcs-co-notice-text span {
-  color: #ed8936;
-  font-size: 0.85rem;
 }
 
 /* Benefits */
@@ -1164,7 +1325,11 @@
   100% { transform: rotate(360deg); }
 }
 
-@keyframes lcs-co-fadeIn {
+/* ==================== */
+/* ANIMACIONES ADICIONALES PARA MÉTODOS DE PAGO */
+/* ==================== */
+
+@keyframes lcs-co-slideIn {
   from {
     opacity: 0;
     transform: translateY(20px);
@@ -1173,6 +1338,18 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.lcs-co-payment-option {
+  animation: lcs-co-slideIn 0.5s ease-out;
+}
+
+.lcs-co-payment-option:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.lcs-co-payment-option:nth-child(2) {
+  animation-delay: 0.2s;
 }
 
 /* ==================== */
@@ -1241,43 +1418,71 @@
     align-items: center;
   }
   
-  .lcs-co-mercadopago-section {
+  /* Responsive para nuevo diseño de pagos */
+  .lcs-co-payment-methods {
     padding: 1.5rem;
   }
   
-  .lcs-co-mercadopago-logo {
-    flex-direction: column;
+  .lcs-co-step-title {
+    font-size: 1.6rem;
+  }
+  
+  .lcs-co-payment-options {
+    grid-template-columns: 1fr;
     gap: 1rem;
   }
   
-  .lcs-co-mp-icon {
-    width: 150px;
-    height: 150px;
-    padding: 18px;
+  .lcs-co-payment-option-content {
+    padding: 1.5rem;
   }
   
-  .lcs-co-mp-title {
-    font-size: 2rem;
+  .lcs-co-mercadopago-header,
+  .lcs-co-transfer-logo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
   }
   
-  .lcs-co-payment-methods-grid {
-    grid-template-columns: 1fr;
+  .lcs-co-mp-description,
+  .lcs-co-transfer-description {
+    padding-left: 0;
+  }
+  
+  .lcs-co-mp-icon,
+  .lcs-co-transfer-icon {
+    width: 50px;
+    height: 50px;
+    padding: 10px;
+  }
+  
+  .lcs-co-mp-title,
+  .lcs-co-transfer-title {
+    font-size: 1.3rem;
+  }
+  
+  .lcs-co-total-payment-amount {
+    font-size: 2.5rem;
   }
   
   .lcs-co-security-badge {
     flex-direction: column;
     text-align: center;
-    gap: 0.75rem;
-  }
-  
-  .lcs-co-total-payment-amount {
-    font-size: 2rem;
   }
   
   .lcs-co-btn-mercadopago,
+  .lcs-co-btn-transfer,
   .lcs-co-btn-login-required {
     padding: 0.875rem 1.5rem;
     font-size: 1rem;
+  }
+  
+  .lcs-co-transfer-details {
+    padding: 0.875rem;
+  }
+  
+  .lcs-co-transfer-instructions {
+    padding-left: 1rem;
+    font-size: 0.8rem;
   }
 }
 
@@ -1306,12 +1511,6 @@
   .lcs-co-step {
     flex-direction: row;
     gap: 1rem;
-  }
-  
-  .lcs-co-mp-icon {
-    width: 85px;
-    height: 85px;
-    padding: 16px;
   }
 }
 
@@ -1345,28 +1544,43 @@
     text-align: center;
   }
   
-  .lcs-co-mercadopago-section {
+  .lcs-co-step-title {
+    font-size: 1.4rem;
+  }
+  
+  .lcs-co-payment-methods {
     padding: 1.25rem;
   }
   
-  .lcs-co-mp-icon {
-    width: 80px;
-    height: 80px;
-    padding: 15px;
+  .lcs-co-payment-option-content {
+    padding: 1.25rem;
   }
   
-  .lcs-co-mp-title {
-    font-size: 1.8rem;
+  .lcs-co-mp-icon,
+  .lcs-co-transfer-icon {
+    width: 45px;
+    height: 45px;
+    padding: 8px;
+  }
+  
+  .lcs-co-mp-title,
+  .lcs-co-transfer-title {
+    font-size: 1.2rem;
   }
   
   .lcs-co-total-payment-amount {
-    font-size: 1.75rem;
+    font-size: 2.2rem;
   }
   
-  .lcs-co-note-text {
-    flex-direction: column;
-    text-align: center;
-    gap: 0.5rem;
+  .lcs-co-transfer-details {
+    padding: 1rem;
+  }
+  
+  .lcs-co-btn-mercadopago,
+  .lcs-co-btn-transfer,
+  .lcs-co-btn-login-required {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.95rem;
   }
 }
 
@@ -1388,14 +1602,15 @@
     font-size: 0.95rem;
   }
   
-  .lcs-co-mp-icon {
-    width: 75px;
-    height: 75px;
-    padding: 14px;
+  .lcs-co-mp-icon,
+  .lcs-co-transfer-icon {
+    width: 40px;
+    height: 40px;
   }
   
-  .lcs-co-mp-title {
-    font-size: 1.6rem;
+  .lcs-co-mp-title,
+  .lcs-co-transfer-title {
+    font-size: 1.1rem;
   }
 }
 
@@ -1407,13 +1622,10 @@
   }
   
   .lcs-co-btn-mercadopago,
+  .lcs-co-btn-transfer,
   .lcs-co-btn-login-required {
     min-height: 60px;
     padding: 1.25rem 2rem;
-  }
-  
-  .lcs-co-payment-method {
-    min-height: 70px;
   }
   
   .lcs-co-input {
@@ -1426,7 +1638,6 @@
   .lcs-co-step,
   .lcs-co-btn,
   .lcs-co-input,
-  .lcs-co-payment-method,
   .lcs-co-order-item,
   .lcs-co-preview-item {
     transition: none;
@@ -1439,273 +1650,74 @@
     border-top-color: #e2e8f0;
   }
   
-  .lcs-co-mp-icon:hover {
+  .lcs-co-mp-icon:hover,
+  .lcs-co-transfer-icon:hover {
     transform: none;
   }
-}
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .lcs-co-page {
-    background: #1a202c;
+  
+  .lcs-co-payment-option,
+  .lcs-co-payment-option:nth-child(1),
+  .lcs-co-payment-option:nth-child(2) {
+    animation: none;
   }
   
-  .lcs-co-form-section,
-  .lcs-co-summary-card,
-  .lcs-co-empty,
-  .lcs-co-benefits {
-    background: linear-gradient(90deg, #4895CF, #7CCBDD);
-  }
-  
-  .lcs-co-title,
-  .lcs-co-step-title,
-  .lcs-co-section-title,
-  .lcs-co-summary-title,
-  .lcs-co-shipping-title,
-  .lcs-co-warning-title,
-  .lcs-co-benefits-title,
-  .lcs-co-empty-title,
-  .lcs-co-order-item-name,
-  .lcs-co-order-total-price,
-  .lcs-co-preview-name,
-  .lcs-co-preview-price,
-  .lcs-co-total-label,
-  .lcs-co-summary-value,
-  .lcs-co-benefit-text strong {
-    color: #ffffff;
-  }
-  
-  .lcs-co-step-label,
-  .lcs-co-label,
-  .lcs-co-empty-text,
-  .lcs-co-free-shipping-description,
-  .lcs-co-warning-text,
-  .lcs-co-shipping-note p,
-  .lcs-co-shipping-details,
-  .lcs-co-order-item-brand,
-  .lcs-co-order-unit-price,
-  .lcs-co-preview-brand,
-  .lcs-co-preview-quantity,
-  .lcs-co-summary-label,
-  .lcs-co-benefit-text {
-    color: #e2e8f0;
-  }
-  
-  .lcs-co-order-item-code,
-  .lcs-co-preview-code,
-  .lcs-co-order-quantity-label {
-    color: #cfd5dd !important;
-  }
-  
-  .lcs-co-input {
-    background: #f0f4fa;
-    border-color: #718096;
-    color: #55585c;
-  }
-  
-  .lcs-co-input::placeholder {
-    color: #a0aec0;
-  }
-  
-  .lcs-co-shipping-info-minimum,
-  .lcs-co-order-summary,
-  .lcs-co-shipping-info,
-  .lcs-co-payment-methods,
-  .lcs-co-mercadopago-section {
-    background: linear-gradient(90deg, #4895CF, #7CCBDD) !important;
-    border-color: transparent  !important;
-    
-  }
-  
-  .lcs-co-minimum-required,
-  .lcs-co-minimum-notice,
-  .lcs-co-shipping-cost,
-  .lcs-co-payment-note {
-    background: #744210;
-    border-color: #dd6b20;
-  }
-  
-  .lcs-co-terms {
-    background: #2C5F8E;
-    border-color: #d0d3d1;
-  }
-  
-  .lcs-co-order-item,
-  .lcs-co-preview-item,
-  .lcs-co-security-badge,
-  .lcs-co-payment-method,
-  .lcs-co-order-total-payment {
-     background: linear-gradient(90deg, #4895CF, #7CCBDD) !important;
-    border-color: #718096;
-  }
-  
-  .lcs-co-order-item-image,
-  .lcs-co-preview-item-image-container,
-  .lcs-co-image-loading,
-  .lcs-co-image-loading-small,
-  .lcs-co-order-item-image-error,
-  .lcs-co-preview-item-image-error {
-    background: linear-gradient(90deg, #4895CF, #7CCBDD) !important;
-  }
-  
-  .lcs-co-btn-secondary {
-    background: #4a5568;
-    color: #e2e8f0;
-    border-color: #718096;
-  }
-  
-  .lcs-co-btn-secondary:hover {
-    background: #5a6575;
-  }
-  
-  /* Mercado Pago en Dark Mode */
-  .lcs-co-mp-icon {
-    background: transparent;
-    
-  }
-  
-  .lcs-co-mp-title {
-    background: transparent;
-    -webkit-background-clip: text;
-    
-    background-clip: text;
-    color: #ffffff !important;
-  }
-  
-  .lcs-co-mp-description {
-    color: #e2e8f0;
-  }
-  
-  /* Mensaje de autenticación en dark mode */
-  .lcs-co-auth-required-message {
-    background: #744210;
-    border-color: #dd6b20;
-  }
-  
-  .lcs-co-auth-message-text {
-    color: #fbd38d;
-  }
-  
-  .lcs-co-security-text strong,
-  .lcs-co-method-name,
-  .lcs-co-total-payment-title {
-    color: #ffffff;
-  }
-  
-  .lcs-co-security-text span {
-    color: #a0aec0;
-  }
-  
-  .lcs-co-btn-mercadopago {
-    background: linear-gradient(135deg, #00b2ff, #009ee3);
-  }
-  
-  .lcs-co-btn-mercadopago:hover:not(:disabled) {
-    background: linear-gradient(135deg, #009ee3, #007bb8);
-  }
-  
-  .lcs-co-btn-login-required {
-    background: linear-gradient(135deg, #5a6fd8, #6a42a0);
-  }
-  
-  .lcs-co-btn-login-required:hover {
-    background: linear-gradient(135deg, #4a5fc7, #5a3890);
-  }
-  
-  .lcs-co-note-text {
-    color: #fbd38d;
-  }
-  
-  .lcs-co-shipping-cost-text {
-    color: #fbd38d;
+  .lcs-co-security-icon {
+    animation: none;
   }
 }
 
-/* Focus States para Accesibilidad */
-.lcs-co-input:focus-visible {
-  outline: 2px solid #4299e1;
-  outline-offset: 2px;
+/* Asegurar colores consistentes en todos los modos */
+.lcs-co-empty,
+.lcs-co-form-section,
+.lcs-co-summary-card,
+.lcs-co-benefits {
+  background: white !important;
 }
 
-.lcs-co-btn:focus-visible {
-  outline: 2px solid #4299e1;
-  outline-offset: 2px;
+.lcs-co-title,
+.lcs-co-step-title,
+.lcs-co-section-title,
+.lcs-co-summary-title,
+.lcs-co-shipping-title,
+.lcs-co-warning-title,
+.lcs-co-benefits-title,
+.lcs-co-empty-title,
+.lcs-co-order-item-name,
+.lcs-co-order-total-price,
+.lcs-co-preview-name,
+.lcs-co-preview-price,
+.lcs-co-total-label,
+.lcs-co-summary-value,
+.lcs-co-benefit-text strong {
+  color: #2d3748 !important;
 }
 
-.lcs-co-terms input[type="checkbox"]:focus-visible {
-  outline: 2px solid #4299e1;
-  outline-offset: 2px;
+.lcs-co-step-label,
+.lcs-co-label,
+.lcs-co-empty-text,
+.lcs-co-free-shipping-description,
+.lcs-co-warning-text,
+.lcs-co-shipping-note p,
+.lcs-co-shipping-details,
+.lcs-co-order-item-brand,
+.lcs-co-order-unit-price,
+.lcs-co-preview-brand,
+.lcs-co-preview-quantity,
+.lcs-co-summary-label,
+.lcs-co-benefit-text {
+  color: #4a5568 !important;
 }
 
-/* Loading State para botones deshabilitados */
-.lcs-co-btn-primary:disabled {
-  position: relative;
-  overflow: hidden;
+.lcs-co-order-item-code,
+.lcs-co-preview-code,
+.lcs-co-order-quantity-label {
+  color: #718096 !important;
 }
 
-.lcs-co-btn-primary:disabled::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
-  animation: lcs-co-loading 1.5s infinite;
+.lcs-co-total-amount {
+  color: #48bb78 !important;
 }
 
-@keyframes lcs-co-loading {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
-}
-
-/* High Contrast Mode */
-@media (prefers-contrast: high) {
-  .lcs-co-input {
-    border-width: 3px;
-  }
-  
-  .lcs-co-btn {
-    border-width: 3px;
-  }
-  
-  .lcs-co-step.lcs-co-active .lcs-co-step-number {
-    border-width: 3px;
-  }
-}
-
-/* Large Screen Optimizations */
-@media (min-width: 1440px) {
-  .lcs-co-container {
-    max-width: 1400px;
-  }
-  
-  .lcs-co-content {
-    grid-template-columns: 1fr 450px;
-    gap: 3rem;
-  }
-  
-  .lcs-co-mercadopago-section {
-    padding: 2.5rem;
-  }
-  
-  /* Icono aún más grande en pantallas grandes */
-  .lcs-co-mp-icon {
-    width: 120px;
-    height: 120px;
-    padding: 25px;
-  }
-  
-  .lcs-co-mp-title {
-    font-size: 2.8rem;
-  }
+.lcs-co-free-shipping-text {
+  color: #48bb78 !important;
 }

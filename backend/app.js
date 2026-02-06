@@ -28,8 +28,8 @@ app.use(cors({
     'http://localhost:3000', 
     'http://127.0.0.1:5173',
     'http://127.0.0.1:3000',
-    'https://testpaginaweb.shop',
-    'https://www.testpaginaweb.shop'
+    'https://lucesademexico-shop.com.mx',
+    'https://lucesademexico-shop.com.mx'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

@@ -4,6 +4,7 @@ const router = express.Router();
 const db = require('../config/db');
 const auth = require('../middlewares/authenticateTokenG');
 const { Preference } = require('../config/mercadopago');
+const { sendTransferOrderEmails } = require('../utils/emailServiceG');
 
 /**
  * Ruta para crear checkout de Mercado Pago
@@ -108,7 +109,7 @@ router.post('/create-checkout', auth, async (req, res) => {
 
     // Guardar ítems de la orden
     const IMAGE_BASE_URL = process.env.NODE_ENV === 'production'
-      ? 'https://testpaginaweb.shop/api/images/code'
+      ? 'https://lucesademexico-shop.com.mx/api/images/code'
       : 'http://localhost:4004/api/images/code';
 
     console.log('📦 Guardando items de la orden...');
@@ -145,7 +146,7 @@ router.post('/create-checkout', auth, async (req, res) => {
       quantity: parseInt(item.quantity),
       currency_id: "MXN",
       picture_url: `${IMAGE_BASE_URL}/${item.codigo}?size=medium`
-    }));
+    }));  // <-- SE AGREGÓ EL PARÉNTESIS QUE FALTABA AQUÍ
 
     console.log('📋 Items para Mercado Pago:', preferenceItems);
 
@@ -243,6 +244,276 @@ router.post('/create-checkout', auth, async (req, res) => {
     });
   } finally {
     client.release();
+  }
+});
+
+/**
+ * Ruta para crear orden de transferencia
+ */
+router.post('/create-transfer-order', auth, async (req, res) => {
+  const client = await db.connect();
+  
+  console.log('🏦 Creando orden de transferencia...');
+  
+  try {
+    await client.query('BEGIN');
+    
+    const { cartItems, shippingAddress, customerInfo, total } = req.body;
+    const userId = req.user.id;
+    
+    // Validaciones básicas
+    if (!cartItems || cartItems.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'El carrito está vacío'
+      });
+    }
+    
+    // Cálculos
+    const subtotal = cartItems.reduce((sum, item) => sum + (item.precioFinal || item.precio) * item.quantity, 0);
+    const tax = subtotal * 0.16;
+    const shipping = subtotal >= 1000 ? 0 : 150;
+    const calculatedTotal = subtotal + tax + shipping;
+    
+    // Verificar que el total coincida
+    if (Math.abs(calculatedTotal - total) > 0.01) {
+      console.warn(`⚠️ Total calculado (${calculatedTotal}) no coincide con enviado (${total})`);
+    }
+    
+    // Generar número de orden para transferencia
+    const orderNumber = 'TRANSFER-' + Date.now();
+    console.log('🔢 Generando número de orden para transferencia:', orderNumber);
+    
+    // Guardar orden en la base de datos
+    const orderResult = await client.query(`
+      INSERT INTO orders (
+        user_id, order_number, total_amount, subtotal, tax_amount, 
+        shipping_amount, shipping_address, status, payment_method,
+        customer_name, customer_email, customer_phone
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending_transfer', 'transfer', $8, $9, $10)
+      RETURNING id, order_number, created_at
+    `, [
+      userId,
+      orderNumber,
+      total,
+      subtotal,
+      tax,
+      shipping,
+      JSON.stringify(shippingAddress),
+      `${customerInfo.firstName} ${customerInfo.lastName}`,
+      customerInfo.email,
+      customerInfo.phone
+    ]);
+    
+    const savedOrder = orderResult.rows[0];
+    const orderId = savedOrder.id;
+    
+    console.log('✅ Orden de transferencia guardada en BD:', savedOrder.order_number);
+    
+    // Guardar ítems de la orden
+    const IMAGE_BASE_URL = process.env.NODE_ENV === 'production'
+      ? 'https://lucesademexico-shop.com.mx/api/images/code'
+      : 'http://localhost:4004/api/images/code';
+    
+    for (const item of cartItems) {
+      const imageUrl = `${IMAGE_BASE_URL}/${item.codigo}?size=small`;
+      const unitPrice = Number(item.precioFinal || item.precio);
+      
+      await client.query(`
+        INSERT INTO order_items (
+          order_id, product_code, product_name, product_brand, 
+          product_image_url, unit_price, quantity, total_price
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `, [
+        orderId,
+        item.codigo,
+        item.nombre || 'Producto sin nombre',
+        item.marca || 'Sin marca',
+        imageUrl,
+        unitPrice,
+        item.quantity,
+        unitPrice * item.quantity
+      ]);
+    }
+    
+    await client.query('COMMIT');
+    
+    // Información de transferencia
+    const transferInfo = {
+      bank_name: 'BBVA',
+      account_number: '00743648380125258480',
+      account_holder: 'SERVICIOS DE TECNOLOGIA, INFRAESTRUCTURA Y SOLUCIONES GLOBALES LUCE',
+      clabe: '012180001252584809',
+      reference: orderNumber,
+      email: 'lucesacorreooficial@gmail.com',
+      whatsapp: '+5215611926523'
+    };
+    
+    // Preparar datos para el correo
+    const emailData = {
+      buyerEmail: customerInfo.email,
+      buyerName: `${customerInfo.firstName} ${customerInfo.lastName}`,
+      orderNumber: savedOrder.order_number,
+      products: cartItems.map(item => ({
+        productName: item.nombre || 'Producto',
+        productCode: item.codigo || 'N/A',
+        quantity: item.quantity || 1,
+        unitPrice: item.precioFinal || item.precio || 0,
+        totalPrice: (item.precioFinal || item.precio || 0) * (item.quantity || 1)
+      })),
+      totalAmount: total,
+      orderDate: savedOrder.created_at.toLocaleDateString('es-MX'),
+      transferInfo,
+      shippingAddress,
+      instructions: 'Por favor envía tu comprobante de transferencia por WhatsApp o correo electrónico.'
+    };
+    
+    // Enviar correos de transferencia en segundo plano (no bloquear respuesta)
+    setTimeout(async () => {
+      try {
+        console.log('📧 Enviando correos de transferencia en segundo plano...');
+        const emailResult = await sendTransferOrderEmails(emailData);
+        
+        if (emailResult.success) {
+          console.log('✅ Correos de transferencia enviados exitosamente');
+          
+          // Actualizar estado en BD
+          const updateClient = await db.connect();
+          try {
+            await updateClient.query(
+              'UPDATE orders SET emails_sent = true, transfer_emails_sent_at = NOW() WHERE id = $1',
+              [orderId]
+            );
+            console.log('✅ Estado de correos actualizado en BD');
+          } catch (updateError) {
+            console.warn('⚠️ No se pudo actualizar estado de correos:', updateError.message);
+          } finally {
+            updateClient.release();
+          }
+        } else {
+          console.warn('⚠️ Algunos correos no se pudieron enviar:', emailResult.results);
+        }
+      } catch (emailError) {
+        console.error('❌ Error enviando correos de transferencia:', emailError);
+      }
+    }, 1000);
+    
+    res.json({
+      success: true,
+      order_number: savedOrder.order_number,
+      order_id: orderId,
+      total: total,
+      subtotal: subtotal,
+      tax: tax,
+      shipping: shipping,
+      cartItems: cartItems,
+      customerInfo: customerInfo,
+      shippingAddress: shippingAddress,
+      transfer_info: transferInfo,
+      instructions: 'Por favor envía tu comprobante de transferencia por WhatsApp o correo electrónico.',
+      created_at: savedOrder.created_at,
+      email_sent: true // Indicar que se programó el envío de correos
+    });
+    
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('❌ Error creando orden de transferencia:', error);
+    
+    res.status(500).json({
+      success: false,
+      message: 'Error al crear la orden de transferencia: ' + error.message
+    });
+  } finally {
+    client.release();
+  }
+});
+
+/**
+ * Ruta para enviar correos de confirmación de transferencia
+ */
+router.post('/send-transfer-confirmation-emails', auth, async (req, res) => {
+  try {
+    const {
+      orderId,
+      buyerEmail,
+      buyerName,
+      orderNumber,
+      products = [],
+      totalAmount,
+      orderDate,
+      transferInfo,
+      shippingAddress
+    } = req.body;
+
+    console.log('📧 Enviando correos de confirmación de transferencia...');
+    console.log('   🏦 Orden:', orderNumber);
+    console.log('   👤 Cliente:', buyerEmail);
+    console.log('   📦 Productos:', products.length);
+
+    const orderData = {
+      buyerEmail,
+      buyerName,
+      orderNumber,
+      products: products.map(p => ({
+        productName: p.product_name || p.nombre || p.name || 'Producto',
+        productCode: p.product_code || p.codigo || p.code || 'N/A',
+        quantity: p.quantity || 1,
+        unitPrice: p.unit_price || p.precioFinal || p.precio || 0,
+        totalPrice: p.totalPrice || p.total_price || (p.precioFinal * (p.quantity || 1)) || 0
+      })),
+      totalAmount,
+      orderDate: orderDate || new Date().toLocaleDateString('es-MX'),
+      transferInfo: transferInfo || {
+        bank_name: 'BBVA',
+        account_number: '00743648380125258480',
+        account_holder: 'SERVICIOS DE TECNOLOGIA, INFRAESTRUCTURA Y SOLUCIONES GLOBALES LUCE',
+        clabe: '012180001252584809',
+        reference: orderNumber,
+        email: 'lucesacorreooficial@gmail.com',
+        whatsapp: '+5215611926523'
+      },
+      shippingAddress
+    };
+
+    const result = await sendTransferOrderEmails(orderData);
+
+    // Actualizar estado en la base de datos
+    const client = await db.connect();
+    try {
+      await client.query(
+        'UPDATE orders SET emails_sent = true, transfer_emails_sent_at = NOW() WHERE id = $1',
+        [orderId]
+      );
+      
+      console.log('✅ Estado de correos actualizado en BD');
+    } catch (dbError) {
+      console.warn('⚠️ No se pudo actualizar estado de correos:', dbError.message);
+    } finally {
+      client.release();
+    }
+
+    res.json({
+      success: result.success,
+      message: result.success 
+        ? 'Correos de transferencia enviados exitosamente' 
+        : 'Error enviando correos de transferencia',
+      emailsResults: result.results,
+      summary: result.summary,
+      debug: {
+        order_id: orderId,
+        order_number: orderNumber,
+        products_sent: products.length,
+        sample_product: products.length > 0 ? products[0] : null
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error en envío de correos de transferencia:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error del servidor al enviar correos de transferencia',
+      error: error.message
+    });
   }
 });
 

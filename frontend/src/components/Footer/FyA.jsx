@@ -70,7 +70,7 @@ const FAQ = () => {
             </div>
             
             <div className="faq-answer-code">
-              Correo: luis.lucio@lucesademexico.com<br />
+              Correo: atenciónclientes@lucesademexico.com<br />
               Teléfono: +52 (56) 1017 7596 / +52 (56) 2739 14557<br />
               
             </div>

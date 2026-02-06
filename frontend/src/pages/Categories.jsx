@@ -3,7 +3,52 @@ import { Link } from 'react-router-dom';
 import { useCategoriasDinamicas, useEstadisticas, useTodosProductos } from '../api/productosHooks';
 import './Categories.css';
 
+/**
+ * CATEGORIES COMPONENT
+ * 
+ * Componente principal para mostrar y navegar por las categorías de productos.
+ * Utiliza datos dinámicos del backend para generar un catálogo organizado
+ * con categorías y subcategorías extraídas directamente de los productos.
+ * 
+ * Características principales:
+ * - Categorías dinámicas generadas desde el backend
+ * - Subcategorías extraídas automáticamente de los productos
+ * - Estadísticas en tiempo real de stock y disponibilidad
+ * - Sistema de colores únicos para cada categoría
+ * - Diseño responsive con acordeones para subcategorías
+ * - Información sobre cobertura del catálogo
+ * 
+ * @component
+ * @example
+ * // Uso en rutas de navegación
+ * <Route path="/categories" element={<Categories />} />
+ */
+
+/**
+ * Componente Categories - Catálogo organizado de productos
+ * 
+ * Este componente maneja:
+ * 1. Obtención y procesamiento de categorías desde el backend
+ * 2. Extracción de subcategorías reales de los productos
+ * 3. Generación de estadísticas de disponibilidad y stock
+ * 4. Visualización con sistema de colores y acordeones
+ * 5. Navegación a productos por categoría/subcategoría
+ * 
+ * @returns {JSX.Element} Componente de catálogo de categorías
+ */
 const Categories = () => {
+  // ==========================================================================
+  // HOOKS DE DATOS
+  // ==========================================================================
+  
+  /**
+   * Hook para obtener categorías dinámicas del backend
+   * @const {Object} categoriasHook - Hook de categorías
+   * @const {Object} categoriasResponse - Respuesta de la API de categorías
+   * @const {boolean} loading - Estado de carga
+   * @const {Object|null} error - Error si existe
+   * @const {function} refetch - Función para recargar datos
+   */
   const { 
     data: categoriasResponse, 
     loading, 
@@ -14,17 +59,36 @@ const Categories = () => {
     minProductos: 1
   });
   
+  /**
+   * Hook para obtener estadísticas generales
+   * @const {Object} estadisticasResponse - Respuesta de estadísticas
+   */
   const { data: estadisticasResponse } = useEstadisticas();
+  
+  /**
+   * Hook para obtener todos los productos (para extraer subcategorías)
+   * @const {Object} productosResponse - Respuesta con todos los productos
+   */
   const { data: productosResponse } = useTodosProductos({ page: 1, limit: 20000 });
-
-  // Procesar categorías del backend
+  
+  // ==========================================================================
+  // PROCESAMIENTO DE DATOS
+  // ==========================================================================
+  
+  /**
+   * Procesa y enriquece las categorías con datos reales de productos
+   * Extrae subcategorías, calcula estadísticas y genera colores únicos
+   * 
+   * @const {Array} categoriasProcesadas - Categorías enriquecidas
+   * @memoize Depende de categoriasResponse y productosResponse
+   */
   const categoriasProcesadas = useMemo(() => {
     if (!categoriasResponse?.data || !Array.isArray(categoriasResponse.data)) {
       return [];
     }
-
+    
     console.log('📊 Categorías del backend:', categoriasResponse.data);
-
+    
     return categoriasResponse.data.map(categoriaApi => {
       // Obtener subcategorías reales de los productos
       let subcategoriasDeEstaCategoria = [];
@@ -32,6 +96,7 @@ const Categories = () => {
       let productosConStockEnCategoria = 0;
       
       if (productosResponse?.data) {
+        // Filtrar productos por categoría
         const productosFiltrados = productosResponse.data.filter(p => 
           p.categoria && p.categoria.trim() === categoriaApi.nombre.trim()
         );
@@ -41,7 +106,7 @@ const Categories = () => {
           (p.existencia || p.existenciaTotal || 0) > 0
         ).length;
         
-        // Extraer subcategorías únicas
+        // Extraer subcategorías únicas de los productos
         const subcategoriasSet = new Set();
         productosFiltrados.forEach(p => {
           if (p.subcategoria && typeof p.subcategoria === 'string') {
@@ -53,8 +118,15 @@ const Categories = () => {
         });
         subcategoriasDeEstaCategoria = Array.from(subcategoriasSet).sort();
       }
-
-      // Generar color único
+      
+      /**
+       * Genera un color único para cada categoría basado en su nombre
+       * Usa hash de string para consistencia entre recargas
+       * 
+       * @function getColorCategoria
+       * @param {string} nombre - Nombre de la categoría
+       * @returns {string} Color hexadecimal
+       */
       const getColorCategoria = (nombre) => {
         const colors = [
           '#4299e1', '#48bb78', '#ed8936', '#9f7aea', '#f56565',
@@ -73,8 +145,15 @@ const Categories = () => {
         
         return colors[Math.abs(hash) % colors.length];
       };
-
-      // Obtener descripción
+      
+      /**
+       * Obtiene una descripción predefinida para categorías conocidas
+       * Usa descripción genérica para categorías no definidas
+       * 
+       * @function getDescripcionCategoria
+       * @param {string} nombre - Nombre de la categoría
+       * @returns {string} Descripción de la categoría
+       */
       const getDescripcionCategoria = (nombre) => {
         const descripciones = {
           'Consumibles': 'Materiales de oficina, tecnología y uso diario esencial',
@@ -96,10 +175,10 @@ const Categories = () => {
         
         return descripciones[nombre] || `Productos de ${nombre} - Calidad y variedad para tus necesidades`;
       };
-
+      
       return {
         ...categoriaApi,
-        // Asegurar datos básicos
+        // Datos básicos asegurados
         nombre: categoriaApi.nombre,
         id: categoriaApi.id || `categoria-${categoriaApi.nombre.toLowerCase().replace(/\s+/g, '-')}`,
         // Datos reales de productos
@@ -110,20 +189,37 @@ const Categories = () => {
         // Subcategorías reales
         subcategorias: subcategoriasDeEstaCategoria,
         subcategoriasCount: subcategoriasDeEstaCategoria.length,
-        // UI
+        // Propiedades UI
         color: getColorCategoria(categoriaApi.nombre),
         descripcion: getDescripcionCategoria(categoriaApi.nombre),
         ruta: `/products?category=${encodeURIComponent(categoriaApi.nombre)}`
       };
     })
     .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }));
-
+    
   }, [categoriasResponse, productosResponse]);
-
-  // Componente para mostrar subcategorías
+  
+  // ==========================================================================
+  // COMPONENTE INTERNO: SUBCATEGORIAS ACCORDION
+  // ==========================================================================
+  
+  /**
+   * Componente interno para mostrar subcategorías en acordeón
+   * Maneja el estado de apertura/cierre y navegación a subcategorías
+   * 
+   * @component SubcategoriasAccordion
+   * @param {Object} props - Props del componente
+   * @param {Object} props.categoria - Categoría con datos de subcategorías
+   * @param {string} props.color - Color de la categoría para estilos
+   * @returns {JSX.Element} Acordeón de subcategorías
+   */
   const SubcategoriasAccordion = ({ categoria, color }) => {
+    /**
+     * @state {boolean} isOpen - Estado de apertura del acordeón
+     */
     const [isOpen, setIsOpen] = useState(false);
-
+    
+    // Caso especial: sin subcategorías
     if (categoria.subcategoriasCount === 0) {
       return (
         <div className="subcategorias-accordion">
@@ -159,7 +255,7 @@ const Categories = () => {
         </div>
       );
     }
-
+    
     return (
       <div className="subcategorias-accordion">
         <button 
@@ -218,19 +314,53 @@ const Categories = () => {
       </div>
     );
   };
-
-  // Obtener totales
+  
+  // ==========================================================================
+  // FUNCIONES UTILITARIAS
+  // ==========================================================================
+  
+  /**
+   * Calcula el total de productos en el sistema
+   * Usa productosResponse si está disponible, sino estadísticas
+   * 
+   * @function getTotalProductos
+   * @returns {number} Total de productos
+   */
   const getTotalProductos = () => {
     return productosResponse?.data?.length || estadisticasResponse?.data?.totals?.todos || 0;
   };
-
-  // Datos para mostrar
+  
+  /**
+   * Datos procesados para renderizado
+   * @const {Array} categorias - Categorías procesadas
+   */
   const categorias = categoriasProcesadas;
+  
+  /**
+   * @const {number} totalProductos - Total de productos en el sistema
+   */
   const totalProductos = getTotalProductos();
+  
+  /**
+   * @const {number} totalProductosEnCategorias - Productos asignados a categorías
+   */
   const totalProductosEnCategorias = categorias.reduce((sum, cat) => sum + (cat.productosRealesEnCategoria || 0), 0);
+  
+  /**
+   * @const {number} totalSubcategorias - Total de subcategorías encontradas
+   */
   const totalSubcategorias = categorias.reduce((sum, cat) => sum + (cat.subcategoriasCount || 0), 0);
-
-  // Debug
+  
+  // ==========================================================================
+  // EFECTOS DE DEPURACIÓN
+  // ==========================================================================
+  
+  /**
+   * Muestra información de depuración en consola
+   * 
+   * @effect
+   * @dependencies [categorias, totalProductos, totalProductosEnCategorias, totalSubcategorias]
+   */
   useEffect(() => {
     if (categorias.length > 0 && totalProductos > 0) {
       console.log('🎯 RESUMEN FINAL CATEGORÍAS:');
@@ -240,8 +370,14 @@ const Categories = () => {
       console.log(`   📦 Productos en categorías: ${totalProductosEnCategorias}`);
     }
   }, [categorias, totalProductos, totalProductosEnCategorias, totalSubcategorias]);
-
-  // Loading state
+  
+  // ==========================================================================
+  // ESTADOS DE CARGA Y ERROR
+  // ==========================================================================
+  
+  /**
+   * Estado de carga: muestra spinner y mensaje
+   */
   if (loading) {
     return (
       <div className="categories-page">
@@ -254,8 +390,10 @@ const Categories = () => {
       </div>
     );
   }
-
-  // Error state
+  
+  /**
+   * Estado de error: muestra mensaje de error y botón para reintentar
+   */
   if (error) {
     return (
       <div className="categories-page">
@@ -272,8 +410,10 @@ const Categories = () => {
       </div>
     );
   }
-
-  // No categories state
+  
+  /**
+   * Estado sin categorías: mensaje informativo
+   */
   if (!categoriasResponse || !categoriasResponse.success || categorias.length === 0) {
     return (
       <div className="categories-page">
@@ -290,11 +430,15 @@ const Categories = () => {
       </div>
     );
   }
-
+  
+  // ==========================================================================
+  // RENDERIZADO PRINCIPAL
+  // ==========================================================================
+  
   return (
     <div className="categories-page">
       <div className="categories-container">
-        {/* Encabezado */}
+        {/* Encabezado con estadísticas */}
         <div className="categories-header">
           <h1>Catálogo Organizado</h1>
           <p className="categories-subtitle">
@@ -325,8 +469,8 @@ const Categories = () => {
               <span className="categories-stat-label">Con Stock</span>
             </div>
           </div>
-
-          {/* Información */}
+          
+          {/* Información de estado */}
           <div className="categories-dynamic-info">
             <div className="categories-update-status">
               <span className="categories-update-dot"></span>
@@ -337,8 +481,8 @@ const Categories = () => {
             </button>
           </div>
         </div>
-
-        {/* Todas las Categorías */}
+        
+        {/* Sección principal de categorías */}
         <div className="categories-section">
           <h2 className="categories-section-title">
             <span className="categories-section-icon">📚</span>
@@ -350,8 +494,8 @@ const Categories = () => {
               Subcategorías reales extraídas de {totalProductos.toLocaleString()} productos
             </span>
           </div>
-
-          {/* Grid de Categorías */}
+          
+          {/* Grid de categorías */}
           <div className="categories-grid">
             {categorias.map((categoria) => (
               <div 
@@ -359,7 +503,7 @@ const Categories = () => {
                 className="categories-card"
                 style={{ borderColor: categoria.color + '40' }}
               >
-                {/* Encabezado */}
+                {/* Encabezado de la tarjeta */}
                 <div className="categories-card-header">
                   <div 
                     className="categories-card-icon"
@@ -375,6 +519,7 @@ const Categories = () => {
                     )}
                   </div>
                   
+                  {/* Badges informativos */}
                   <div className="categories-card-badges">
                     {categoria.productosConStock > 0 && (
                       <span className="categories-badge-stock">Disponible</span>
@@ -384,8 +529,8 @@ const Categories = () => {
                     </span>
                   </div>
                 </div>
-
-                {/* Contenido */}
+                
+                {/* Contenido principal */}
                 <div className="categories-card-content">
                   <h3 className="categories-card-name">
                     {categoria.nombre}
@@ -394,7 +539,7 @@ const Categories = () => {
                     {categoria.descripcion}
                   </p>
                   
-                  {/* Estadísticas */}
+                  {/* Metadatos estadísticos */}
                   <div className="categories-card-meta">
                     <div className="categories-meta-item">
                       <span className="categories-meta-icon">📦</span>
@@ -409,13 +554,13 @@ const Categories = () => {
                       <span>{categoria.porcentajeDisponible}% disponible</span>
                     </div>
                   </div>
-
-                  {/* Subcategorías */}
+                  
+                  {/* Acordeón de subcategorías */}
                   <SubcategoriasAccordion 
                     categoria={categoria} 
                     color={categoria.color} 
                   />
-
+                  
                   {/* Acción principal */}
                   <div className="categories-card-actions">
                     <Link 
@@ -431,8 +576,8 @@ const Categories = () => {
                     </Link>
                   </div>
                 </div>
-
-                {/* Footer - CORREGIDO: Usar categoriasResponse en lugar de categoriaApi */}
+                
+                {/* Pie de tarjeta - Información de origen */}
                 <div className="categories-card-footer">
                   <span className="categories-source-info">
                     Datos del backend - {categoriasResponse?.metadata?.procesamiento?.fechaProcesamiento || 'Actual'}
@@ -442,8 +587,8 @@ const Categories = () => {
             ))}
           </div>
         </div>
-
-        {/* Pie de página - CORREGIDO */}
+        
+        {/* Pie de página con información detallada */}
         <div className="categories-footer">
           <div className="categories-footer-content">
             <h3>Categorías Dinámicas del Backend</h3>
@@ -452,6 +597,7 @@ const Categories = () => {
               Este sistema garantiza que solo se muestren categorías que realmente contienen productos.
             </p>
             
+            {/* Estadísticas detalladas */}
             <div className="categories-footer-stats">
               <div className="categories-footer-stat">
                 <strong>Productos analizados:</strong>
@@ -473,13 +619,13 @@ const Categories = () => {
               </div>
             </div>
             
-            {/* Tips informativos - CORREGIDO */}
+            {/* Tips informativos */}
             <div className="categories-footer-tips">
               <div className="categories-tip">
                 <span className="categories-tip-icon">🎯</span>
                 <div>
                   <strong>Categorías Reales</strong>
-                  <p>Solo se muestran categorías que tienen productos en la base de datos</p>
+                  <p>Solo se muestren categorías que tienen productos en la base de datos</p>
                 </div>
               </div>
               <div className="categories-tip">

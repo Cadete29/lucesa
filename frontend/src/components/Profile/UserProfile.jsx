@@ -6,38 +6,210 @@ import OrderManagement from '../../pages/OrderManagement';
 import AdminFavorites from '../AdminFavorites';
 import './UserProfile.css';
 
+/**
+ * USER PROFILE COMPONENT
+ * 
+ * Componente principal para la gestión del perfil de usuario.
+ * Permite a los usuarios ver y editar su información personal,
+ * consultar historial de compras, subir foto de perfil, y para
+ * administradores, acceder a herramientas de gestión del sistema.
+ * 
+ * Características principales:
+ * - Gestión completa del perfil de usuario
+ * - Subida y eliminación de foto de perfil
+ * - Historial detallado de compras con modal de detalles
+ * - Panel de administración para usuarios con rol 'admin'
+ * - Diseño responsivo con sidebar desplegable en móviles
+ * - Integración con contexto de autenticación
+ * 
+ * @component
+ * @example
+ * // Uso en rutas protegidas
+ * <Route path="/profile" element={
+ *   <ProtectedRoute>
+ *     <UserProfile />
+ *   </ProtectedRoute>
+ * } />
+ */
+
+/**
+ * URL base de la API según entorno
+ * @constant {string} API_BASE_URL
+ */
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://testpaginaweb.shop/api'
+  ? 'https://lucesademexico-shop.com.mx/api'
   : 'http://localhost:4004/api';
 
+/**
+ * Componente UserProfile - Gestión de perfil de usuario
+ * 
+ * Este componente maneja:
+ * 1. Visualización y edición de datos del perfil
+ * 2. Subida y gestión de foto de perfil
+ * 3. Historial de compras con detalles
+ * 4. Panel de administración (solo para rol 'admin')
+ * 5. Navegación entre diferentes secciones
+ * 6. Diseño adaptativo para móviles y escritorio
+ * 
+ * @returns {JSX.Element} Componente de perfil de usuario
+ */
 const UserProfile = () => {
+  // ==========================================================================
+  // CONTEXTO Y HOOKS DE RUTA
+  // ==========================================================================
+  
+  /**
+   * Contexto de autenticación para obtener datos del usuario
+   * @const {Object} authContext - Contexto de autenticación
+   * @const {Object} user - Datos del usuario autenticado
+   * @const {function} logout - Función para cerrar sesión
+   * @const {function} updateProfile - Función para actualizar perfil
+   * @const {function} getOrderHistory - Función para obtener historial de pedidos
+   * @const {function} getOrderDetails - Función para obtener detalles de pedido
+   */
   const { user, logout, updateProfile, getOrderHistory, getOrderDetails } = useAuth();
+  
+  /**
+   * Hook de navegación de React Router
+   * @const {function} navigate - Función para navegar entre rutas
+   */
   const navigate = useNavigate();
+  
+  // ==========================================================================
+  // ESTADOS PRINCIPALES
+  // ==========================================================================
+  
+  /**
+   * @state {string} activeTab - Pestaña activa actual
+   * Valores posibles: 'profile', 'orders', 'admin'
+   */
   const [activeTab, setActiveTab] = useState('profile');
+  
+  /**
+   * @state {string|null} selectedAdminTab - Subpestaña activa en administración
+   * Valores posibles: 'products', 'orders', 'favorites', null
+   */
   const [selectedAdminTab, setSelectedAdminTab] = useState(null);
+  
+  /**
+   * @state {boolean} loading - Estado de carga general
+   */
   const [loading, setLoading] = useState(false);
+  
+  /**
+   * @state {boolean} uploadLoading - Estado de carga para subida de imagen
+   */
   const [uploadLoading, setUploadLoading] = useState(false);
+  
+  /**
+   * @state {string} message - Mensaje de éxito a mostrar
+   */
   const [message, setMessage] = useState('');
+  
+  /**
+   * @state {string} error - Mensaje de error a mostrar
+   */
   const [error, setError] = useState('');
+  
+  /**
+   * @state {boolean} mobileMenuOpen - Estado del menú móvil (abierto/cerrado)
+   */
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
+  /**
+   * @state {boolean} isMobile - Detecta si el dispositivo es móvil
+   */
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  // ==========================================================================
+  // ESTADOS DE PEDIDOS
+  // ==========================================================================
+  
+  /**
+   * @state {Array} userOrders - Lista de pedidos del usuario
+   */
   const [userOrders, setUserOrders] = useState([]);
+  
+  /**
+   * @state {boolean} ordersLoading - Estado de carga de pedidos
+   */
   const [ordersLoading, setOrdersLoading] = useState(false);
+  
+  /**
+   * @state {Object|null} selectedOrder - Pedido seleccionado para ver detalles
+   */
   const [selectedOrder, setSelectedOrder] = useState(null);
+  
+  /**
+   * @state {boolean} orderDetailsLoading - Estado de carga de detalles de pedido
+   */
   const [orderDetailsLoading, setOrderDetailsLoading] = useState(false);
+  
+  /**
+   * @state {boolean} showOrderModal - Controla visibilidad del modal de detalles
+   */
   const [showOrderModal, setShowOrderModal] = useState(false);
-
+  
+  // ==========================================================================
+  // ESTADOS DEL PERFIL
+  // ==========================================================================
+  
+  /**
+   * @state {Object} profileData - Datos del perfil en formulario de edición
+   * @property {string} nombre - Nombre completo del usuario
+   * @property {string} username - Nombre de usuario
+   * @property {string} email - Correo electrónico (solo lectura)
+   */
   const [profileData, setProfileData] = useState({
     nombre: '',
     username: '',
     email: ''
   });
-
+  
+  /**
+   * @state {boolean} isEditing - Estado de edición del perfil
+   */
   const [isEditing, setIsEditing] = useState(false);
+  
+  /**
+   * @state {boolean} editLoading - Estado de carga al guardar perfil
+   */
   const [editLoading, setEditLoading] = useState(false);
+  
+  /**
+   * @state {number} imageReloadKey - Clave para forzar recarga de imagen de perfil
+   */
   const [imageReloadKey, setImageReloadKey] = useState(0);
-
-  // Controlar el scroll del body cuando el menú móvil está abierto
+  
+  // ==========================================================================
+  // EFECTOS
+  // ==========================================================================
+  
+  /**
+   * Detecta cambios en el tamaño de la ventana para responsive design
+   * 
+   * @effect
+   * @dependencies [] - Se ejecuta solo al montar el componente
+   */
+  useEffect(() => {
+    /**
+     * Maneja el evento de redimensionamiento de ventana
+     * @function handleResize
+     */
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  /**
+   * Controla el scroll del body cuando el menú móvil está abierto
+   * 
+   * @effect
+   * @dependencies [mobileMenuOpen] - Se ejecuta cuando cambia mobileMenuOpen
+   */
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.classList.add('sidebar-open');
@@ -49,7 +221,13 @@ const UserProfile = () => {
       document.body.classList.remove('sidebar-open');
     };
   }, [mobileMenuOpen]);
-
+  
+  /**
+   * Inicializa los datos del perfil cuando el usuario está disponible
+   * 
+   * @effect
+   * @dependencies [user] - Se ejecuta cuando cambia el usuario
+   */
   useEffect(() => {
     if (user) {
       setProfileData({
@@ -59,18 +237,36 @@ const UserProfile = () => {
       });
     }
   }, [user]);
-
+  
+  /**
+   * Carga el historial de pedidos cuando se activa la pestaña de pedidos
+   * 
+   * @effect
+   * @dependencies [activeTab, user] - Se ejecuta al cambiar de pestaña o usuario
+   */
   useEffect(() => {
     if (activeTab === 'orders' && user) {
       loadOrderHistory();
     }
   }, [activeTab, user]);
-
+  
+  // ==========================================================================
+  // FUNCIONES DE CARGA DE DATOS
+  // ==========================================================================
+  
+  /**
+   * Carga el historial de pedidos del usuario
+   * Formatea y normaliza los datos de pedidos para consistencia
+   * 
+   * @async
+   * @function loadOrderHistory
+   */
   const loadOrderHistory = async () => {
     try {
       setOrdersLoading(true);
       const orders = await getOrderHistory();
       
+      // Formatear y normalizar datos de pedidos
       const formattedOrders = (orders || []).map(order => ({
         id: order.id,
         order_number: order.order_number || `ORD-${order.id}`,
@@ -107,7 +303,14 @@ const UserProfile = () => {
       setOrdersLoading(false);
     }
   };
-
+  
+  /**
+   * Carga los detalles de un pedido específico
+   * 
+   * @async
+   * @function handleViewOrderDetails
+   * @param {string|number} orderId - ID del pedido a consultar
+   */
   const handleViewOrderDetails = async (orderId) => {
     try {
       setOrderDetailsLoading(true);
@@ -134,17 +337,41 @@ const UserProfile = () => {
       setOrderDetailsLoading(false);
     }
   };
-
+  
+  /**
+   * Cierra el modal de detalles de pedido
+   * 
+   * @function handleCloseOrderDetails
+   */
   const handleCloseOrderDetails = () => {
     setSelectedOrder(null);
     setShowOrderModal(false);
   };
-
+  
+  // ==========================================================================
+  // FUNCIONES DE AUTENTICACIÓN
+  // ==========================================================================
+  
+  /**
+   * Cierra la sesión del usuario y redirige a la página principal
+   * 
+   * @function handleLogout
+   */
   const handleLogout = () => {
     logout();
     navigate('/');
   };
-
+  
+  // ==========================================================================
+  // FUNCIONES DE NAVEGACIÓN
+  // ==========================================================================
+  
+  /**
+   * Cambia la pestaña activa principal
+   * 
+   * @function handleTabChange
+   * @param {string} tabName - Nombre de la pestaña a activar
+   */
   const handleTabChange = (tabName) => {
     if (tabName === 'admin' && user?.rol !== 'admin') {
       setActiveTab('profile');
@@ -159,16 +386,37 @@ const UserProfile = () => {
     setSelectedOrder(null);
     setShowOrderModal(false);
   };
-
+  
+  /**
+   * Cambia la subpestaña en el panel de administración
+   * 
+   * @function handleAdminTabChange
+   * @param {string} tabName - Nombre de la subpestaña a activar
+   */
   const handleAdminTabChange = (tabName) => {
     setSelectedAdminTab(tabName);
     setMobileMenuOpen(false);
   };
-
+  
+  /**
+   * Regresa al panel principal de administración
+   * 
+   * @function handleBackToAdmin
+   */
   const handleBackToAdmin = () => {
     setSelectedAdminTab(null);
   };
-
+  
+  // ==========================================================================
+  // FUNCIONES DEL PERFIL
+  // ==========================================================================
+  
+  /**
+   * Maneja cambios en los inputs del formulario de perfil
+   * 
+   * @function handleInputChange
+   * @param {Object} e - Evento del input
+   */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setProfileData(prev => ({
@@ -176,7 +424,13 @@ const UserProfile = () => {
       [name]: value
     }));
   };
-
+  
+  /**
+   * Alterna el modo de edición del perfil
+   * Cancela los cambios si se estaba editando
+   * 
+   * @function toggleEdit
+   */
   const toggleEdit = () => {
     if (isEditing) {
       setProfileData({
@@ -189,37 +443,44 @@ const UserProfile = () => {
     setError('');
     setMessage('');
   };
-
+  
+  /**
+   * Actualiza el perfil del usuario con los datos del formulario
+   * 
+   * @async
+   * @function handleProfileUpdate
+   * @param {Object} e - Evento del formulario
+   */
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     setEditLoading(true);
     setError('');
     setMessage('');
-
+    
     if (!profileData.nombre.trim()) {
       setError('El nombre completo es obligatorio');
       setEditLoading(false);
       return;
     }
-
+    
     if (!profileData.username.trim()) {
       setError('El nombre de usuario es obligatorio');
       setEditLoading(false);
       return;
     }
-
+    
     if (profileData.username.length < 3) {
       setError('El nombre de usuario debe tener al menos 3 caracteres');
       setEditLoading(false);
       return;
     }
-
+    
     try {
       const result = await updateProfile({
         nombre: profileData.nombre.trim(),
         username: profileData.username.trim()
       });
-
+      
       if (result.success) {
         setMessage('Perfil actualizado correctamente');
         setIsEditing(false);
@@ -233,7 +494,19 @@ const UserProfile = () => {
       setEditLoading(false);
     }
   };
-
+  
+  // ==========================================================================
+  // FUNCIONES DE IMAGEN DE PERFIL
+  // ==========================================================================
+  
+  /**
+   * Genera la URL completa de la imagen de perfil
+   * Incluye timestamp para evitar caché
+   * 
+   * @function getProfileImageUrl
+   * @param {string} imagePath - Ruta de la imagen
+   * @returns {string|null} URL completa de la imagen o null si no hay imagen
+   */
   const getProfileImageUrl = (imagePath) => {
     if (!imagePath) return null;
     
@@ -242,7 +515,7 @@ const UserProfile = () => {
     }
     
     const baseUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://testpaginaweb.shop'
+      ? 'https://lucesademexico-shop.com.mx'
       : 'http://localhost:4004';
     
     let normalizedPath = imagePath;
@@ -256,28 +529,36 @@ const UserProfile = () => {
     
     return finalUrl;
   };
-
+  
+  /**
+   * Sube una nueva foto de perfil al servidor
+   * 
+   * @async
+   * @function handlePhotoUpload
+   * @param {Object} event - Evento del input file
+   */
   const handlePhotoUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
+    
     if (!file.type.startsWith('image/')) {
       setError('Por favor selecciona una imagen válida (JPEG, PNG, GIF)');
       return;
     }
-
+    
     if (file.size > 5 * 1024 * 1024) {
       setError('La imagen debe ser menor a 5MB');
       return;
     }
-
+    
     setUploadLoading(true);
     setError('');
     setMessage('');
-
+    
     try {
       const token = localStorage.getItem('lucesa-token');
       
+      // Eliminar imagen anterior si existe
       if (user?.images_profile) {
         try {
           await fetch(`${API_BASE_URL}/user/me/remove-photo`, {
@@ -291,10 +572,11 @@ const UserProfile = () => {
           console.error('Error al eliminar imagen anterior:', deleteError);
         }
       }
-
+      
+      // Subir nueva imagen
       const formData = new FormData();
       formData.append('profileImage', file);
-
+      
       const response = await fetch(`${API_BASE_URL}/user/me/upload-photo`, {
         method: 'POST',
         headers: {
@@ -302,13 +584,14 @@ const UserProfile = () => {
         },
         body: formData,
       });
-
+      
       const data = await response.json();
-
+      
       if (data.success) {
         setMessage('Foto de perfil actualizada correctamente');
         setImageReloadKey(Date.now());
         
+        // Actualizar usuario en localStorage
         if (data.data && data.data.user) {
           const updatedUser = {
             ...user,
@@ -317,6 +600,7 @@ const UserProfile = () => {
           
           localStorage.setItem('lucesa-user', JSON.stringify(updatedUser));
           
+          // Recargar después de 1.5 segundos para ver cambios
           setTimeout(() => {
             window.location.reload();
           }, 1500);
@@ -332,19 +616,25 @@ const UserProfile = () => {
       event.target.value = '';
     }
   };
-
+  
+  /**
+   * Elimina la foto de perfil actual del servidor
+   * 
+   * @async
+   * @function removeProfilePhoto
+   */
   const removeProfilePhoto = async () => {
     if (!window.confirm('¿Estás seguro de que quieres eliminar tu foto de perfil?')) {
       return;
     }
-
+    
     setUploadLoading(true);
     setError('');
     setMessage('');
-
+    
     try {
       const token = localStorage.getItem('lucesa-token');
-
+      
       const response = await fetch(`${API_BASE_URL}/user/me/remove-photo`, {
         method: 'DELETE',
         headers: {
@@ -352,12 +642,13 @@ const UserProfile = () => {
           'Content-Type': 'application/json'
         }
       });
-
+      
       const data = await response.json();
-
+      
       if (data.success) {
         setMessage('Foto de perfil eliminada correctamente');
         
+        // Actualizar usuario en localStorage
         if (data.data && data.data.user) {
           const updatedUser = {
             ...user,
@@ -366,6 +657,7 @@ const UserProfile = () => {
           
           localStorage.setItem('lucesa-user', JSON.stringify(updatedUser));
           
+          // Recargar después de 1.5 segundos para ver cambios
           setTimeout(() => {
             window.location.reload();
           }, 1500);
@@ -380,7 +672,13 @@ const UserProfile = () => {
       setUploadLoading(false);
     }
   };
-
+  
+  /**
+   * Maneja errores de carga de imagen mostrando un fallback
+   * 
+   * @function handleImageError
+   * @param {Object} e - Evento de error de imagen
+   */
   const handleImageError = (e) => {
     e.target.style.display = 'none';
     const fallback = e.target.nextSibling;
@@ -388,7 +686,18 @@ const UserProfile = () => {
       fallback.style.display = 'flex';
     }
   };
-
+  
+  // ==========================================================================
+  // FUNCIONES DE FORMATEO
+  // ==========================================================================
+  
+  /**
+   * Formatea una fecha a formato legible en español
+   * 
+   * @function formatDate
+   * @param {string} dateString - Fecha en formato string
+   * @returns {string} Fecha formateada o mensaje de error
+   */
   const formatDate = (dateString) => {
     if (!dateString) return 'Fecha no disponible';
     try {
@@ -401,7 +710,14 @@ const UserProfile = () => {
       return 'Fecha inválida';
     }
   };
-
+  
+  /**
+   * Formatea una fecha con hora a formato legible en español
+   * 
+   * @function formatDateTime
+   * @param {string} dateString - Fecha en formato string
+   * @returns {string} Fecha y hora formateadas o mensaje de error
+   */
   const formatDateTime = (dateString) => {
     if (!dateString) return 'Fecha no disponible';
     try {
@@ -416,7 +732,14 @@ const UserProfile = () => {
       return 'Fecha inválida';
     }
   };
-
+  
+  /**
+   * Traduce el estado del pedido a español
+   * 
+   * @function getOrderStatusText
+   * @param {string} status - Estado del pedido en inglés
+   * @returns {string} Estado traducido al español
+   */
   const getOrderStatusText = (status) => {
     const statusMap = {
       'confirmed': 'Confirmado',
@@ -429,7 +752,14 @@ const UserProfile = () => {
     };
     return statusMap[status] || status;
   };
-
+  
+  /**
+   * Obtiene la clase CSS para el estado del pedido
+   * 
+   * @function getOrderStatusClass
+   * @param {string} status - Estado del pedido
+   * @returns {string} Clase CSS correspondiente
+   */
   const getOrderStatusClass = (status) => {
     const statusClassMap = {
       'confirmed': 'confirmed',
@@ -442,15 +772,39 @@ const UserProfile = () => {
     };
     return statusClassMap[status] || 'confirmed';
   };
-
+  
+  // ==========================================================================
+  // FUNCIONES DE MENÚ MÓVIL
+  // ==========================================================================
+  
+  /**
+   * Alterna la visibilidad del menú móvil
+   * 
+   * @function toggleMobileMenu
+   */
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
-
+  
+  /**
+   * Cierra el menú móvil
+   * 
+   * @function closeMobileMenu
+   */
   const closeMobileMenu = () => {
     setMobileMenuOpen(false);
   };
-
+  
+  // ==========================================================================
+  // COMPONENTES DE RENDERIZADO POR SECCIÓN
+  // ==========================================================================
+  
+  /**
+   * Renderiza la sección de pedidos/historial de compras
+   * 
+   * @function renderOrdersSection
+   * @returns {JSX.Element} Sección de pedidos
+   */
   const renderOrdersSection = () => {
     return (
       <div className="tab-content">
@@ -548,7 +902,8 @@ const UserProfile = () => {
             </div>
           )}
         </div>
-
+        
+        {/* Modal de detalles de pedido */}
         {showOrderModal && selectedOrder && (
           <div className="order-details-modal active">
             <div className="modal-overlay" onClick={handleCloseOrderDetails}></div>
@@ -588,7 +943,7 @@ const UserProfile = () => {
                     <span className="order-info-value">{selectedOrder.items?.length || 0} items</span>
                   </div>
                 </div>
-
+                
                 <div className="order-products-list">
                   <h4>📋 Productos de la Orden ({selectedOrder.items?.length || 0})</h4>
                   
@@ -641,7 +996,7 @@ const UserProfile = () => {
                     )}
                   </div>
                 </div>
-
+                
                 <div className="order-totals">
                   <h4>💰 Resumen de Pagos</h4>
                   
@@ -683,7 +1038,13 @@ const UserProfile = () => {
       </div>
     );
   };
-
+  
+  /**
+   * Renderiza la sección de perfil del usuario
+   * 
+   * @function renderProfileSection
+   * @returns {JSX.Element} Sección de perfil
+   */
   const renderProfileSection = () => (
     <div className="tab-content">
       <div className="profile-header-inner">
@@ -768,7 +1129,7 @@ const UserProfile = () => {
             <p><strong>Nota:</strong> Al cambiar la foto, la anterior será eliminada automáticamente</p>
           </div>
         </div>
-
+        
         <div className="info-section">
           <h3>Información Personal</h3>
           
@@ -786,7 +1147,7 @@ const UserProfile = () => {
                   required
                 />
               </div>
-
+              
               <div className="form-group">
                 <label htmlFor="username">Username *</label>
                 <input
@@ -801,7 +1162,7 @@ const UserProfile = () => {
                 />
                 <small>Mínimo 3 caracteres</small>
               </div>
-
+              
               <div className="form-group">
                 <label htmlFor="email">Email</label>
                 <input
@@ -815,7 +1176,7 @@ const UserProfile = () => {
                 />
                 <small>El email no se puede modificar</small>
               </div>
-
+              
               <div className="form-actions">
                 <button 
                   type="submit" 
@@ -858,221 +1219,256 @@ const UserProfile = () => {
       </div>
     </div>
   );
-
+  
+  /**
+   * Renderiza la sección de administración
+   * Solo visible para usuarios con rol 'admin'
+   * 
+   * @function renderAdminSection
+   * @returns {JSX.Element} Sección de administración
+   */
   const renderAdminSection = () => (
     <div className="tab-content">
-      <div className="admin-section">
-        {user?.rol === 'admin' ? (
-          <div className="admin-content">
-            {!selectedAdminTab ? (
-              <div>
-                <div className="admin-header">
-                  <h2>Panel de Administración</h2>
-                  <p>Selecciona una opción para gestionar el sistema</p>
-                </div>
-                <div className="admin-actions">
-                  <div className="admin-action">
-                    <div className="admin-action-icon">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4895CF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="3" y1="9" x2="21" y2="9"></line>
-                        <line x1="9" y1="21" x2="9" y2="9"></line>
-                      </svg>
-                    </div>
-                    <div className="admin-action-info">
-                      <h3>Gestión de Productos</h3>
-                      <p>Administrar productos, garantías y devoluciones</p>
-                    </div>
-                    <button 
-                      className="btn-primary"
-                      onClick={() => handleAdminTabChange('products')}
-                    >
-                      Gestionar
-                    </button>
-                  </div>
-                  
-                  <div className="admin-action">
-                    <div className="admin-action-icon">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4895CF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                      </svg>
-                    </div>
-                    <div className="admin-action-info">
-                      <h3>Gestión de Pedidos</h3>
-                      <p>Ver y administrar todos los pedidos</p>
-                    </div>
-                    <button 
-                      className="btn-primary"
-                      onClick={() => handleAdminTabChange('orders')}
-                    >
-                      Ver Pedidos
-                    </button>
-                  </div>
-
-                  <div className="admin-action">
-                    <div className="admin-action-icon">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#4895CF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                      </svg>
-                    </div>
-                    <div className="admin-action-info">
-                      <h3>Gestión de Favoritos</h3>
-                      <p>Ver estadísticas de productos favoritos</p>
-                    </div>
-                    <button 
-                      className="btn-primary"
-                      onClick={() => handleAdminTabChange('favorites')}
-                    >
-                      Ver Estadísticas
-                    </button>
-                  </div>
-                </div>
+      {user?.rol === 'admin' ? (
+        <div className="admin-content">
+          {!selectedAdminTab ? (
+            <>
+              <div className="profile-header-inner">
+                <h2>Panel de Administración</h2>
+                <p className="section-subtitle">Selecciona una opción para gestionar el sistema</p>
               </div>
-            ) : (
-              <div className="admin-panel">
-                <button 
-                  className="back-button"
-                  onClick={handleBackToAdmin}
-                >
-                  ← Volver al Panel Principal
-                </button>
+              
+              <div className="profile-content-container">
+                {/* Card: Gestión de Productos */}
+                <div className="info-section">
+                  <h3>Gestión de Productos</h3>
+                  <div className="info-display" style={{borderLeft: '4px solid #4895CF'}}>
+                    <div className="info-row">
+                      <span className="info-label">Descripción:</span>
+                      <span className="info-value">Administrar productos, garantías y devoluciones</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="info-label">Acciones:</span>
+                      <span className="info-value">
+                        <button 
+                          className="btn-primary"
+                          onClick={() => handleAdminTabChange('products')}
+                          style={{marginTop: '1rem'}}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '6px'}}>
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="9" y1="21" x2="9" y2="9"></line>
+                          </svg>
+                          Gestionar Productos
+                        </button>
+                      </span>
+                    </div>
+                  </div>
+                </div>
                 
-                {selectedAdminTab === 'products' && <ProductManagement />}
-                {selectedAdminTab === 'orders' && <OrderManagement />}
-                {selectedAdminTab === 'favorites' && <AdminFavorites />}
+                {/* Card: Gestión de Pedidos */}
+                <div className="info-section">
+                  <h3>Gestión de Pedidos</h3>
+                  <div className="info-display" style={{borderLeft: '4px solid #28a745'}}>
+                    <div className="info-row">
+                      <span className="info-label">Descripción:</span>
+                      <span className="info-value">Ver y administrar todos los pedidos</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="info-label">Acciones:</span>
+                      <span className="info-value">
+                        <button 
+                          className="btn-primary"
+                          onClick={() => handleAdminTabChange('orders')}
+                          style={{marginTop: '1rem'}}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '6px'}}>
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                          </svg>
+                          Ver Pedidos
+                        </button>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Card: Gestión de Favoritos */}
+                <div className="info-section">
+                  <h3>Gestión de Favoritos</h3>
+                  <div className="info-display" style={{borderLeft: '4px solid #ffc107'}}>
+                    <div className="info-row">
+                      <span className="info-label">Descripción:</span>
+                      <span className="info-value">Ver estadísticas de productos favoritos</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="info-label">Acciones:</span>
+                      <span className="info-value">
+                        <button 
+                          className="btn-primary"
+                          onClick={() => handleAdminTabChange('favorites')}
+                          style={{marginTop: '1rem'}}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '6px'}}>
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                          </svg>
+                          Ver Estadísticas
+                        </button>
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="no-admin">
-            <div className="no-admin-icon">🔒</div>
-            <h3>Acceso Restringido</h3>
-            <p>No tienes permisos de administrador para acceder a esta sección.</p>
-          </div>
-        )}
-      </div>
+            </>
+          ) : (
+            <div className="admin-panel">
+              {selectedAdminTab === 'products' && <ProductManagement />}
+              {selectedAdminTab === 'orders' && <OrderManagement />}
+              {selectedAdminTab === 'favorites' && <AdminFavorites />}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="no-access-section">
+          <div className="no-access-icon">🔒</div>
+          <h3>Acceso Restringido</h3>
+          <p>No tienes permisos de administrador para acceder a esta sección.</p>
+        </div>
+      )}
     </div>
   );
-
+  
+  // ==========================================================================
+  // RENDERIZADO PRINCIPAL
+  // ==========================================================================
+  
   return (
     <div className="user-profile">
-      {/* Header Principal */}
-      <header className="profile-header">
-        <div className="header-content">
-          <h1>Mi Cuenta</h1>
-          <p>Gestiona tu perfil y preferencias</p>
-        </div>
-        
-        <button 
-          className={`mobile-menu-btn ${mobileMenuOpen ? 'active' : ''}`}
-          onClick={toggleMobileMenu}
-          aria-label="Abrir menú"
-        >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-      </header>
+      {/* Header Principal - SOLO en móvil */}
+      {isMobile && (
+        <header className="profile-header">
+          <div className="container-hdr">
+            <div className="header-content">
+              <h1>Mi Cuenta</h1>
+              <p>Gestiona tu perfil y preferencias</p>
+            </div>
+            
+            <button 
+              className={`mobile-menu-btn ${mobileMenuOpen ? 'active' : ''}`}
+              onClick={toggleMobileMenu}
+              aria-label="Abrir menú"
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+          </div>
+        </header>
+      )}
       
       <div className="profile-layout">
         {/* Sidebar de Navegación - Escritorio */}
         <aside className="profile-sidebar">
-          <div className="user-summary">
-            <div className="user-avatar">
-              {user?.images_profile ? (
-                <img 
-                  key={`avatar-${imageReloadKey}`}
-                  src={getProfileImageUrl(user.images_profile)} 
-                  alt="Avatar del usuario" 
-                  className="avatar-img" 
-                  onError={handleImageError}
-                />
-              ) : null}
-              <div className={`avatar-default ${user?.images_profile ? 'avatar-fallback' : ''}`}>
-                {user?.nombre?.charAt(0) || user?.username?.charAt(0) || 'U'}
+          <div className="container-hdr">
+            <div className="sidebar-content">
+              <div className="user-summary">
+                <div className="user-avatar">
+                  {user?.images_profile ? (
+                    <img 
+                      key={`avatar-${imageReloadKey}`}
+                      src={getProfileImageUrl(user.images_profile)} 
+                      alt="Avatar del usuario" 
+                      className="avatar-img" 
+                      onError={handleImageError}
+                    />
+                  ) : null}
+                  <div className={`avatar-default ${user?.images_profile ? 'avatar-fallback' : ''}`}>
+                    {user?.nombre?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                  </div>
+                </div>
+                <div className="user-info">
+                  <h3>{user?.nombre || user?.username || 'Usuario'}</h3>
+                  <p>{user?.email || 'email@ejemplo.com'}</p>
+                  <span className="member-since">
+                    Miembro desde {formatDate(user?.created_at)}
+                  </span>
+                  {user?.rol === 'admin' && (
+                    <span className="admin-tag">Administrador</span>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="user-info">
-              <h3>{user?.nombre || user?.username || 'Usuario'}</h3>
-              <p>{user?.email || 'email@ejemplo.com'}</p>
-              <span className="member-since">
-                Miembro desde {formatDate(user?.created_at)}
-              </span>
-              {user?.rol === 'admin' && (
-                <span className="admin-tag">Administrador</span>
-              )}
+              
+              <nav className="navigation-menu">
+                <button 
+                  className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
+                  onClick={() => handleTabChange('profile')}
+                >
+                  <span className="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </span>
+                  Mi Perfil
+                </button>
+                
+                <Link to="/favorites" className="nav-btn">
+                  <span className="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                  </span>
+                  Mis Favoritos
+                </Link>
+                
+                <button 
+                  className={`nav-btn ${activeTab === 'orders' ? 'active' : ''}`}
+                  onClick={() => handleTabChange('orders')}
+                >
+                  <span className="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                      <path d="M8 21v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"></path>
+                    </svg>
+                  </span>
+                  Historial de Compras
+                </button>
+                
+                {user?.rol === 'admin' && (
+                  <button 
+                    className={`nav-btn ${activeTab === 'admin' ? 'active' : ''}`}
+                    onClick={() => handleTabChange('admin')}
+                  >
+                    <span className="nav-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                      </svg>
+                    </span>
+                    Panel de Administración
+                  </button>
+                )}
+                
+                <button className="nav-btn logout" onClick={handleLogout}>
+                  <span className="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                      <polyline points="16 17 21 12 16 7"></polyline>
+                      <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                  </span>
+                  Cerrar Sesión
+                </button>
+              </nav>
             </div>
           </div>
-
-          <nav className="navigation-menu">
-            <button 
-              className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => handleTabChange('profile')}
-            >
-              <span className="nav-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-              </span>
-              Mi Perfil
-            </button>
-            
-            <Link to="/favorites" className="nav-btn">
-              <span className="nav-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                </svg>
-              </span>
-              Mis Favoritos
-            </Link>
-
-            <button 
-              className={`nav-btn ${activeTab === 'orders' ? 'active' : ''}`}
-              onClick={() => handleTabChange('orders')}
-            >
-              <span className="nav-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                  <path d="M8 21v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"></path>
-                </svg>
-              </span>
-              Historial de Compras
-            </button>
-
-            {user?.rol === 'admin' && (
-              <button 
-                className={`nav-btn ${activeTab === 'admin' ? 'active' : ''}`}
-                onClick={() => handleTabChange('admin')}
-              >
-                <span className="nav-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                  </svg>
-                </span>
-                Panel de Administración
-              </button>
-            )}
-
-            <button className="nav-btn logout" onClick={handleLogout}>
-              <span className="nav-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                  <polyline points="16 17 21 12 16 7"></polyline>
-                  <line x1="21" y1="12" x2="9" y2="12"></line>
-                </svg>
-              </span>
-              Cerrar Sesión
-            </button>
-          </nav>
         </aside>
-
+        
         {/* Overlay del Menú Móvil */}
         <div 
           className={`mobile-overlay ${mobileMenuOpen ? 'active' : ''}`} 
@@ -1081,148 +1477,120 @@ const UserProfile = () => {
         
         {/* Sidebar Móvil */}
         <aside className={`mobile-sidebar ${mobileMenuOpen ? 'active' : ''}`}>
-          {/* Header fijo del sidebar móvil */}
-          <div className="mobile-sidebar-header">
-            <div className="user-avatar">
-              {user?.images_profile ? (
-                <img 
-                  key={`mobile-header-avatar-${imageReloadKey}`}
-                  src={getProfileImageUrl(user.images_profile)} 
-                  alt="Avatar" 
-                  className="avatar-img" 
-                  onError={handleImageError}
-                />
-              ) : null}
-              <div className={`avatar-default ${user?.images_profile ? 'avatar-fallback' : ''}`}>
-                {user?.nombre?.charAt(0) || user?.username?.charAt(0) || 'U'}
-              </div>
-            </div>
-            <div className="user-info">
-              <h3>{user?.nombre || user?.username || 'Usuario'}</h3>
-              <p>{user?.email || 'email@ejemplo.com'}</p>
-            </div>
-            <button className="close-sidebar-btn" onClick={closeMobileMenu}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-          
-          {/* Contenido desplazable del sidebar */}
-          <div className="mobile-sidebar-content">
-            <div className="mobile-user-summary">
-              <div className="user-avatar">
-                {user?.images_profile ? (
-                  <img 
-                    key={`mobile-avatar-${imageReloadKey}`}
-                    src={getProfileImageUrl(user.images_profile)} 
-                    alt="Avatar del usuario" 
-                    className="avatar-img" 
-                    onError={handleImageError}
-                  />
-                ) : null}
-                <div className={`avatar-default ${user?.images_profile ? 'avatar-fallback' : ''}`}>
-                  {user?.nombre?.charAt(0) || user?.username?.charAt(0) || 'U'}
+          <div className="container-hdr">
+            <div className="mobile-sidebar-content">
+              <div className="mobile-user-summary">
+                <div className="user-avatar">
+                  {user?.images_profile ? (
+                    <img 
+                      key={`mobile-avatar-${imageReloadKey}`}
+                      src={getProfileImageUrl(user.images_profile)} 
+                      alt="Avatar del usuario" 
+                      className="avatar-img" 
+                      onError={handleImageError}
+                    />
+                  ) : null}
+                  <div className={`avatar-default ${user?.images_profile ? 'avatar-fallback' : ''}`}>
+                    {user?.nombre?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                  </div>
+                </div>
+                <div className="user-info">
+                  <h3>{user?.nombre || user?.username || 'Usuario'}</h3>
+                  <p>{user?.email || 'email@ejemplo.com'}</p>
+                  <span className="member-since">
+                    Miembro desde {formatDate(user?.created_at)}
+                  </span>
                 </div>
               </div>
-              <div className="user-info">
-                <h3>{user?.nombre || user?.username || 'Usuario'}</h3>
-                <p>{user?.email || 'email@ejemplo.com'}</p>
-                <span className="member-since">
-                  Miembro desde {formatDate(user?.created_at)}
-                </span>
-                {/* {user?.rol === 'admin' && (
-                  <span className="admin-tag">Administrador</span>
-                )} */}
-              </div>
-            </div>
-
-            <nav className="mobile-navigation-menu">
-              <button 
-                className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
-                onClick={() => handleTabChange('profile')}
-              >
-                <span className="nav-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                </span>
-                Mi Perfil
-              </button>
               
-              <Link to="/favorites" className="nav-btn" onClick={closeMobileMenu}>
-                <span className="nav-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                  </svg>
-                </span>
-                Mis Favoritos
-              </Link>
-
-              <button 
-                className={`nav-btn ${activeTab === 'orders' ? 'active' : ''}`}
-                onClick={() => handleTabChange('orders')}
-              >
-                <span className="nav-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                    <path d="M8 21v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"></path>
-                  </svg>
-                </span>
-                Historial de Compras
-              </button>
-
-              {user?.rol === 'admin' && (
+              <nav className="mobile-navigation-menu">
                 <button 
-                  className={`nav-btn ${activeTab === 'admin' ? 'active' : ''}`}
-                  onClick={() => handleTabChange('admin')}
+                  className={`nav-btn ${activeTab === 'profile' ? 'active' : ''}`}
+                  onClick={() => handleTabChange('profile')}
                 >
                   <span className="nav-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="3"></circle>
-                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                   </span>
-                  Panel de Administración
+                  Mi Perfil
                 </button>
-              )}
-
-              <button className="nav-btn logout" onClick={handleLogout}>
-                <span className="nav-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                    <polyline points="16 17 21 12 16 7"></polyline>
-                    <line x1="21" y1="12" x2="9" y2="12"></line>
-                  </svg>
-                </span>
-                Cerrar Sesión
-              </button>
-            </nav>
+                
+                <Link to="/favorites" className="nav-btn" onClick={closeMobileMenu}>
+                  <span className="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                  </span>
+                  Mis Favoritos
+                </Link>
+                
+                <button 
+                  className={`nav-btn ${activeTab === 'orders' ? 'active' : ''}`}
+                  onClick={() => handleTabChange('orders')}
+                >
+                  <span className="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                      <path d="M8 21v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"></path>
+                    </svg>
+                  </span>
+                  Historial de Compras
+                </button>
+                
+                {user?.rol === 'admin' && (
+                  <button 
+                    className={`nav-btn ${activeTab === 'admin' ? 'active' : ''}`}
+                    onClick={() => handleTabChange('admin')}
+                  >
+                    <span className="nav-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                      </svg>
+                    </span>
+                    Panel de Administración
+                  </button>
+                )}
+                
+                <button className="nav-btn logout" onClick={handleLogout}>
+                  <span className="nav-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                      <polyline points="16 17 21 12 16 7"></polyline>
+                      <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                  </span>
+                  Cerrar Sesión
+                </button>
+              </nav>
+            </div>
           </div>
         </aside>
-
+        
         {/* Área de Contenido Principal */}
         <main className="profile-main-content">
-          {message && (
-            <div className="alert success">
-              <span>✅</span>
-              {message}
-            </div>
-          )}
-
-          {error && (
-            <div className="alert error">
-              <span>⚠️</span>
-              {error}
-            </div>
-          )}
-
-          {activeTab === 'profile' && renderProfileSection()}
-          {activeTab === 'orders' && renderOrdersSection()}
-          {activeTab === 'admin' && renderAdminSection()}
+          <div className="container-hdr">
+            {message && (
+              <div className="alert success">
+                <span>✅</span>
+                {message}
+              </div>
+            )}
+            
+            {error && (
+              <div className="alert error">
+                <span>⚠️</span>
+                {error}
+              </div>
+            )}
+            
+            {activeTab === 'profile' && renderProfileSection()}
+            {activeTab === 'orders' && renderOrdersSection()}
+            {activeTab === 'admin' && renderAdminSection()}
+          </div>
         </main>
       </div>
     </div>

@@ -249,10 +249,15 @@
 .forgot-password {
   color: #ffffff;
   text-decoration: none;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 500;
   transition: color 0.2s ease;
   opacity: 0.9;
+  /* font-size: 0.9rem;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.4;
+  opacity: 0.9; */
 }
 
 .forgot-password:hover {
@@ -353,6 +358,8 @@
   margin: 0;
   font-size: 0.9rem;
   opacity: 0.9;
+
+  
 }
 
 .auth-link {
